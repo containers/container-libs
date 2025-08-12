@@ -1,0 +1,18 @@
+docker:
+    example.com:
+        lookaside: https://lookaside.example.com
+    registry.test.example.com:
+        lookaside: http://registry.test.example.com/lookaside
+    registry.test.example.com:8888:
+        lookaside: http://registry.test.example.com:8889/lookaside
+        lookaside-staging: https://registry.test.example.com:8889/lookaside/specialAPIserverWhichDoesNotExist
+    localhost:
+        lookaside: file:///home/mitr/mydevelopment1
+    localhost:8080:
+        lookaside: file:///home/mitr/mydevelopment2
+    localhost/invalid/url/test:
+        lookaside: ":emptyscheme"
+    localhost/file/path/test:
+        lookaside: "/no/scheme/just/a/path"
+    localhost/relative/path/test:
+        lookaside: "no/scheme/relative/path"

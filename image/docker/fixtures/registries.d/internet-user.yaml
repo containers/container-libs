@@ -1,0 +1,12 @@
+default-docker:
+    lookaside: file:///mnt/companywide/signatures/for/other/repositories
+docker:
+    docker.io/contoso:
+        lookaside: https://lookaside.contoso.com/fordocker
+    docker.io/centos:
+        lookaside: https://lookaside.centos.org/
+    docker.io/centos/mybetaproduct:
+        lookaside: http://localhost:9999/mybetaWIP/lookaside
+        lookaside-staging: file:///srv/mybetaWIP/lookaside
+    docker.io/centos/mybetaproduct:latest:
+        lookaside: https://lookaside.centos.org/
