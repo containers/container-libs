@@ -1,0 +1,388 @@
+---
+
+# Main collection of env. vars to set for all tasks and scripts.
+env:
+    ####
+    #### Global variables used for all tasks
+    ####
+    # Overrides default location (/tmp/cirrus) for repo clone
+    CIRRUS_WORKING_DIR: "/var/tmp/go/src/github.com/containers/storage"
+    # Shell used to execute all script commands
+    CIRRUS_SHELL: "/bin/bash"
+    # Automation script path relative to $CIRRUS_WORKING_DIR)
+    SCRIPT_BASE: "./storage/contrib/cirrus"
+    IMAGE_SCRIPT_BASE: "./image/contrib/cirrus"
+    # No need to go crazy, but grab enough to cover most PRs
+    CIRRUS_CLONE_DEPTH: 50
+    DEST_BRANCH: "main"
+    GOPATH: "/var/tmp/go"
+    SKOPEO_PATH: "/var/tmp/go/src/github.com/containers/skopeo"
+    GOBIN: "${GOPATH}/bin"
+    IMAGE_WORKING_DIR: "/var/tmp/go/src/github.com/containers/image"
+
+
+    ####
+    #### Cache-image names to test with (double-quotes around names are critical)
+    ###
+    FEDORA_NAME: "fedora-42"
+    DEBIAN_NAME: "debian-13"
+
+    # GCE project where images live
+    IMAGE_PROJECT: "libpod-218412"
+    # VM Image built in containers/automation_images
+    IMAGE_SUFFIX: "c20250422t130822z-f42f41d13"
+    FEDORA_CACHE_IMAGE_NAME: "fedora-${IMAGE_SUFFIX}"
+    DEBIAN_CACHE_IMAGE_NAME: "debian-${IMAGE_SUFFIX}"
+    FEDORA_CONTAINER_FQIN: "quay.io/libpod/fedora_podman:${IMAGE_SUFFIX}"
+
+
+    ####
+    #### Command variables to help avoid duplication
+    ####
+    # Command to prefix every output line with a timestamp
+    # (can't do inline awk script, Cirrus-CI or YAML mangles quoting)
+    _TIMESTAMP: 'awk --file ${CIRRUS_WORKING_DIR}/${SCRIPT_BASE}/timestamp.awk'
+    _DFCMD: 'df -lhTx tmpfs'
+    _RAUDITCMD: 'cat /var/log/audit/audit.log'
+    _UAUDITCMD: 'cat /var/log/kern.log'
+    _JOURNALCMD: 'journalctl -b'
+
+gcp_credentials: ENCRYPTED[a5f14684103359f8ce34fc93f47e2c49eceb648aab145e73f786620d4f45df8d074b64b4062e9b8411b2b3e3c3088154]
+
+# Default timeout for each task
+timeout_in: 120m
+
+# Default VM to use unless set or modified by task
+gce_instance:
+    image_project: "${IMAGE_PROJECT}"
+    zone: "us-central1-b"  # Required by Cirrus for the time being
+    cpu: 2
+    memory: "4Gb"
+    disk: 200
+    image_name: "${FEDORA_CACHE_IMAGE_NAME}"
+
+
+storage_linux_testing: &linux_testing
+    depends_on:
+        - storage_lint
+    gce_instance:  # Only need to specify differences from defaults (above)
+        image_name: "${VM_IMAGE}"
+
+    # Separate scripts for separate outputs, makes debugging easier.
+    setup_script: '${CIRRUS_WORKING_DIR}/${SCRIPT_BASE}/setup.sh |& ${_TIMESTAMP}'
+    build_and_test_script: '${CIRRUS_WORKING_DIR}/${SCRIPT_BASE}/build_and_test.sh |& ${_TIMESTAMP}'
+
+    always:
+        df_script: '${_DFCMD} || true'
+        rh_audit_log_script: '${_RAUDITCMD} || true'
+        debian_audit_log_script: '${_UAUDITCMD} || true'
+        journal_log_script: '${_JOURNALCMD} || true'
+
+
+storage_fedora_testing_task: &fedora_testing
+    <<: *linux_testing
+    alias: storage_fedora_testing
+    skip: "!changesInclude('storage/**')"
+    name: &std_test_name "Storage: ${OS_NAME} ${TEST_DRIVER}"
+    env:
+        OS_NAME: "${FEDORA_NAME}"
+        VM_IMAGE: "${FEDORA_CACHE_IMAGE_NAME}"
+    # Not all $TEST_DRIVER combinations valid for all $VM_IMAGE types.
+    matrix: &test_matrix
+        - env:
+            TEST_DRIVER: "vfs"
+        - env:
+            TEST_DRIVER: "overlay"
+        - env:
+            TEST_DRIVER: "overlay-transient"
+        - env:
+            TEST_DRIVER: "fuse-overlay"
+        - env:
+            TEST_DRIVER: "fuse-overlay-whiteout"
+        - env:
+            TEST_DRIVER: "btrfs"
+
+
+# aufs was dropped between 20.04 and 22.04, can't test it
+storage_debian_testing_task: &storage_debian_testing
+    <<: *linux_testing
+    alias: storage_debian_testing
+    name: *std_test_name
+    skip: "!changesInclude('storage/**')"
+    env:
+        OS_NAME: "${DEBIAN_NAME}"
+        VM_IMAGE: "${DEBIAN_CACHE_IMAGE_NAME}"
+    # Not all $TEST_DRIVER combinations valid for all $VM_IMAGE types.
+    matrix:
+        - env:
+            TEST_DRIVER: "vfs"
+        - env:
+            TEST_DRIVER: "overlay"
+        - env:
+            TEST_DRIVER: "fuse-overlay"
+        - env:
+            TEST_DRIVER: "fuse-overlay-whiteout"
+        - env:
+            TEST_DRIVER: "btrfs"
+
+
+storage_lint_task:
+    alias: storage_lint
+    name: "Storage: Lint"
+    skip: "!changesInclude('storage/**')"
+
+    env:
+        CIRRUS_WORKING_DIR: "/go/src/github.com/containers/storage"
+    container:
+        image: golang
+    modules_cache:
+        fingerprint_script: cat storage/go.sum
+        folder: $GOPATH/pkg/mod
+    build_script: |
+      apt-get update
+      apt-get install -y libbtrfs-dev libsubid-dev
+    test_script: |
+      cd storage
+      make TAGS=regex_precompile local-validate
+      make lint
+      make clean
+
+
+# Update metadata on VM images referenced by this repository state
+# TODO: This is not needed for monorep POC.
+# storage_meta_task:
+#     alias: storage_meta
+
+#     container:
+#         image: "quay.io/libpod/imgts:latest"
+#         cpu: 1
+#         memory: 1
+
+#     env:
+#         # Space-separated list of images used by this repository state
+#         IMGNAMES: |-
+#             ${FEDORA_CACHE_IMAGE_NAME}
+#             ${DEBIAN_CACHE_IMAGE_NAME}
+#         BUILDID: "${CIRRUS_BUILD_ID}"
+#         REPOREF: "${CIRRUS_CHANGE_IN_REPO}"
+#         GCPJSON: ENCRYPTED[244a93fe8b386b48b96f748342bf741350e43805eee81dd04b45093bdf737e540b993fc735df41f131835fa0f9b65826]
+#         GCPNAME: ENCRYPTED[91cf7aa421858b26b67835978d224b4a5c46afcf52a0f1ec1b69a99b248715dc8e92a1b56fde18e092acf256fa80ae9c]
+#         GCPPROJECT: ENCRYPTED[79b0f7eb5958e25bc7095d5d368fa8d94447a43ffacb9c693de438186e2f767b7efe9563d6954297ae4730220e10aa9c]
+#         CIRRUS_CLONE_DEPTH: 1  # source not used
+
+#     script: '/usr/local/bin/entrypoint.sh |& ${_TIMESTAMP}'
+
+
+
+image_validate_task:
+    alias: image_validate
+    name: "Image: Validate"
+    skip: "!changesInclude('storage/**', 'image/**')"
+    # The git-validation tool doesn't work well on branch or tag push,
+    # under Cirrus-CI, due to challenges obtaining the starting commit ID.
+    # Only do validation for PRs.
+    only_if: $CIRRUS_PR != ''
+    gce_instance: &debian_vm
+        image_project: libpod-218412
+        zone: "us-central1-f"
+        cpu: 2
+        memory: "4Gb"
+        # Required to be 200gig, do not modify - has i/o performance impact
+        # according to gcloud CLI tool warning messages.
+        disk: 200
+        image_name: ${DEBIAN_CACHE_IMAGE_NAME}
+    env:
+        HOME: "/root"  # default unset, needed by golangci-lint.
+    script: |
+        cd image
+        git remote update
+        make tools
+        # TODO: Enable once we are done with monorepo tests.
+        # ${GOBIN}/git-validation -q -run DCO,short-subject,dangling-whitespace -range $(git merge-base origin/${DEST_BRANCH} HEAD)..${CIRRUS_CHANGE_IN_REPO}
+        make validate
+
+
+image_cross_task:
+    alias: image_cross
+    name: "Image: Cross"
+    skip: "!changesInclude('storage/**', 'image/**')"
+    only_if: &not_docs $CIRRUS_CHANGE_TITLE !=~ '.*CI:DOCS.*'
+    gce_instance: *debian_vm
+    env:
+        HOME: "/root"  # default unset, needed by golangci-lint.
+    script: |
+        cd image
+        make cross
+
+
+image_test_task:
+    alias: image_test
+    depends_on:
+        - image_validate
+    only_if: *not_docs
+    skip: "!changesInclude('storage/**', 'image/**')"
+    gce_instance: *debian_vm
+    env:
+        HOME: "/root"  # default unset, needed by golangci-lint.
+        GOSRC: "${CIRRUS_WORKING_DIR}/image"
+        GOPATH: "/var/tmp/go"
+    # Required for consistency with containers/skopeo CI
+    matrix:
+        - name: "Image: Test"
+          env:
+              BUILDTAGS: ''
+        - name: "Image: Test w/ opengpg"
+          env:
+              BUILDTAGS: &withopengpg 'containers_image_openpgp'
+    script: |
+        cd image
+        ls -l ${CIRRUS_WORKING_DIR}
+        echo "${GOPATH}"
+        ${CIRRUS_WORKING_DIR}/${IMAGE_SCRIPT_BASE}/runner.sh image_tests
+
+
+#####
+##### NOTE: This task is subtantially duplicated in the containers/skopeo
+##### repository's `.cirrus.yml`.  Changes made here should be fully merged
+##### prior to being manually duplicated and maintained in containers/skopeo.
+#####
+image_test_skopeo_task:
+    alias: image_test_skopeo
+    only_if: *not_docs
+    skip: "!changesInclude('storage/**', 'image/**')"
+    depends_on:
+        - image_validate
+    gce_instance:
+        image_project: libpod-218412
+        zone: "us-central1-f"
+        cpu: 2
+        memory: "4Gb"
+        # Required to be 200gig, do not modify - has i/o performance impact
+        # according to gcloud CLI tool warning messages.
+        disk: 200
+        image_name: ${FEDORA_CACHE_IMAGE_NAME}
+    env:
+        HOME: "/root"  # default unset, needed by golangci-lint.
+        GOSRC: "${CIRRUS_WORKING_DIR}/image"
+        GOPATH: "/var/tmp/go"
+        SKOPEO_CI_BRANCH: "main"
+        SCRIPT_BASE: "./contrib/cirrus"
+        # Built along with the standard PR-based workflow in c/automation_images
+        SKOPEO_CIDEV_CONTAINER_FQIN: "quay.io/libpod/skopeo_cidev:${IMAGE_SUFFIX}"
+    matrix:
+        - name: "Image: Skopeo Test"
+          env:
+              BUILDTAGS: ''
+        - name: "Image: Skopeo Test w/ opengpg"
+          env:
+              BUILDTAGS: *withopengpg
+    setup_script: >-
+        "${CIRRUS_WORKING_DIR}/${IMAGE_SCRIPT_BASE}/runner.sh" setup
+    vendor_script: >-
+        "${SKOPEO_PATH}/contrib/cirrus/runner.sh" vendor
+    build_script: >-
+        "${SKOPEO_PATH}/contrib/cirrus/runner.sh" build
+    unit_script: >-
+        "${SKOPEO_PATH}/contrib/cirrus/runner.sh" unit
+    integration_script: >-
+        "${SKOPEO_PATH}/contrib/cirrus/runner.sh" integration
+    system_script: >
+        "${SKOPEO_PATH}/contrib/cirrus/runner.sh" system
+
+
+
+common_testing_task:
+    alias: common_testing
+    name: "Common: Test"  
+    skip: "!changesInclude('storage/**', 'image/**', 'common/**')"
+    container:
+        image: "${FEDORA_CONTAINER_FQIN}"
+    modules_cache:
+        fingerprint_script: cat common/go.sum
+        folder: $GOPATH/pkg/mod
+    build_script: |
+      cd common
+      make vendor
+    test_script: |
+      cd common
+      hack/tree_status.sh
+      make build
+      make build-cross
+      make test
+
+storage_vendor_task:
+    alias: storage_vendor
+    name: "Vendor"
+    container:
+        image: golang
+    modules_cache:
+        fingerprint_script: cat storage/go.sum
+        folder: $GOPATH/pkg/mod
+    build_script: |
+      cd storage
+      make vendor
+    test_script: |
+      cd storage
+      hack/tree_status.sh
+
+storage_cross_task:
+    skip: "!changesInclude('storage/**')"
+    alias: storage_cross
+    name: "Storage: Cross"
+    container:
+        image: golang:1.23
+    build_script: |
+      cd storage
+      make cross
+
+storage_gofix_task:
+    skip: "!changesInclude('storage/**')"
+    alias: storage_gofix
+    name: "Storage: gofix"
+    container:
+        image: golang:1.23
+    build_script: |
+      cd storage
+      go fix ./...
+    test_script: |
+      cd storage
+      git diff --diff-filter=M --exit-code
+
+storage_codespell_task:
+    skip: "!changesInclude('storage/**')"
+    alias: storage_codespell
+    name: "Storage: codespell"
+    container:
+        image: python
+    build_script: pip install codespell
+    test_script: |
+      cd storage
+      codespell
+
+
+# Status aggregator for all tests.  This task simply ensures a defined
+# set of tasks all passed, and allows confirming that based on the status
+# of this task.
+success_task:
+    alias: success
+    # N/B: The prow merge-bot (tide) is sensitized to this exact name, DO NOT CHANGE IT.
+    # Ref: https://github.com/openshift/release/pull/49820
+    name: "Total Success"
+    depends_on:
+        - storage_lint
+        - storage_fedora_testing
+        - storage_debian_testing
+        # - storage_meta
+        - storage_vendor
+        - storage_cross
+        - storage_gofix
+        - storage_codespell
+        - common_testing
+        - image_validate
+        - image_cross
+        - image_test
+        - image_test_skopeo
+    container:
+        image: golang:1.21
+    clone_script: 'mkdir -p "$CIRRUS_WORKING_DIR"'  # Source code not needed
+    script: /bin/true
