@@ -2,23 +2,20 @@
 # See the documentation for more information:
 # https://packit.dev/docs/configuration/
 
-upstream_tag_template: v{version}
+upstream_tag_template: common/v{version}
 
 packages:
   containers-common-fedora:
     downstream_package_name: containers-common
     pkg_tool: fedpkg
-    specfile_path: rpm/containers-common.spec
+    specfile_path: common/rpm/containers-common.spec
   containers-common-centos:
     downstream_package_name: containers-common
     pkg_tool: centpkg
-    specfile_path: rpm/containers-common.spec
+    specfile_path: common/rpm/containers-common.spec
   containers-common-eln:
     downstream_package_name: containers-common
-    specfile_path: rpm/containers-common.spec
-
-actions:
-  pre-sync: "bash rpm/update-lib-versions.sh"
+    specfile_path: common/rpm/containers-common.spec
 
 jobs:
   - job: copr_build
@@ -26,7 +23,7 @@ jobs:
     packages: [containers-common-fedora]
     notifications: &ephemeral_build_failure_notification
       failure_comment:
-        message: "Ephemeral COPR build failed. @containers/packit-build please check."
+        message: "Packit jobs failed. @containers/packit-build please check."
     enable_net: true
     targets:
       - fedora-all
@@ -55,7 +52,7 @@ jobs:
 
   # Run on commit to main branch
   - job: copr_build
-    trigger: commit
+    trigger: ignore
     packages: [containers-common-fedora]
     notifications:
       failure_comment:
@@ -71,11 +68,13 @@ jobs:
     dist_git_branches: &fedora_targets
       - fedora-all
 
+  # Ignore CentOS Stream for now
   - job: propose_downstream
-    trigger: release
+    trigger: ignore
     packages: [containers-common-centos]
     dist_git_branches:
       - c10s
+      - c9s
 
   # Fedora Koji build
   - job: koji_build
