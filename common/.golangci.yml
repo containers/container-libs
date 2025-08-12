@@ -1,0 +1,88 @@
+version: "2"
+
+run:
+  timeout: 5m
+  build-tags:
+    - apparmor
+    - seccomp
+    - selinux
+    - systemd
+    - exclude_graphdriver_btrfs
+    - containers_image_openpgp
+    - cni
+
+formatters:
+  enable:
+    - gofumpt
+
+linters:
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - canonicalheader
+    - containedctx
+    - contextcheck
+    - copyloopvar
+    - decorder
+    - dupl
+    - dupword
+    - durationcheck
+    - exptostd
+    - fatcontext
+    - forbidigo
+    - ginkgolinter
+    - gocheckcompilerdirectives
+    - gochecksumtype
+    - gocritic
+    - goprintffuncname
+    - gosmopolitan
+    - iface
+    - intrange
+    - makezero
+    - mirror
+    - misspell
+    - nilnesserr
+    - nosprintfhostport
+    - perfsprint
+    - prealloc
+    - predeclared
+    - reassign
+    - recvcheck
+    - revive
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - usetesting
+    - wastedassign
+    - whitespace
+  settings:
+    errcheck:
+      check-type-assertions: true
+    gocyclo:
+      min-complexity: 35
+    revive:
+      rules:
+        - name: dot-imports
+          disabled: true
+    staticcheck:
+      checks:
+        - all
+        - -ST1003 # https://staticcheck.dev/docs/checks/#ST1003 Poorly chosen identifier.
+        - -QF1008 # https://staticcheck.dev/docs/checks/#QF1008 Omit embedded fields from selector expression.
+  exclusions:
+    generated: strict
+    presets:
+      - comments
+      - common-false-positives
+      - std-error-handling
+    rules:
+      - linters:
+          - dupl
+          - perfsprint
+        path: _test\.go
+      - linters:
+          - contextcheck
+        path: libimage
+        text: LookupImage

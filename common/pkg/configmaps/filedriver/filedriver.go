@@ -1,0 +1,155 @@
+package filedriver
+
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"maps"
+	"os"
+	"path/filepath"
+	"slices"
+
+	"github.com/containers/storage/pkg/fileutils"
+	"github.com/containers/storage/pkg/lockfile"
+)
+
+// configMapsDataFile is the file where configMaps data/payload will be stored
+var configMapsDataFile = "configmapsdata.json"
+
+// errNoSecretData indicates that there is not data associated with an id
+var errNoSecretData = errors.New("no configMap data with ID")
+
+// errNoSecretData indicates that there is configMap data already associated with an id
+var errSecretIDExists = errors.New("configMap data with ID already exists")
+
+// Driver is the filedriver object
+type Driver struct {
+	// configMapsDataFilePath is the path to the configMapsfile
+	configMapsDataFilePath string
+	// lockfile is the filedriver lockfile
+	lockfile *lockfile.LockFile
+}
+
+// NewDriver creates a new file driver.
+// rootPath is the directory where the configMaps data file resides.
+func NewDriver(rootPath string) (*Driver, error) {
+	fileDriver := new(Driver)
+	fileDriver.configMapsDataFilePath = filepath.Join(rootPath, configMapsDataFile)
+	// the lockfile functions require that the rootPath dir is executable
+	if err := os.MkdirAll(rootPath, 0o700); err != nil {
+		return nil, err
+	}
+
+	lock, err := lockfile.GetLockFile(filepath.Join(rootPath, "configMapsdata.lock"))
+	if err != nil {
+		return nil, err
+	}
+	fileDriver.lockfile = lock
+
+	return fileDriver, nil
+}
+
+// List returns all configMap IDs
+func (d *Driver) List() ([]string, error) {
+	d.lockfile.Lock()
+	defer d.lockfile.Unlock()
+	configMapData, err := d.getAllData()
+	if err != nil {
+		return nil, err
+	}
+	return slices.Sorted(maps.Keys(configMapData)), nil
+}
+
+// Lookup returns the bytes associated with a configMap ID
+func (d *Driver) Lookup(id string) ([]byte, error) {
+	d.lockfile.Lock()
+	defer d.lockfile.Unlock()
+
+	configMapData, err := d.getAllData()
+	if err != nil {
+		return nil, err
+	}
+	if data, ok := configMapData[id]; ok {
+		return data, nil
+	}
+	return nil, fmt.Errorf("%s: %w", id, errNoSecretData)
+}
+
+// Store stores the bytes associated with an ID. An error is returned if the ID already exists
+func (d *Driver) Store(id string, data []byte) error {
+	d.lockfile.Lock()
+	defer d.lockfile.Unlock()
+
+	configMapData, err := d.getAllData()
+	if err != nil {
+		return err
+	}
+	if _, ok := configMapData[id]; ok {
+		return fmt.Errorf("%s: %w", id, errSecretIDExists)
+	}
+	configMapData[id] = data
+	marshalled, err := json.MarshalIndent(configMapData, "", "  ")
+	if err != nil {
+		return err
+	}
+	err = os.WriteFile(d.configMapsDataFilePath, marshalled, 0o600)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Delete deletes the configMap associated with the specified ID.  An error is returned if no matching configMap is found.
+func (d *Driver) Delete(id string) error {
+	d.lockfile.Lock()
+	defer d.lockfile.Unlock()
+	configMapData, err := d.getAllData()
+	if err != nil {
+		return err
+	}
+	if _, ok := configMapData[id]; ok {
+		delete(configMapData, id)
+	} else {
+		return fmt.Errorf("%s: %w", id, errNoSecretData)
+	}
+	marshalled, err := json.MarshalIndent(configMapData, "", "  ")
+	if err != nil {
+		return err
+	}
+	err = os.WriteFile(d.configMapsDataFilePath, marshalled, 0o600)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// getAllData reads the data file and returns all data
+func (d *Driver) getAllData() (map[string][]byte, error) {
+	// check if the db file exists
+	err := fileutils.Exists(d.configMapsDataFilePath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			// the file will be created later on a store()
+			return make(map[string][]byte), nil
+		}
+		return nil, err
+	}
+
+	file, err := os.Open(d.configMapsDataFilePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	byteValue, err := io.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+	configMapData := new(map[string][]byte)
+	err = json.Unmarshal(byteValue, configMapData)
+	if err != nil {
+		return nil, err
+	}
+	return *configMapData, nil
+}
