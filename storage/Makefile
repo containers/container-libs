@@ -97,5 +97,5 @@ vendor-in-container:
 
 vendor:
 	$(GO) mod tidy
-	$(GO) mod vendor
+	$(GO) work vendor
 	$(GO) mod verify

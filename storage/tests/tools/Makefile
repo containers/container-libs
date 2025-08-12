@@ -6,11 +6,11 @@ all: $(BUILDDIR)
 .PHONY: vendor
 vendor:
 	$(GO) mod tidy
-	$(GO) mod vendor
+	GOWORK=off $(GO) mod vendor
 	$(GO) mod verify
 
 define go-build
-	$(shell cd `pwd` && $(GO) build -mod=vendor -o $(BUILDDIR)/$(shell basename $(1)) $(1))
+	$(shell cd `pwd` && GOWORK=off $(GO) build -mod=vendor -o $(BUILDDIR)/$(shell basename $(1)) $(1))
 	@echo > /dev/null
 endef
 

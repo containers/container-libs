@@ -4,7 +4,9 @@ set -e
 
 source $(dirname $0)/lib.sh
 
-cd $GOSRC
+cd $GOSRC/storage
+pwd
+ls -l
 make install.tools
 showrun make local-binary
 showrun make local-cross
