@@ -47,7 +47,7 @@ env:
     _UAUDITCMD: 'cat /var/log/kern.log'
     _JOURNALCMD: 'journalctl -b'
 
-gcp_credentials: ENCRYPTED[a5f14684103359f8ce34fc93f47e2c49eceb648aab145e73f786620d4f45df8d074b64b4062e9b8411b2b3e3c3088154]
+gcp_credentials: ENCRYPTED[f448b0e5ed38a52ba93550305f9e38c9b0c03852b9fc3115930f231fc7124b7423e8c912b4d9e002cc34b3a7ac3c145b]
 
 # Default timeout for each task
 timeout_in: 120m
