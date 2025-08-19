@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/containers/image/v5/docker/internal/tarfile"
-	"github.com/containers/image/v5/internal/private"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/docker/internal/tarfile"
+	"go.podman.io/image/v5/internal/private"
+	"go.podman.io/image/v5/types"
 )
 
 type daemonImageSource struct {

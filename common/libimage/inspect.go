@@ -6,9 +6,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/containers/image/v5/image"
-	"github.com/containers/image/v5/manifest"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/image"
+	"go.podman.io/image/v5/manifest"
+	"go.podman.io/image/v5/types"
 	"github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"

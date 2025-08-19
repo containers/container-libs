@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containers/common/libimage/define"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/common/libimage/define"
+	"go.podman.io/image/v5/types"
 )
 
 // SearchFilter allows filtering images while searching.

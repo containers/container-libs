@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/types"
 	dockerReference "github.com/distribution/reference"
 	"github.com/docker/cli/cli/config"
 	"github.com/docker/cli/cli/config/configfile"

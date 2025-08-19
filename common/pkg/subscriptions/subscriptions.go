@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/containers/common/pkg/umask"
-	"github.com/containers/storage/pkg/fileutils"
-	"github.com/containers/storage/pkg/idtools"
+	"go.podman.io/common/pkg/umask"
+	"go.podman.io/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/idtools"
 	securejoin "github.com/cyphar/filepath-securejoin"
 	rspec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opencontainers/selinux/go-selinux/label"

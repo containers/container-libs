@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	flag "github.com/containers/storage/pkg/mflag"
+	flag "go.podman.io/storage/pkg/mflag"
 )
 
 var (

@@ -12,8 +12,8 @@ import (
 	"github.com/containernetworking/cni/libcni"
 	cnitypes "github.com/containernetworking/cni/pkg/types"
 	types040 "github.com/containernetworking/cni/pkg/types/040"
-	"github.com/containers/common/libnetwork/internal/util"
-	"github.com/containers/common/libnetwork/types"
+	"go.podman.io/common/libnetwork/internal/util"
+	"go.podman.io/common/libnetwork/types"
 	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
 )

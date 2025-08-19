@@ -5,8 +5,8 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/containers/image/v5/internal/set"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/internal/set"
+	"go.podman.io/image/v5/types"
 )
 
 // knownTransports is a registry of known ImageTransport instances.

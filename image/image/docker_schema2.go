@@ -1,7 +1,7 @@
 package image
 
 import (
-	"github.com/containers/image/v5/internal/image"
+	"go.podman.io/image/v5/internal/image"
 )
 
 // GzippedEmptyLayer is a gzip-compressed version of an empty tar file (1024 NULL bytes)

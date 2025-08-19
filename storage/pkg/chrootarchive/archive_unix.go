@@ -16,8 +16,8 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"github.com/containers/storage/pkg/archive"
-	"github.com/containers/storage/pkg/reexec"
+	"go.podman.io/storage/pkg/archive"
+	"go.podman.io/storage/pkg/reexec"
 )
 
 type unpackDestination struct {

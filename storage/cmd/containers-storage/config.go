@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/containers/storage"
-	"github.com/containers/storage/pkg/mflag"
-	"github.com/containers/storage/types"
+	"go.podman.io/storage"
+	"go.podman.io/storage/pkg/mflag"
+	"go.podman.io/storage/types"
 )
 
 func config(flags *mflag.FlagSet, action string, m storage.Store, args []string) (int, error) {

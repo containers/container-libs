@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/containers/common/pkg/config"
+	"go.podman.io/common/pkg/config"
 )
 
 func nativeConnectionCreate(options ConnectionCreateOptions) error {

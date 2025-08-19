@@ -6,8 +6,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/containers/storage"
-	storageTypes "github.com/containers/storage/types"
+	"go.podman.io/storage"
+	storageTypes "go.podman.io/storage/types"
 	digest "github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"

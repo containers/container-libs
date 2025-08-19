@@ -9,8 +9,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/containers/common/pkg/apparmor"
-	"github.com/containers/common/pkg/capabilities"
+	"go.podman.io/common/pkg/apparmor"
+	"go.podman.io/common/pkg/capabilities"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 	selinux "github.com/opencontainers/selinux/go-selinux"

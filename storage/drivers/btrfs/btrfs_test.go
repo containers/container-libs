@@ -7,8 +7,8 @@ import (
 	"path"
 	"testing"
 
-	graphdriver "github.com/containers/storage/drivers"
-	"github.com/containers/storage/drivers/graphtest"
+	graphdriver "go.podman.io/storage/drivers"
+	"go.podman.io/storage/drivers/graphtest"
 )
 
 // This avoids creating a new driver for each test if all tests are run

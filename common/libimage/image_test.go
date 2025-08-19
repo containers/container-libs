@@ -10,8 +10,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/containers/common/pkg/config"
-	"github.com/containers/image/v5/transports/alltransports"
+	"go.podman.io/common/pkg/config"
+	"go.podman.io/image/v5/transports/alltransports"
 	"github.com/stretchr/testify/require"
 )
 

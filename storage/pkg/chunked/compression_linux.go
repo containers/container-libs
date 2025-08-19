@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/containers/storage/pkg/chunked/internal/minimal"
+	"go.podman.io/storage/pkg/chunked/internal/minimal"
 	"github.com/klauspost/compress/zstd"
 	"github.com/klauspost/pgzip"
 	digest "github.com/opencontainers/go-digest"

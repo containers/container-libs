@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	_ "github.com/containers/image/v5/internal/testing/explicitfilepath-tmpdir"
+	_ "go.podman.io/image/v5/internal/testing/explicitfilepath-tmpdir"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

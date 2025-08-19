@@ -7,8 +7,8 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/containers/common/libnetwork/types"
-	"github.com/containers/common/libnetwork/util"
+	"go.podman.io/common/libnetwork/types"
+	"go.podman.io/common/libnetwork/util"
 )
 
 // ValidateSubnet will validate a given Subnet. It checks if the

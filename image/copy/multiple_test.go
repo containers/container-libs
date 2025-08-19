@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	internalManifest "github.com/containers/image/v5/internal/manifest"
-	"github.com/containers/image/v5/pkg/compression"
+	internalManifest "go.podman.io/image/v5/internal/manifest"
+	"go.podman.io/image/v5/pkg/compression"
 	digest "github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

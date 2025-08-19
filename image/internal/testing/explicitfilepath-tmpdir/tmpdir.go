@@ -8,7 +8,7 @@
 // default set to /var/folders/…, with /var a symlink to /private/var ,
 // which does not match our expectations.  So, tests which want to use
 // os.MkdirTemp that way, can
-// import _ "github.com/containers/image/internal/testing/explicitfilepath-tmpdir"
+// import _ "go.podman.io/image/internal/testing/explicitfilepath-tmpdir"
 // to ensure that $TMPDIR is canonical and usable as a base for testing
 // path canonicalization in its subdirectories.
 //

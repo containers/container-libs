@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containers/image/v5/docker"
+	"go.podman.io/image/v5/docker"
 	"github.com/docker/distribution/registry/api/errcode"
 	errcodev2 "github.com/docker/distribution/registry/api/v2"
 	"github.com/hashicorp/go-multierror"

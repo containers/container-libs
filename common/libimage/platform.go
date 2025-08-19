@@ -3,8 +3,8 @@
 package libimage
 
 import (
-	"github.com/containers/common/libimage/define"
-	"github.com/containers/common/libimage/platform"
+	"go.podman.io/common/libimage/define"
+	"go.podman.io/common/libimage/platform"
 )
 
 // PlatformPolicy controls the behavior of image-platform matching.

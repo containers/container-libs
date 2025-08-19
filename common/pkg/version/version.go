@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/containers/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/fileutils"
 )
 
 const (

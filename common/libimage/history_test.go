@@ -6,7 +6,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/containers/common/pkg/config"
+	"go.podman.io/common/pkg/config"
 	"github.com/stretchr/testify/require"
 )
 

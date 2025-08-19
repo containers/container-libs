@@ -6,8 +6,8 @@ import (
 	"context"
 	"errors"
 
-	storage "github.com/containers/storage"
-	graphdriver "github.com/containers/storage/drivers"
+	storage "go.podman.io/storage"
+	graphdriver "go.podman.io/storage/drivers"
 	digest "github.com/opencontainers/go-digest"
 )
 

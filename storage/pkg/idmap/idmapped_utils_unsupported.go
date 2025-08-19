@@ -5,7 +5,7 @@ package idmap
 import (
 	"fmt"
 
-	"github.com/containers/storage/pkg/idtools"
+	"go.podman.io/storage/pkg/idtools"
 )
 
 // CreateIDMappedMount creates a IDMapped bind mount from SOURCE to TARGET using the user namespace

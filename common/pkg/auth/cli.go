@@ -3,7 +3,7 @@ package auth
 import (
 	"io"
 
-	"github.com/containers/common/pkg/completion"
+	"go.podman.io/common/pkg/completion"
 	"github.com/spf13/pflag"
 )
 

@@ -8,10 +8,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/internal/signature"
-	"github.com/containers/image/v5/manifest"
-	"github.com/containers/image/v5/signature/internal"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/internal/signature"
+	"go.podman.io/image/v5/manifest"
+	"go.podman.io/image/v5/signature/internal"
 	sigstoreSignature "github.com/sigstore/sigstore/pkg/signature"
 )
 

@@ -7,9 +7,9 @@ import (
 	"os"
 	"sync"
 
-	"github.com/containers/image/v5/docker/internal/tarfile"
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/docker/internal/tarfile"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/types"
 )
 
 // Writer manages a single in-progress Docker archive and allows adding images to it.

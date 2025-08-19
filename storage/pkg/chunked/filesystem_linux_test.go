@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/containers/storage/pkg/archive"
-	"github.com/containers/storage/pkg/chunked/internal/minimal"
+	"go.podman.io/storage/pkg/archive"
+	"go.podman.io/storage/pkg/chunked/internal/minimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

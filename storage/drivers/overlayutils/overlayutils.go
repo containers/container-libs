@@ -5,7 +5,7 @@ package overlayutils
 import (
 	"fmt"
 
-	graphdriver "github.com/containers/storage/drivers"
+	graphdriver "go.podman.io/storage/drivers"
 )
 
 // ErrDTypeNotSupported denotes that the backing filesystem doesn't support d_type.

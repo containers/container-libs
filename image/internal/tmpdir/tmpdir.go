@@ -4,7 +4,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/types"
 )
 
 // unixTempDirForBigFiles is the directory path to store big files on non Windows systems.

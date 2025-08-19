@@ -3,7 +3,7 @@ package archive
 import (
 	"os"
 
-	"github.com/containers/storage/pkg/system"
+	"go.podman.io/storage/pkg/system"
 )
 
 func statDifferent(oldStat *system.StatT, oldInfo *FileInfo, newStat *system.StatT, newInfo *FileInfo) bool {

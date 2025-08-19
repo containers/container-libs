@@ -19,9 +19,9 @@ import (
 	"strings"
 
 	"github.com/containernetworking/plugins/pkg/ns"
-	"github.com/containers/common/libnetwork/types"
-	"github.com/containers/common/libnetwork/util"
-	"github.com/containers/common/pkg/config"
+	"go.podman.io/common/libnetwork/types"
+	"go.podman.io/common/libnetwork/util"
+	"go.podman.io/common/pkg/config"
 	"github.com/sirupsen/logrus"
 )
 

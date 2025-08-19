@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containers/storage/pkg/stringid"
+	"go.podman.io/storage/pkg/stringid"
 	"github.com/stretchr/testify/require"
 )
 

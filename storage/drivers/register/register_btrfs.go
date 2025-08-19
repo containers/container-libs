@@ -4,5 +4,5 @@ package register
 
 import (
 	// register the btrfs graphdriver
-	_ "github.com/containers/storage/drivers/btrfs"
+	_ "go.podman.io/storage/drivers/btrfs"
 )

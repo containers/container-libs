@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/containers/storage/pkg/regexp"
+	"go.podman.io/storage/pkg/regexp"
 	"github.com/sirupsen/logrus"
 )
 

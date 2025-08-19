@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/containers/image/v5/manifest"
-	"github.com/containers/storage/pkg/reexec"
+	"go.podman.io/image/v5/manifest"
+	"go.podman.io/storage/pkg/reexec"
 	digest "github.com/opencontainers/go-digest"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"

@@ -1,5 +1,5 @@
 package openshift
 
-import "github.com/containers/image/v5/internal/private"
+import "go.podman.io/image/v5/internal/private"
 
 var _ private.ImageSource = (*openshiftImageSource)(nil)

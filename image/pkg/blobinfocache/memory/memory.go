@@ -5,10 +5,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containers/image/v5/internal/blobinfocache"
-	"github.com/containers/image/v5/internal/set"
-	"github.com/containers/image/v5/pkg/blobinfocache/internal/prioritize"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/internal/blobinfocache"
+	"go.podman.io/image/v5/internal/set"
+	"go.podman.io/image/v5/pkg/blobinfocache/internal/prioritize"
+	"go.podman.io/image/v5/types"
 	digest "github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
 )

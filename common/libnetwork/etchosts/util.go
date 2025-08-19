@@ -3,7 +3,7 @@ package etchosts
 import (
 	"fmt"
 
-	"github.com/containers/common/pkg/config"
+	"go.podman.io/common/pkg/config"
 	securejoin "github.com/cyphar/filepath-securejoin"
 )
 

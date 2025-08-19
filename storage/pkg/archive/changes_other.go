@@ -10,8 +10,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/containers/storage/pkg/idtools"
-	"github.com/containers/storage/pkg/system"
+	"go.podman.io/storage/pkg/idtools"
+	"go.podman.io/storage/pkg/system"
 )
 
 func collectFileInfoForChanges(oldDir, newDir string, oldIDMap, newIDMap *idtools.IDMappings) (*FileInfo, *FileInfo, error) {

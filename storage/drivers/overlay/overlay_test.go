@@ -6,11 +6,11 @@ import (
 	"os"
 	"testing"
 
-	graphdriver "github.com/containers/storage/drivers"
-	"github.com/containers/storage/drivers/graphtest"
-	"github.com/containers/storage/pkg/archive"
-	"github.com/containers/storage/pkg/idtools"
-	"github.com/containers/storage/pkg/reexec"
+	graphdriver "go.podman.io/storage/drivers"
+	"go.podman.io/storage/drivers/graphtest"
+	"go.podman.io/storage/pkg/archive"
+	"go.podman.io/storage/pkg/idtools"
+	"go.podman.io/storage/pkg/reexec"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

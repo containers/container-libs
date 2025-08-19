@@ -3,7 +3,7 @@ package apparmor
 import (
 	"errors"
 
-	"github.com/containers/common/version"
+	"go.podman.io/common/version"
 )
 
 const (

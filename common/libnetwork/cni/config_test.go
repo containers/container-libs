@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/containers/common/libnetwork/types"
-	"github.com/containers/common/libnetwork/util"
+	"go.podman.io/common/libnetwork/types"
+	"go.podman.io/common/libnetwork/util"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	gomegaTypes "github.com/onsi/gomega/types"

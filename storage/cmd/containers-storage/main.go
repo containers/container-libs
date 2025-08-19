@@ -6,12 +6,12 @@ import (
 	"os"
 	"slices"
 
-	"github.com/containers/storage"
-	"github.com/containers/storage/internal/opts"
-	"github.com/containers/storage/pkg/mflag"
-	"github.com/containers/storage/pkg/reexec"
-	"github.com/containers/storage/pkg/unshare"
-	"github.com/containers/storage/types"
+	"go.podman.io/storage"
+	"go.podman.io/storage/internal/opts"
+	"go.podman.io/storage/pkg/mflag"
+	"go.podman.io/storage/pkg/reexec"
+	"go.podman.io/storage/pkg/unshare"
+	"go.podman.io/storage/types"
 	"github.com/sirupsen/logrus"
 )
 

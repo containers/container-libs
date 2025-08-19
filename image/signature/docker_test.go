@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/containers/image/v5/internal/testing/gpgagent"
+	"go.podman.io/image/v5/internal/testing/gpgagent"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

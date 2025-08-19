@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containers/image/v5/version"
+	"go.podman.io/image/v5/version"
 	digest "github.com/opencontainers/go-digest"
 	sigstoreSignature "github.com/sigstore/sigstore/pkg/signature"
 )

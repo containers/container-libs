@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/internal/private"
-	internalsig "github.com/containers/image/v5/internal/signature"
-	internalSigner "github.com/containers/image/v5/internal/signer"
-	"github.com/containers/image/v5/signature/sigstore"
-	"github.com/containers/image/v5/signature/simplesigning"
-	"github.com/containers/image/v5/transports"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/internal/private"
+	internalsig "go.podman.io/image/v5/internal/signature"
+	internalSigner "go.podman.io/image/v5/internal/signer"
+	"go.podman.io/image/v5/signature/sigstore"
+	"go.podman.io/image/v5/signature/simplesigning"
+	"go.podman.io/image/v5/transports"
 )
 
 // setupSigners initializes c.signers.

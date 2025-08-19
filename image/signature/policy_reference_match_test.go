@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/internal/testing/mocks"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/internal/testing/mocks"
+	"go.podman.io/image/v5/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

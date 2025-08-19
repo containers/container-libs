@@ -3,7 +3,7 @@ package simplesequoia
 import (
 	"errors"
 
-	"github.com/containers/image/v5/signature/signer"
+	"go.podman.io/image/v5/signature/signer"
 )
 
 // simpleSequoiaSigner is a signer.SignerImplementation implementation for simple signing signatures using Sequoia.

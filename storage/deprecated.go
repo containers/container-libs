@@ -4,8 +4,8 @@ import (
 	"io"
 	"time"
 
-	drivers "github.com/containers/storage/drivers"
-	"github.com/containers/storage/pkg/archive"
+	drivers "go.podman.io/storage/drivers"
+	"go.podman.io/storage/pkg/archive"
 	digest "github.com/opencontainers/go-digest"
 )
 

@@ -8,15 +8,15 @@ import (
 	"os"
 	"strings"
 
-	"github.com/containers/image/v5/directory/explicitfilepath"
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/internal/image"
-	"github.com/containers/image/v5/internal/tmpdir"
-	"github.com/containers/image/v5/oci/internal"
-	ocilayout "github.com/containers/image/v5/oci/layout"
-	"github.com/containers/image/v5/transports"
-	"github.com/containers/image/v5/types"
-	"github.com/containers/storage/pkg/archive"
+	"go.podman.io/image/v5/directory/explicitfilepath"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/internal/image"
+	"go.podman.io/image/v5/internal/tmpdir"
+	"go.podman.io/image/v5/oci/internal"
+	ocilayout "go.podman.io/image/v5/oci/layout"
+	"go.podman.io/image/v5/transports"
+	"go.podman.io/image/v5/types"
+	"go.podman.io/storage/pkg/archive"
 )
 
 func init() {

@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containers/storage/pkg/fileutils"
-	"github.com/containers/storage/pkg/homedir"
+	"go.podman.io/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/homedir"
 	"github.com/sirupsen/logrus"
 )
 

@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/containers/storage/pkg/unshare"
+	"go.podman.io/storage/pkg/unshare"
 	"github.com/opencontainers/cgroups"
 )
 

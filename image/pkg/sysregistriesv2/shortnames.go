@@ -9,12 +9,12 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/internal/multierr"
-	"github.com/containers/image/v5/internal/rootless"
-	"github.com/containers/image/v5/types"
-	"github.com/containers/storage/pkg/homedir"
-	"github.com/containers/storage/pkg/lockfile"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/internal/multierr"
+	"go.podman.io/image/v5/internal/rootless"
+	"go.podman.io/image/v5/types"
+	"go.podman.io/storage/pkg/homedir"
+	"go.podman.io/storage/pkg/lockfile"
 	"github.com/sirupsen/logrus"
 )
 

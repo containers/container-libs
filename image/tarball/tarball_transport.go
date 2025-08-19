@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/containers/image/v5/transports"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/transports"
+	"go.podman.io/image/v5/types"
 )
 
 const (

@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/containers/storage/pkg/idtools"
-	"github.com/containers/storage/pkg/system"
+	"go.podman.io/storage/pkg/idtools"
+	"go.podman.io/storage/pkg/system"
 	"golang.org/x/sys/unix"
 )
 

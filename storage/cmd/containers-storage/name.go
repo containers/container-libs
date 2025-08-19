@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/containers/storage"
-	"github.com/containers/storage/internal/opts"
-	"github.com/containers/storage/pkg/mflag"
+	"go.podman.io/storage"
+	"go.podman.io/storage/internal/opts"
+	"go.podman.io/storage/pkg/mflag"
 )
 
 func getNames(flags *mflag.FlagSet, action string, m storage.Store, args []string) (int, error) {

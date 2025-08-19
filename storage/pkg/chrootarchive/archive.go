@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/containers/storage/pkg/archive"
-	"github.com/containers/storage/pkg/fileutils"
-	"github.com/containers/storage/pkg/idtools"
-	"github.com/containers/storage/pkg/unshare"
+	"go.podman.io/storage/pkg/archive"
+	"go.podman.io/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/idtools"
+	"go.podman.io/storage/pkg/unshare"
 )
 
 // NewArchiver returns a new Archiver which uses chrootarchive.Untar

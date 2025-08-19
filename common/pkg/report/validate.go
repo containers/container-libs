@@ -1,7 +1,7 @@
 package report
 
 import (
-	"github.com/containers/storage/pkg/regexp"
+	"go.podman.io/storage/pkg/regexp"
 )
 
 // Check for json, {{json }} and {{ json. }} which are not valid go template,

@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/containers/storage/pkg/idtools"
+	"go.podman.io/storage/pkg/idtools"
 )
 
 func TestGetAutoUserNSMapping(t *testing.T) {

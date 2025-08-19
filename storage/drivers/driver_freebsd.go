@@ -3,7 +3,7 @@ package graphdriver
 import (
 	"golang.org/x/sys/unix"
 
-	"github.com/containers/storage/pkg/mount"
+	"go.podman.io/storage/pkg/mount"
 )
 
 const (

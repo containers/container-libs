@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/containers/image/v5/internal/signature"
+	"go.podman.io/image/v5/internal/signature"
 	"github.com/opencontainers/go-digest"
 )
 

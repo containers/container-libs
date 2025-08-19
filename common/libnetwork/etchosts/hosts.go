@@ -9,7 +9,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/containers/common/pkg/config"
+	"go.podman.io/common/pkg/config"
 )
 
 const (

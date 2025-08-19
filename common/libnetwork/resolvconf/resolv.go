@@ -8,7 +8,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/containers/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/fileutils"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 )

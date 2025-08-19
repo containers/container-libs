@@ -7,11 +7,11 @@ import (
 	"slices"
 	"strings"
 
-	internalManifest "github.com/containers/image/v5/internal/manifest"
-	"github.com/containers/image/v5/internal/set"
-	"github.com/containers/image/v5/manifest"
-	compressiontypes "github.com/containers/image/v5/pkg/compression/types"
-	"github.com/containers/image/v5/types"
+	internalManifest "go.podman.io/image/v5/internal/manifest"
+	"go.podman.io/image/v5/internal/set"
+	"go.podman.io/image/v5/manifest"
+	compressiontypes "go.podman.io/image/v5/pkg/compression/types"
+	"go.podman.io/image/v5/types"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
 )

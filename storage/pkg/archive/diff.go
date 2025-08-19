@@ -10,10 +10,10 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/containers/storage/pkg/fileutils"
-	"github.com/containers/storage/pkg/idtools"
-	"github.com/containers/storage/pkg/pools"
-	"github.com/containers/storage/pkg/system"
+	"go.podman.io/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/idtools"
+	"go.podman.io/storage/pkg/pools"
+	"go.podman.io/storage/pkg/system"
 	"github.com/sirupsen/logrus"
 )
 

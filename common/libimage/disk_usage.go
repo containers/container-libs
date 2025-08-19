@@ -6,7 +6,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/containers/storage"
+	"go.podman.io/storage"
 	"github.com/sirupsen/logrus"
 )
 

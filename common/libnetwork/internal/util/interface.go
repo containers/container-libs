@@ -1,6 +1,6 @@
 package util
 
-import "github.com/containers/common/libnetwork/types"
+import "go.podman.io/common/libnetwork/types"
 
 // This is a helper package to allow code sharing between the different
 // network interfaces.

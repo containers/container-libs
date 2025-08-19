@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/containers/storage/internal/staging_lockfile"
+	"go.podman.io/storage/internal/staging_lockfile"
 	"github.com/sirupsen/logrus"
 )
 

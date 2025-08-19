@@ -10,7 +10,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/containers/common/pkg/secrets/define"
+	"go.podman.io/common/pkg/secrets/define"
 )
 
 // errMissingConfig indicates that one or more of the external actions are not configured

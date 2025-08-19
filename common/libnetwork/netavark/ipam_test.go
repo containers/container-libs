@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/containers/common/libnetwork/types"
-	"github.com/containers/common/pkg/config"
+	"go.podman.io/common/libnetwork/types"
+	"go.podman.io/common/pkg/config"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/sirupsen/logrus"

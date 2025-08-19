@@ -2,5 +2,5 @@ package register
 
 import (
 	// register vfs
-	_ "github.com/containers/storage/drivers/vfs"
+	_ "go.podman.io/storage/drivers/vfs"
 )

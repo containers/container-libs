@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	internalSigner "github.com/containers/image/v5/internal/signer"
-	"github.com/containers/image/v5/signature/signer"
-	"github.com/containers/image/v5/signature/sigstore/internal"
+	internalSigner "go.podman.io/image/v5/internal/signer"
+	"go.podman.io/image/v5/signature/signer"
+	"go.podman.io/image/v5/signature/sigstore/internal"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
 )
 

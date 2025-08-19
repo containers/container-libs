@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/containers/image/v5/internal/set"
+	"go.podman.io/image/v5/internal/set"
 )
 
 // JSONFormatError is returned when JSON does not match expected format.

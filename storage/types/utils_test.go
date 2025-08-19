@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/containers/storage/pkg/unshare"
+	"go.podman.io/storage/pkg/unshare"
 	"gotest.tools/v3/assert"
 )
 

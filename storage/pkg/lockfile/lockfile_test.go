@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containers/storage/pkg/reexec"
+	"go.podman.io/storage/pkg/reexec"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

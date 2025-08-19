@@ -6,12 +6,12 @@ import (
 	"io"
 	"maps"
 
-	internalblobinfocache "github.com/containers/image/v5/internal/blobinfocache"
-	"github.com/containers/image/v5/manifest"
-	"github.com/containers/image/v5/pkg/compression"
-	compressiontypes "github.com/containers/image/v5/pkg/compression/types"
-	"github.com/containers/image/v5/types"
-	chunkedToc "github.com/containers/storage/pkg/chunked/toc"
+	internalblobinfocache "go.podman.io/image/v5/internal/blobinfocache"
+	"go.podman.io/image/v5/manifest"
+	"go.podman.io/image/v5/pkg/compression"
+	compressiontypes "go.podman.io/image/v5/pkg/compression/types"
+	"go.podman.io/image/v5/types"
+	chunkedToc "go.podman.io/storage/pkg/chunked/toc"
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
 )

@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/containers/common/libnetwork/types"
-	"github.com/containers/common/pkg/config"
+	"go.podman.io/common/libnetwork/types"
+	"go.podman.io/common/pkg/config"
 )
 
 func parseIPNet(subnet string) *types.IPNet {

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/containers/image/v5/internal/private"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/internal/private"
+	"go.podman.io/image/v5/types"
 )
 
 // NoPutBlobPartialInitialize implements parts of private.ImageDestination

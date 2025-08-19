@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/containers/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/fileutils"
 	"github.com/hashicorp/go-multierror"
 )
 

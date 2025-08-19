@@ -10,7 +10,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/containers/storage/pkg/idtools"
+	"go.podman.io/storage/pkg/idtools"
 )
 
 func TestHardLinkOrder(t *testing.T) {

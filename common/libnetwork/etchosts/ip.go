@@ -4,11 +4,11 @@ import (
 	"net"
 	"sync"
 
-	"github.com/containers/common/libnetwork/types"
-	"github.com/containers/common/libnetwork/util"
-	"github.com/containers/common/pkg/config"
-	"github.com/containers/common/pkg/machine"
-	"github.com/containers/storage/pkg/unshare"
+	"go.podman.io/common/libnetwork/types"
+	"go.podman.io/common/libnetwork/util"
+	"go.podman.io/common/pkg/config"
+	"go.podman.io/common/pkg/machine"
+	"go.podman.io/storage/pkg/unshare"
 	"github.com/sirupsen/logrus"
 )
 

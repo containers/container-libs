@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/containers/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/fileutils"
 	rspec "github.com/opencontainers/runtime-spec/specs-go"
 )
 

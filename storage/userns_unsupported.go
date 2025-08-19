@@ -5,8 +5,8 @@ package storage
 import (
 	"errors"
 
-	"github.com/containers/storage/pkg/idtools"
-	"github.com/containers/storage/types"
+	"go.podman.io/storage/pkg/idtools"
+	"go.podman.io/storage/types"
 )
 
 func (s *store) getAutoUserNS(_ *types.AutoUserNsOptions, _ *Image, _ rwLayerStore, _ []roLayerStore) ([]idtools.IDMap, []idtools.IDMap, error) {

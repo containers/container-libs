@@ -6,7 +6,7 @@
 //		"context"
 //		"fmt"
 //
-//		"github.com/containers/image/v5/docker"
+//		"go.podman.io/image/v5/docker"
 //	)
 //
 //	func main() {
@@ -36,9 +36,9 @@
 //	package main
 //
 //	import (
-//		"github.com/containers/storage/pkg/reexec"
+//		"go.podman.io/storage/pkg/reexec"
 //		"github.com/syndtr/gocapability/capability"
-//		"github.com/containers/storage/pkg/unshare"
+//		"go.podman.io/storage/pkg/unshare"
 //	)
 //
 //	var neededCapabilities = []capability.Cap{

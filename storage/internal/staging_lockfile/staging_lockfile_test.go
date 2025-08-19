@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/containers/storage/pkg/reexec"
+	"go.podman.io/storage/pkg/reexec"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/containers/image/v5/internal/manifest"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/internal/manifest"
+	"go.podman.io/image/v5/types"
 	digest "github.com/opencontainers/go-digest"
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"

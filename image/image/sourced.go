@@ -6,8 +6,8 @@ package image
 import (
 	"context"
 
-	"github.com/containers/image/v5/internal/image"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/internal/image"
+	"go.podman.io/image/v5/types"
 )
 
 // FromSource returns a types.ImageCloser implementation for the default instance of source.

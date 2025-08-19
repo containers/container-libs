@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	graphdriver "github.com/containers/storage/drivers"
-	"github.com/containers/storage/pkg/stringid"
+	graphdriver "go.podman.io/storage/drivers"
+	"go.podman.io/storage/pkg/stringid"
 )
 
 // DriverBenchExists benchmarks calls to exist

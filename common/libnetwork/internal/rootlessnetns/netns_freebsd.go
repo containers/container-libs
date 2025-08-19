@@ -3,9 +3,9 @@ package rootlessnetns
 import (
 	"errors"
 
-	"github.com/containers/common/libnetwork/types"
-	"github.com/containers/common/pkg/config"
-	"github.com/containers/storage/pkg/lockfile"
+	"go.podman.io/common/libnetwork/types"
+	"go.podman.io/common/pkg/config"
+	"go.podman.io/storage/pkg/lockfile"
 )
 
 var ErrNotSupported = errors.New("rootless netns only supported on linux")

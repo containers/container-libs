@@ -11,10 +11,10 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/containers/storage/pkg/archive"
-	"github.com/containers/storage/pkg/reexec"
-	"github.com/containers/storage/pkg/system"
-	"github.com/containers/storage/pkg/unshare"
+	"go.podman.io/storage/pkg/archive"
+	"go.podman.io/storage/pkg/reexec"
+	"go.podman.io/storage/pkg/system"
+	"go.podman.io/storage/pkg/unshare"
 )
 
 type applyLayerResponse struct {

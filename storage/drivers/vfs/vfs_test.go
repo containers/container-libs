@@ -5,9 +5,9 @@ package vfs
 import (
 	"testing"
 
-	"github.com/containers/storage/drivers/graphtest"
+	"go.podman.io/storage/drivers/graphtest"
 
-	"github.com/containers/storage/pkg/reexec"
+	"go.podman.io/storage/pkg/reexec"
 )
 
 func init() {

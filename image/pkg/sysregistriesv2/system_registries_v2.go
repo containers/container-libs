@@ -14,11 +14,11 @@ import (
 	"sync"
 
 	"github.com/BurntSushi/toml"
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/types"
-	"github.com/containers/storage/pkg/fileutils"
-	"github.com/containers/storage/pkg/homedir"
-	"github.com/containers/storage/pkg/regexp"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/types"
+	"go.podman.io/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/homedir"
+	"go.podman.io/storage/pkg/regexp"
 	"github.com/sirupsen/logrus"
 )
 

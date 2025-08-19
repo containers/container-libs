@@ -5,7 +5,7 @@ package overlay
 import (
 	"path"
 
-	"github.com/containers/storage/pkg/directory"
+	"go.podman.io/storage/pkg/directory"
 )
 
 // ReadWriteDiskUsage returns the disk usage of the writable directory for the ID.

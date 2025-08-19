@@ -32,7 +32,7 @@ import (
 
 	"github.com/containernetworking/cni/pkg/invoke"
 	"github.com/containernetworking/cni/pkg/version"
-	"github.com/containers/storage/pkg/unshare"
+	"go.podman.io/storage/pkg/unshare"
 )
 
 type cniExec struct {

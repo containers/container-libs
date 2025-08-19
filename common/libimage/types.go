@@ -1,6 +1,6 @@
 package libimage
 
-import "github.com/containers/common/libimage/manifests"
+import "go.podman.io/common/libimage/manifests"
 
 // LookupReferenceFunc return an image reference based on the specified one.
 // The returned reference can return custom ImageSource or ImageDestination

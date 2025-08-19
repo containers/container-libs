@@ -3,8 +3,8 @@ package signer
 import (
 	"context"
 
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/internal/signature"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/internal/signature"
 )
 
 // Signer is an object, possibly carrying state, that can be used by copy.Image to sign one or more container images.

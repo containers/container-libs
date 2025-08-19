@@ -9,11 +9,11 @@ import (
 	"os"
 	"path"
 
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/internal/iolimits"
-	"github.com/containers/image/v5/internal/tmpdir"
-	"github.com/containers/image/v5/pkg/compression"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/internal/iolimits"
+	"go.podman.io/image/v5/internal/tmpdir"
+	"go.podman.io/image/v5/pkg/compression"
+	"go.podman.io/image/v5/types"
 )
 
 // Reader is a ((docker save)-formatted) tar archive that allows random access to any component.

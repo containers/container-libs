@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/types"
 	"github.com/containers/ocicrypt"
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 )

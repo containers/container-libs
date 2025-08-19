@@ -3,8 +3,8 @@ package alltransports
 import (
 	"testing"
 
-	"github.com/containers/image/v5/directory"
-	"github.com/containers/image/v5/transports"
+	"go.podman.io/image/v5/directory"
+	"go.podman.io/image/v5/transports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

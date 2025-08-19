@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/containers/storage/pkg/reexec"
+	"go.podman.io/storage/pkg/reexec"
 	"github.com/sirupsen/logrus"
 )
 

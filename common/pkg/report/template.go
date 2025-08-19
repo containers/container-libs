@@ -7,8 +7,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/containers/common/pkg/report/camelcase"
-	"github.com/containers/storage/pkg/regexp"
+	"go.podman.io/common/pkg/report/camelcase"
+	"go.podman.io/storage/pkg/regexp"
 )
 
 // Template embeds template.Template to add functionality to methods

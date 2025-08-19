@@ -1,6 +1,6 @@
 package mocks
 
-import "github.com/containers/image/v5/types"
+import "go.podman.io/image/v5/types"
 
 // NameImageTransport is a mock of types.ImageTransport which returns itself in Name.
 type NameImageTransport string

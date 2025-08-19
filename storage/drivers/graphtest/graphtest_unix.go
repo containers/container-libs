@@ -13,9 +13,9 @@ import (
 	"sort"
 	"testing"
 
-	graphdriver "github.com/containers/storage/drivers"
-	"github.com/containers/storage/pkg/archive"
-	"github.com/containers/storage/pkg/stringid"
+	graphdriver "go.podman.io/storage/drivers"
+	"go.podman.io/storage/pkg/archive"
+	"go.podman.io/storage/pkg/stringid"
 	"github.com/docker/go-units"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

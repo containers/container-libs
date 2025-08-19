@@ -4,7 +4,7 @@ import (
 	"errors"
 	"os"
 
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/types"
 )
 
 // UpdateRegistriesConf sets the SystemRegistriesConfPath in the system

@@ -7,13 +7,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/containers/common/pkg/config"
-	dockerArchiveTransport "github.com/containers/image/v5/docker/archive"
-	dockerDaemonTransport "github.com/containers/image/v5/docker/daemon"
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/manifest"
-	compressiontypes "github.com/containers/image/v5/pkg/compression/types"
-	"github.com/containers/image/v5/transports/alltransports"
+	"go.podman.io/common/pkg/config"
+	dockerArchiveTransport "go.podman.io/image/v5/docker/archive"
+	dockerDaemonTransport "go.podman.io/image/v5/docker/daemon"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/manifest"
+	compressiontypes "go.podman.io/image/v5/pkg/compression/types"
+	"go.podman.io/image/v5/transports/alltransports"
 	"github.com/sirupsen/logrus"
 )
 

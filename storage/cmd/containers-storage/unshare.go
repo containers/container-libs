@@ -4,9 +4,9 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/containers/storage"
-	"github.com/containers/storage/pkg/mflag"
-	"github.com/containers/storage/pkg/unshare"
+	"go.podman.io/storage"
+	"go.podman.io/storage/pkg/mflag"
+	"go.podman.io/storage/pkg/unshare"
 )
 
 func unshareFn(flags *mflag.FlagSet, action string, m storage.Store, args []string) (int, error) {

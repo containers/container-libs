@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/containers/storage/pkg/unshare"
+	"go.podman.io/storage/pkg/unshare"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"gotest.tools/v3/assert"

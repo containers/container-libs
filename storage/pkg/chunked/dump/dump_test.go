@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containers/storage/pkg/chunked/internal/minimal"
+	"go.podman.io/storage/pkg/chunked/internal/minimal"
 )
 
 func TestEscaped(t *testing.T) {

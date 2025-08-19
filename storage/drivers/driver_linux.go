@@ -5,7 +5,7 @@ package graphdriver
 import (
 	"path/filepath"
 
-	"github.com/containers/storage/pkg/mount"
+	"go.podman.io/storage/pkg/mount"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )

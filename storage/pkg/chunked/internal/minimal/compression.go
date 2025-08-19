@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containers/storage/pkg/archive"
+	"go.podman.io/storage/pkg/archive"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/klauspost/compress/zstd"
 	"github.com/opencontainers/go-digest"

@@ -19,8 +19,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containers/storage/pkg/fileutils"
-	"github.com/containers/storage/pkg/unshare"
+	"go.podman.io/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/unshare"
 	systemdDbus "github.com/coreos/go-systemd/v22/dbus"
 	"github.com/godbus/dbus/v5"
 	"github.com/opencontainers/cgroups"

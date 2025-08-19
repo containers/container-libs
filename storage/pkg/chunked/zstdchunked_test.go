@@ -10,8 +10,8 @@ import (
 	"io"
 	"testing"
 
-	"github.com/containers/storage/pkg/chunked/internal/minimal"
-	"github.com/containers/storage/pkg/chunked/toc"
+	"go.podman.io/storage/pkg/chunked/internal/minimal"
+	"go.podman.io/storage/pkg/chunked/toc"
 	"github.com/klauspost/compress/zstd"
 	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"

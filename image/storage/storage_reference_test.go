@@ -7,10 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/pkg/blobinfocache/memory"
-	"github.com/containers/storage"
-	"github.com/containers/storage/pkg/archive"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/pkg/blobinfocache/memory"
+	"go.podman.io/storage"
+	"go.podman.io/storage/pkg/archive"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

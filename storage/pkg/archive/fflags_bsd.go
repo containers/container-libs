@@ -10,7 +10,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/containers/storage/pkg/system"
+	"go.podman.io/storage/pkg/system"
 )
 
 const (

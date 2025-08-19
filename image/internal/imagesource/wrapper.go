@@ -3,10 +3,10 @@ package imagesource
 import (
 	"context"
 
-	"github.com/containers/image/v5/internal/imagesource/stubs"
-	"github.com/containers/image/v5/internal/private"
-	"github.com/containers/image/v5/internal/signature"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/internal/imagesource/stubs"
+	"go.podman.io/image/v5/internal/private"
+	"go.podman.io/image/v5/internal/signature"
+	"go.podman.io/image/v5/types"
 	"github.com/opencontainers/go-digest"
 )
 

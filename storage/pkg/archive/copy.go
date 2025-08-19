@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/containers/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/fileutils"
 	"github.com/sirupsen/logrus"
 )
 

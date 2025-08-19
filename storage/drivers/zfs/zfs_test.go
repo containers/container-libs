@@ -5,7 +5,7 @@ package zfs
 import (
 	"testing"
 
-	"github.com/containers/storage/drivers/graphtest"
+	"go.podman.io/storage/drivers/graphtest"
 )
 
 // This avoids creating a new driver for each test if all tests are run

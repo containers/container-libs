@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containers/storage/internal/rawfilelock"
+	"go.podman.io/storage/internal/rawfilelock"
 )
 
 // A Locker represents a file lock where the file is used to cache an

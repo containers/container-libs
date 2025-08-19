@@ -4,5 +4,5 @@ package register
 
 import (
 	// register the overlay graphdriver
-	_ "github.com/containers/storage/drivers/overlay"
+	_ "go.podman.io/storage/drivers/overlay"
 )

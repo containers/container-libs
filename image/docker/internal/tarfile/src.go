@@ -12,13 +12,13 @@ import (
 	"path"
 	"sync"
 
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/internal/imagesource/impl"
-	"github.com/containers/image/v5/internal/imagesource/stubs"
-	"github.com/containers/image/v5/internal/iolimits"
-	"github.com/containers/image/v5/manifest"
-	"github.com/containers/image/v5/pkg/compression"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/internal/imagesource/impl"
+	"go.podman.io/image/v5/internal/imagesource/stubs"
+	"go.podman.io/image/v5/internal/iolimits"
+	"go.podman.io/image/v5/manifest"
+	"go.podman.io/image/v5/pkg/compression"
+	"go.podman.io/image/v5/types"
 	digest "github.com/opencontainers/go-digest"
 )
 

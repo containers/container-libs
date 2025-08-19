@@ -12,8 +12,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/containers/common/pkg/secrets/define"
-	"github.com/containers/storage/pkg/fileutils"
+	"go.podman.io/common/pkg/secrets/define"
+	"go.podman.io/storage/pkg/fileutils"
 )
 
 type driverConfig struct {

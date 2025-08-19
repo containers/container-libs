@@ -5,7 +5,7 @@ import (
 	"os/user"
 	"path/filepath"
 
-	"github.com/containers/storage/pkg/homedir"
+	"go.podman.io/storage/pkg/homedir"
 )
 
 // DangerousHostPath validates if a host path is dangerous and should not be modified

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/containers/storage/internal/rawfilelock"
+	"go.podman.io/storage/internal/rawfilelock"
 )
 
 // StagingLockFile represents a file lock used to coordinate access to staging areas.

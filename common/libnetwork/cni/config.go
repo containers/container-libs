@@ -9,8 +9,8 @@ import (
 	"os"
 	"slices"
 
-	internalutil "github.com/containers/common/libnetwork/internal/util"
-	"github.com/containers/common/libnetwork/types"
+	internalutil "go.podman.io/common/libnetwork/internal/util"
+	"go.podman.io/common/libnetwork/types"
 	"github.com/sirupsen/logrus"
 )
 

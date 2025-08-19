@@ -1,7 +1,7 @@
 package manifests
 
 import (
-	"github.com/containers/image/v5/signature"
+	"go.podman.io/image/v5/signature"
 )
 
 // storageAllowedPolicyScopes overrides the policy for local storage

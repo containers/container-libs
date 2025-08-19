@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/containers/storage/pkg/fileutils"
-	"github.com/containers/storage/pkg/lockfile"
+	"go.podman.io/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/lockfile"
 )
 
 // configMapsDataFile is the file where configMaps data/payload will be stored

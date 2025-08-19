@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/containers/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/fileutils"
 	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
 )

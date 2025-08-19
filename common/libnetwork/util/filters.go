@@ -5,9 +5,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/containers/common/libnetwork/types"
-	"github.com/containers/common/pkg/filters"
-	"github.com/containers/common/pkg/util"
+	"go.podman.io/common/libnetwork/types"
+	"go.podman.io/common/pkg/filters"
+	"go.podman.io/common/pkg/util"
 )
 
 func GenerateNetworkFilters(f map[string][]string) ([]types.FilterFunc, error) {

@@ -20,7 +20,7 @@ import (
 	"path/filepath"
 	"unsafe"
 
-	"github.com/containers/storage/pkg/mount"
+	"go.podman.io/storage/pkg/mount"
 	"github.com/sirupsen/logrus"
 )
 

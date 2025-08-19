@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"github.com/containers/storage/pkg/lockfile"
+	"go.podman.io/storage/pkg/lockfile"
 )
 
 // Deprecated: Use lockfile.*LockFile.

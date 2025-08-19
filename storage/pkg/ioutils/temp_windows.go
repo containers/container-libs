@@ -5,7 +5,7 @@ package ioutils
 import (
 	"os"
 
-	"github.com/containers/storage/pkg/longpath"
+	"go.podman.io/storage/pkg/longpath"
 )
 
 // TempDir is the equivalent of os.MkdirTemp, except that the result is in Windows longpath format.

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/containers/common/libnetwork/types"
+	"go.podman.io/common/libnetwork/types"
 )
 
 type Error struct {

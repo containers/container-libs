@@ -4,5 +4,5 @@ package alltransports
 
 import (
 	// Register the docker-daemon transport
-	_ "github.com/containers/image/v5/docker/daemon"
+	_ "go.podman.io/image/v5/docker/daemon"
 )

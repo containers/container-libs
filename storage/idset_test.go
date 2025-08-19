@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/containers/storage/pkg/idtools"
+	"go.podman.io/storage/pkg/idtools"
 	"github.com/google/go-intervals/intervalset"
 )
 

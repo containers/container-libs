@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/containers/storage/pkg/idtools"
+	"go.podman.io/storage/pkg/idtools"
 )
 
 // AutoUserNsOptions defines how to automatically create a user namespace.

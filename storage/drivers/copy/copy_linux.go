@@ -22,10 +22,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containers/storage/pkg/idtools"
-	"github.com/containers/storage/pkg/pools"
-	"github.com/containers/storage/pkg/system"
-	"github.com/containers/storage/pkg/unshare"
+	"go.podman.io/storage/pkg/idtools"
+	"go.podman.io/storage/pkg/pools"
+	"go.podman.io/storage/pkg/system"
+	"go.podman.io/storage/pkg/unshare"
 	"golang.org/x/sys/unix"
 )
 

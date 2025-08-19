@@ -20,13 +20,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/signature/internal"
-	"github.com/containers/image/v5/transports"
-	"github.com/containers/image/v5/types"
-	"github.com/containers/storage/pkg/fileutils"
-	"github.com/containers/storage/pkg/homedir"
-	"github.com/containers/storage/pkg/regexp"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/signature/internal"
+	"go.podman.io/image/v5/transports"
+	"go.podman.io/image/v5/types"
+	"go.podman.io/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/homedir"
+	"go.podman.io/storage/pkg/regexp"
 )
 
 // systemDefaultPolicyPath is the policy path used for DefaultPolicy().

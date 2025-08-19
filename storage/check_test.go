@@ -4,7 +4,7 @@ import (
 	"archive/tar"
 	"testing"
 
-	"github.com/containers/storage/pkg/archive"
+	"go.podman.io/storage/pkg/archive"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

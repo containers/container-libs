@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/types"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/docker/go-connections/tlsconfig"
 )

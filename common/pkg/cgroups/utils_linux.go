@@ -13,7 +13,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/containers/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/fileutils"
 	"github.com/opencontainers/cgroups"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"

@@ -12,8 +12,8 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/containers/storage/pkg/fileutils"
-	"github.com/containers/storage/pkg/system"
+	"go.podman.io/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/system"
 	"github.com/moby/sys/user"
 )
 

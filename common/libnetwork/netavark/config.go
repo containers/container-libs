@@ -14,9 +14,9 @@ import (
 	"strconv"
 	"time"
 
-	internalutil "github.com/containers/common/libnetwork/internal/util"
-	"github.com/containers/common/libnetwork/types"
-	"github.com/containers/storage/pkg/stringid"
+	internalutil "go.podman.io/common/libnetwork/internal/util"
+	"go.podman.io/common/libnetwork/types"
+	"go.podman.io/storage/pkg/stringid"
 )
 
 func sliceRemoveDuplicates(strList []string) []string {

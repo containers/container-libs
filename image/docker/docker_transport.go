@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/containers/image/v5/docker/policyconfiguration"
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/transports"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/docker/policyconfiguration"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/transports"
+	"go.podman.io/image/v5/types"
 )
 
 // UnknownDigestSuffix can be appended to a reference when the caller

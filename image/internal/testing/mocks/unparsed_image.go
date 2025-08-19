@@ -3,8 +3,8 @@ package mocks
 import (
 	"context"
 
-	"github.com/containers/image/v5/internal/signature"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/internal/signature"
+	"go.podman.io/image/v5/types"
 )
 
 // ForbiddenUnparsedImage is used when we don't expect the UnparsedImage to be used in our tests.

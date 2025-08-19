@@ -4,5 +4,5 @@ package alltransports
 
 import (
 	// Register the storage transport
-	_ "github.com/containers/image/v5/storage"
+	_ "go.podman.io/image/v5/storage"
 )

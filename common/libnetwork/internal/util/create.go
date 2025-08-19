@@ -3,7 +3,7 @@ package util
 import (
 	"fmt"
 
-	"github.com/containers/common/libnetwork/types"
+	"go.podman.io/common/libnetwork/types"
 	"github.com/sirupsen/logrus"
 )
 

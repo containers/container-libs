@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/containers/storage"
-	"github.com/containers/storage/pkg/mflag"
+	"go.podman.io/storage"
+	"go.podman.io/storage/pkg/mflag"
 )
 
 type mountPointOrError struct {

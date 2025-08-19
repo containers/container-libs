@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	_ "github.com/containers/image/v5/internal/testing/explicitfilepath-tmpdir"
-	"github.com/containers/image/v5/types"
+	_ "go.podman.io/image/v5/internal/testing/explicitfilepath-tmpdir"
+	"go.podman.io/image/v5/types"
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

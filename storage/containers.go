@@ -9,11 +9,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containers/storage/pkg/idtools"
-	"github.com/containers/storage/pkg/ioutils"
-	"github.com/containers/storage/pkg/lockfile"
-	"github.com/containers/storage/pkg/stringid"
-	"github.com/containers/storage/pkg/truncindex"
+	"go.podman.io/storage/pkg/idtools"
+	"go.podman.io/storage/pkg/ioutils"
+	"go.podman.io/storage/pkg/lockfile"
+	"go.podman.io/storage/pkg/stringid"
+	"go.podman.io/storage/pkg/truncindex"
 	digest "github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
 )

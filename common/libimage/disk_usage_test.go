@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containers/common/pkg/config"
-	"github.com/containers/storage"
+	"go.podman.io/common/pkg/config"
+	"go.podman.io/storage"
 	"github.com/stretchr/testify/require"
 )
 

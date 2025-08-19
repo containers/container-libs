@@ -3,8 +3,8 @@ package chunked
 import (
 	"io"
 
-	"github.com/containers/storage/pkg/chunked/compressor"
-	"github.com/containers/storage/pkg/chunked/internal/minimal"
+	"go.podman.io/storage/pkg/chunked/compressor"
+	"go.podman.io/storage/pkg/chunked/internal/minimal"
 )
 
 const (

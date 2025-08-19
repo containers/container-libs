@@ -8,8 +8,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/containers/common/internal"
-	"github.com/containers/image/v5/manifest"
+	"go.podman.io/common/internal"
+	"go.podman.io/image/v5/manifest"
 	digest "github.com/opencontainers/go-digest"
 	imgspec "github.com/opencontainers/image-spec/specs-go"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"

@@ -13,9 +13,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containers/storage/pkg/archive"
-	"github.com/containers/storage/pkg/idtools"
-	"github.com/containers/storage/pkg/reexec"
+	"go.podman.io/storage/pkg/archive"
+	"go.podman.io/storage/pkg/idtools"
+	"go.podman.io/storage/pkg/reexec"
 	"github.com/stretchr/testify/require"
 )
 

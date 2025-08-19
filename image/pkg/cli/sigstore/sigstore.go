@@ -6,12 +6,12 @@ import (
 	"io"
 	"net/url"
 
-	"github.com/containers/image/v5/pkg/cli"
-	"github.com/containers/image/v5/pkg/cli/sigstore/params"
-	"github.com/containers/image/v5/signature/signer"
-	"github.com/containers/image/v5/signature/sigstore"
-	"github.com/containers/image/v5/signature/sigstore/fulcio"
-	"github.com/containers/image/v5/signature/sigstore/rekor"
+	"go.podman.io/image/v5/pkg/cli"
+	"go.podman.io/image/v5/pkg/cli/sigstore/params"
+	"go.podman.io/image/v5/signature/signer"
+	"go.podman.io/image/v5/signature/sigstore"
+	"go.podman.io/image/v5/signature/sigstore/fulcio"
+	"go.podman.io/image/v5/signature/sigstore/rekor"
 )
 
 // Options collects data that the caller should provide to NewSignerFromParameterFile.

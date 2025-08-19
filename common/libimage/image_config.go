@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containers/common/pkg/signal"
+	"go.podman.io/common/pkg/signal"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 

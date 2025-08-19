@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containers/common/pkg/secrets/define"
+	"go.podman.io/common/pkg/secrets/define"
 )
 
 type db struct {

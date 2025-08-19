@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containers/image/v5/signature/internal"
-	"github.com/containers/storage/pkg/homedir"
+	"go.podman.io/image/v5/signature/internal"
+	"go.podman.io/storage/pkg/homedir"
 
 	// This is a fallback code; the primary recommendation is to use the gpgme mechanism
 	// implementation, which is out-of-process and more appropriate for handling long-term private key material

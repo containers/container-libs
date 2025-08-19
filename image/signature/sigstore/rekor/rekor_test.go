@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containers/image/v5/signature/internal"
+	"go.podman.io/image/v5/signature/internal"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"github.com/stretchr/testify/assert"

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/containers/storage/types"
+	"go.podman.io/storage/types"
 )
 
 // ParseIDMapping takes idmappings and subuid and subgid maps and returns a storage mapping

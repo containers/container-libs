@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/containers/common/libnetwork/types"
+	"go.podman.io/common/libnetwork/types"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 )

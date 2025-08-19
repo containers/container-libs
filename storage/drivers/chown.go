@@ -7,8 +7,8 @@ import (
 	"io/fs"
 	"os"
 
-	"github.com/containers/storage/pkg/idtools"
-	"github.com/containers/storage/pkg/reexec"
+	"go.podman.io/storage/pkg/idtools"
+	"go.podman.io/storage/pkg/reexec"
 	"github.com/opencontainers/selinux/pkg/pwalkdir"
 )
 

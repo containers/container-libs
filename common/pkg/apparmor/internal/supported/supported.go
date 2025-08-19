@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/containers/storage/pkg/unshare"
+	"go.podman.io/storage/pkg/unshare"
 	runcaa "github.com/opencontainers/runc/libcontainer/apparmor"
 	"github.com/sirupsen/logrus"
 )

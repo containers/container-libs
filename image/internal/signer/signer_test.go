@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/internal/signature"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/internal/signature"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

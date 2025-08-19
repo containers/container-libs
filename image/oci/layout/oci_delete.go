@@ -8,8 +8,8 @@ import (
 	"os"
 	"slices"
 
-	"github.com/containers/image/v5/internal/set"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/internal/set"
+	"go.podman.io/image/v5/types"
 	digest "github.com/opencontainers/go-digest"
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"

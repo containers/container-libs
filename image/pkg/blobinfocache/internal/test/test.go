@@ -4,12 +4,12 @@ package test
 import (
 	"testing"
 
-	"github.com/containers/image/v5/internal/blobinfocache"
-	"github.com/containers/image/v5/internal/testing/mocks"
-	"github.com/containers/image/v5/manifest"
-	"github.com/containers/image/v5/pkg/compression"
-	compressiontypes "github.com/containers/image/v5/pkg/compression/types"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/internal/blobinfocache"
+	"go.podman.io/image/v5/internal/testing/mocks"
+	"go.podman.io/image/v5/manifest"
+	"go.podman.io/image/v5/pkg/compression"
+	compressiontypes "go.podman.io/image/v5/pkg/compression/types"
+	"go.podman.io/image/v5/types"
 	digest "github.com/opencontainers/go-digest"
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"

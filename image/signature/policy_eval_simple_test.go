@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/containers/image/v5/internal/testing/mocks"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/internal/testing/mocks"
+	"go.podman.io/image/v5/types"
 )
 
 // nameOnlyImageMock is a mock of private.UnparsedImage which only allows transports.ImageName to work

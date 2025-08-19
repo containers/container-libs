@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containers/common/pkg/configmaps/filedriver"
-	"github.com/containers/storage/pkg/lockfile"
-	"github.com/containers/storage/pkg/regexp"
-	"github.com/containers/storage/pkg/stringid"
+	"go.podman.io/common/pkg/configmaps/filedriver"
+	"go.podman.io/storage/pkg/lockfile"
+	"go.podman.io/storage/pkg/regexp"
+	"go.podman.io/storage/pkg/stringid"
 )
 
 // maxConfigMapSize is the max size for configMap data - 512kB

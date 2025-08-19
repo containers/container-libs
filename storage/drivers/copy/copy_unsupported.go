@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/containers/storage/pkg/chrootarchive"
+	"go.podman.io/storage/pkg/chrootarchive"
 )
 
 // Mode indicates whether to use hardlink or copy content

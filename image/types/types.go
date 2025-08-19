@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/containers/image/v5/docker/reference"
-	compression "github.com/containers/image/v5/pkg/compression/types"
+	"go.podman.io/image/v5/docker/reference"
+	compression "go.podman.io/image/v5/pkg/compression/types"
 	digest "github.com/opencontainers/go-digest"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 )

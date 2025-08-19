@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/containers/image/v5/signature/internal"
-	"github.com/containers/image/v5/version"
+	"go.podman.io/image/v5/signature/internal"
+	"go.podman.io/image/v5/version"
 	digest "github.com/opencontainers/go-digest"
 )
 

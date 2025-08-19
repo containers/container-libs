@@ -3,7 +3,7 @@ package supplemented
 import (
 	"errors"
 
-	"github.com/containers/common/pkg/manifests"
+	"go.podman.io/common/pkg/manifests"
 )
 
 var (

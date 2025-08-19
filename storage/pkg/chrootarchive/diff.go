@@ -3,7 +3,7 @@ package chrootarchive
 import (
 	"io"
 
-	"github.com/containers/storage/pkg/archive"
+	"go.podman.io/storage/pkg/archive"
 )
 
 // ApplyLayer parses a diff in the standard layer format from `layer`,

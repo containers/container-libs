@@ -10,12 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containers/common/pkg/secrets/define"
-	"github.com/containers/common/pkg/secrets/filedriver"
-	"github.com/containers/common/pkg/secrets/passdriver"
-	"github.com/containers/common/pkg/secrets/shelldriver"
-	"github.com/containers/storage/pkg/lockfile"
-	"github.com/containers/storage/pkg/stringid"
+	"go.podman.io/common/pkg/secrets/define"
+	"go.podman.io/common/pkg/secrets/filedriver"
+	"go.podman.io/common/pkg/secrets/passdriver"
+	"go.podman.io/common/pkg/secrets/shelldriver"
+	"go.podman.io/storage/pkg/lockfile"
+	"go.podman.io/storage/pkg/stringid"
 )
 
 // maxSecretSize is the max size for secret data - 512kB

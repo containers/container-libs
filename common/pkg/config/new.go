@@ -11,8 +11,8 @@ import (
 	"sync"
 
 	"github.com/BurntSushi/toml"
-	"github.com/containers/storage/pkg/fileutils"
-	"github.com/containers/storage/pkg/unshare"
+	"go.podman.io/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/unshare"
 	"github.com/sirupsen/logrus"
 )
 

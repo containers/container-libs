@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/containers/storage/pkg/ioutils"
+	"go.podman.io/storage/pkg/ioutils"
 )
 
 func TestApplyLayerInvalidFilenames(t *testing.T) {

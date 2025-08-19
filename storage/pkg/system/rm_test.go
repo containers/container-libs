@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containers/storage/pkg/mount"
+	"go.podman.io/storage/pkg/mount"
 )
 
 func TestEnsureRemoveAllNotExist(t *testing.T) {

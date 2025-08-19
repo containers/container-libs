@@ -19,11 +19,11 @@ import (
 	"time"
 
 	"github.com/containernetworking/plugins/pkg/ns"
-	"github.com/containers/common/libnetwork/types"
-	"github.com/containers/common/pkg/config"
-	"github.com/containers/common/pkg/rootlessport"
-	"github.com/containers/common/pkg/servicereaper"
-	"github.com/containers/common/pkg/util"
+	"go.podman.io/common/libnetwork/types"
+	"go.podman.io/common/pkg/config"
+	"go.podman.io/common/pkg/rootlessport"
+	"go.podman.io/common/pkg/servicereaper"
+	"go.podman.io/common/pkg/util"
 	"github.com/sirupsen/logrus"
 )
 

@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/containers/storage/pkg/archive"
-	"github.com/containers/storage/pkg/system"
+	"go.podman.io/storage/pkg/archive"
+	"go.podman.io/storage/pkg/system"
 )
 
 func scanForMountProgramIndicators(home string) (detected bool, err error) {

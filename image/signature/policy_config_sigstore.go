@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/containers/image/v5/signature/internal"
+	"go.podman.io/image/v5/signature/internal"
 )
 
 // PRSigstoreSignedOption is way to pass values to NewPRSigstoreSigned

@@ -1,7 +1,7 @@
 package graphdriver
 
 import (
-	"github.com/containers/storage/pkg/idtools"
+	"go.podman.io/storage/pkg/idtools"
 	"github.com/sirupsen/logrus"
 )
 

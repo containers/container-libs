@@ -3,7 +3,7 @@ package storage
 import (
 	"errors"
 
-	"github.com/containers/storage/types"
+	"go.podman.io/storage/types"
 )
 
 var (

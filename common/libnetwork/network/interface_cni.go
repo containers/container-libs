@@ -8,13 +8,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/containers/common/libnetwork/cni"
-	"github.com/containers/common/libnetwork/types"
-	"github.com/containers/common/pkg/config"
-	"github.com/containers/common/pkg/machine"
-	"github.com/containers/storage"
-	"github.com/containers/storage/pkg/homedir"
-	"github.com/containers/storage/pkg/unshare"
+	"go.podman.io/common/libnetwork/cni"
+	"go.podman.io/common/libnetwork/types"
+	"go.podman.io/common/pkg/config"
+	"go.podman.io/common/pkg/machine"
+	"go.podman.io/storage"
+	"go.podman.io/storage/pkg/homedir"
+	"go.podman.io/storage/pkg/unshare"
 )
 
 const (

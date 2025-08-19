@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/containers/storage/pkg/regexp"
+	"go.podman.io/storage/pkg/regexp"
 )
 
 // add a user and/or group to Linux /etc/passwd, /etc/group using standard

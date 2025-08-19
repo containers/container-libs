@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/containers/storage/pkg/idtools"
-	"github.com/containers/storage/pkg/longpath"
+	"go.podman.io/storage/pkg/idtools"
+	"go.podman.io/storage/pkg/longpath"
 )
 
 // fixVolumePathPrefix does platform specific processing to ensure that if

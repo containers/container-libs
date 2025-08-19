@@ -4,20 +4,20 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/containers/image/v5/transports"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/transports"
+	"go.podman.io/image/v5/types"
 
 	// Register all known transports.
 	// NOTE: Make sure docs/containers-transports.5.md and docs/containers-policy.json.5.md are updated when adding or updating
 	// a transport.
-	_ "github.com/containers/image/v5/directory"
-	_ "github.com/containers/image/v5/docker"
-	_ "github.com/containers/image/v5/docker/archive"
-	_ "github.com/containers/image/v5/oci/archive"
-	_ "github.com/containers/image/v5/oci/layout"
-	_ "github.com/containers/image/v5/openshift"
-	_ "github.com/containers/image/v5/sif"
-	_ "github.com/containers/image/v5/tarball"
+	_ "go.podman.io/image/v5/directory"
+	_ "go.podman.io/image/v5/docker"
+	_ "go.podman.io/image/v5/docker/archive"
+	_ "go.podman.io/image/v5/oci/archive"
+	_ "go.podman.io/image/v5/oci/layout"
+	_ "go.podman.io/image/v5/openshift"
+	_ "go.podman.io/image/v5/sif"
+	_ "go.podman.io/image/v5/tarball"
 	// The docker-daemon transport is registeredy by docker_daemon*.go
 	// The storage transport is registered by storage*.go
 )

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	graphdriver "github.com/containers/storage/drivers"
+	graphdriver "go.podman.io/storage/drivers"
 	"github.com/stretchr/testify/assert"
 )
 

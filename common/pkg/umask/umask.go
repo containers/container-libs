@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/containers/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/fileutils"
 )
 
 // MkdirAllIgnoreUmask creates a directory by ignoring the currently set umask.

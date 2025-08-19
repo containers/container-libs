@@ -14,7 +14,7 @@ import (
 	"io"
 	"sync"
 
-	"github.com/containers/storage/pkg/ioutils"
+	"go.podman.io/storage/pkg/ioutils"
 )
 
 var (

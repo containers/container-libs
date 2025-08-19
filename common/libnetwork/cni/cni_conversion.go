@@ -15,9 +15,9 @@ import (
 	"time"
 
 	"github.com/containernetworking/cni/libcni"
-	internalutil "github.com/containers/common/libnetwork/internal/util"
-	"github.com/containers/common/libnetwork/types"
-	"github.com/containers/common/libnetwork/util"
+	internalutil "go.podman.io/common/libnetwork/internal/util"
+	"go.podman.io/common/libnetwork/types"
+	"go.podman.io/common/libnetwork/util"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )

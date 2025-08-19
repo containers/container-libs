@@ -12,8 +12,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/containers/image/v5/signature/internal"
-	signerInternal "github.com/containers/image/v5/signature/sigstore/internal"
+	"go.podman.io/image/v5/signature/internal"
+	signerInternal "go.podman.io/image/v5/signature/sigstore/internal"
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/sirupsen/logrus"

@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/containers/image/v5/docker/reference"
-	internalSig "github.com/containers/image/v5/internal/signature"
-	internalSigner "github.com/containers/image/v5/internal/signer"
-	"github.com/containers/image/v5/signature"
-	"github.com/containers/image/v5/signature/signer"
+	"go.podman.io/image/v5/docker/reference"
+	internalSig "go.podman.io/image/v5/internal/signature"
+	internalSigner "go.podman.io/image/v5/internal/signer"
+	"go.podman.io/image/v5/signature"
+	"go.podman.io/image/v5/signature/signer"
 )
 
 // simpleSigner is a signer.SignerImplementation implementation for simple signing signatures.

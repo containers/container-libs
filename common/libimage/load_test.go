@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/containers/image/v5/transports/alltransports"
+	"go.podman.io/image/v5/transports/alltransports"
 	"github.com/stretchr/testify/require"
 )
 

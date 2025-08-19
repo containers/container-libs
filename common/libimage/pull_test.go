@@ -9,7 +9,7 @@ import (
 	goruntime "runtime"
 	"testing"
 
-	"github.com/containers/common/pkg/config"
+	"go.podman.io/common/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"slices"
 
-	compressiontypes "github.com/containers/image/v5/pkg/compression/types"
+	compressiontypes "go.podman.io/image/v5/pkg/compression/types"
 	"github.com/containers/libtrust"
 	digest "github.com/opencontainers/go-digest"
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"

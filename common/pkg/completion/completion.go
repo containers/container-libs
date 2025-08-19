@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/containers/common/pkg/capabilities"
+	"go.podman.io/common/pkg/capabilities"
 	"github.com/spf13/cobra"
 )
 

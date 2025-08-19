@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/containers/storage/pkg/archive"
+	"go.podman.io/storage/pkg/archive"
 	"golang.org/x/sys/unix"
 	"gotest.tools/v3/assert"
 )

@@ -4,10 +4,10 @@ import (
 	"context"
 	"io"
 
-	internal "github.com/containers/image/v5/docker/internal/tarfile"
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/internal/private"
-	"github.com/containers/image/v5/types"
+	internal "go.podman.io/image/v5/docker/internal/tarfile"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/internal/private"
+	"go.podman.io/image/v5/types"
 	"github.com/opencontainers/go-digest"
 )
 

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/types"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/stretchr/testify/assert"
 )

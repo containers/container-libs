@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/containers/storage/pkg/idtools"
-	"github.com/containers/storage/types"
+	"go.podman.io/storage/pkg/idtools"
+	"go.podman.io/storage/types"
 	"github.com/google/go-intervals/intervalset"
 )
 

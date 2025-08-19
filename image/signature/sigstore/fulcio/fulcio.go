@@ -11,8 +11,8 @@ import (
 	"io"
 	"net/url"
 
-	"github.com/containers/image/v5/internal/useragent"
-	"github.com/containers/image/v5/signature/sigstore/internal"
+	"go.podman.io/image/v5/internal/useragent"
+	"go.podman.io/image/v5/signature/sigstore/internal"
 	"github.com/sigstore/fulcio/pkg/api"
 	"github.com/sigstore/sigstore/pkg/oauth"
 	"github.com/sigstore/sigstore/pkg/oauthflow"

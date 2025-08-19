@@ -9,8 +9,8 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/containers/storage/pkg/chunked/internal/minimal"
-	"github.com/containers/storage/pkg/ioutils"
+	"go.podman.io/storage/pkg/chunked/internal/minimal"
+	"go.podman.io/storage/pkg/ioutils"
 	"github.com/opencontainers/go-digest"
 	"github.com/vbatts/tar-split/archive/tar"
 	"github.com/vbatts/tar-split/tar/asm"

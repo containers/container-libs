@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/containers/image/v5/internal/private"
-	compressiontypes "github.com/containers/image/v5/pkg/compression/types"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/internal/private"
+	compressiontypes "go.podman.io/image/v5/pkg/compression/types"
+	"go.podman.io/image/v5/types"
 	"github.com/sirupsen/logrus"
 )
 

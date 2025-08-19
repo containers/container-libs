@@ -3,8 +3,8 @@ package mocks
 import (
 	"context"
 
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/types"
 )
 
 // ForbiddenImageReference is used when we don’t expect the ImageReference to be used in our tests.

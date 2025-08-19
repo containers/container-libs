@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/containers/storage/pkg/homedir"
+	"go.podman.io/storage/pkg/homedir"
 )
 
 // isCgroup2UnifiedMode returns whether we are running in cgroup2 mode.

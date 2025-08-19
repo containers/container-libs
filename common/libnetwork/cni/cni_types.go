@@ -6,8 +6,8 @@ import (
 	"net"
 	"path/filepath"
 
-	"github.com/containers/common/libnetwork/types"
-	"github.com/containers/storage/pkg/fileutils"
+	"go.podman.io/common/libnetwork/types"
+	"go.podman.io/storage/pkg/fileutils"
 )
 
 const (

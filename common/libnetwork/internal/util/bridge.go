@@ -5,9 +5,9 @@ import (
 	"net"
 	"slices"
 
-	"github.com/containers/common/libnetwork/types"
-	"github.com/containers/common/libnetwork/util"
-	"github.com/containers/common/pkg/config"
+	"go.podman.io/common/libnetwork/types"
+	"go.podman.io/common/libnetwork/util"
+	"go.podman.io/common/pkg/config"
 )
 
 func CreateBridge(n NetUtil, network *types.Network, usedNetworks []*net.IPNet, subnetPools []config.SubnetPool, checkBridgeConflict bool) error {

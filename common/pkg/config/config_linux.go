@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/containers/common/pkg/capabilities"
+	"go.podman.io/common/pkg/capabilities"
 	selinux "github.com/opencontainers/selinux/go-selinux"
 )
 

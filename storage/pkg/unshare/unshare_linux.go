@@ -18,8 +18,8 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/containers/storage/pkg/idtools"
-	"github.com/containers/storage/pkg/reexec"
+	"go.podman.io/storage/pkg/idtools"
+	"go.podman.io/storage/pkg/reexec"
 	"github.com/moby/sys/capability"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"

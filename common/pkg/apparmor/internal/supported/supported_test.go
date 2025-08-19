@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/containers/common/pkg/apparmor/internal/supported/supportedfakes"
+	"go.podman.io/common/pkg/apparmor/internal/supported/supportedfakes"
 	"github.com/stretchr/testify/require"
 )
 

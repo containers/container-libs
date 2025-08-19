@@ -7,11 +7,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containers/image/v5/docker/internal/tarfile"
-	"github.com/containers/image/v5/docker/reference"
-	ctrImage "github.com/containers/image/v5/internal/image"
-	"github.com/containers/image/v5/transports"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/docker/internal/tarfile"
+	"go.podman.io/image/v5/docker/reference"
+	ctrImage "go.podman.io/image/v5/internal/image"
+	"go.podman.io/image/v5/transports"
+	"go.podman.io/image/v5/types"
 )
 
 func init() {

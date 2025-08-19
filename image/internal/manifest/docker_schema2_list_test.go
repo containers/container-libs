@@ -6,7 +6,7 @@ import (
 	"slices"
 	"testing"
 
-	compressionTypes "github.com/containers/image/v5/pkg/compression/types"
+	compressionTypes "go.podman.io/image/v5/pkg/compression/types"
 	"github.com/opencontainers/go-digest"
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"

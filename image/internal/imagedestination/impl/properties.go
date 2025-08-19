@@ -1,6 +1,6 @@
 package impl
 
-import "github.com/containers/image/v5/types"
+import "go.podman.io/image/v5/types"
 
 // Properties collects properties of an ImageDestination that are constant throughout its lifetime
 // (but might differ across instances).

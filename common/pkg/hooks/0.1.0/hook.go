@@ -6,7 +6,7 @@ import (
 	"errors"
 	"strings"
 
-	current "github.com/containers/common/pkg/hooks/1.0.0"
+	current "go.podman.io/common/pkg/hooks/1.0.0"
 	rspec "github.com/opencontainers/runtime-spec/specs-go"
 )
 

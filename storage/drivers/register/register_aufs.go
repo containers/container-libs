@@ -4,5 +4,5 @@ package register
 
 import (
 	// register the aufs graphdriver
-	_ "github.com/containers/storage/drivers/aufs"
+	_ "go.podman.io/storage/drivers/aufs"
 )

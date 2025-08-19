@@ -12,11 +12,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/containers/image/v5/internal/multierr"
-	"github.com/containers/image/v5/internal/private"
-	"github.com/containers/image/v5/internal/signature"
-	"github.com/containers/image/v5/manifest"
-	"github.com/containers/image/v5/signature/internal"
+	"go.podman.io/image/v5/internal/multierr"
+	"go.podman.io/image/v5/internal/private"
+	"go.podman.io/image/v5/internal/signature"
+	"go.podman.io/image/v5/manifest"
+	"go.podman.io/image/v5/signature/internal"
 	digest "github.com/opencontainers/go-digest"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
 )

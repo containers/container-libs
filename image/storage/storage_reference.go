@@ -8,11 +8,11 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/manifest"
-	"github.com/containers/image/v5/transports"
-	"github.com/containers/image/v5/types"
-	"github.com/containers/storage"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/manifest"
+	"go.podman.io/image/v5/transports"
+	"go.podman.io/image/v5/types"
+	"go.podman.io/storage"
 	digest "github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
 )

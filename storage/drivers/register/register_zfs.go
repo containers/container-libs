@@ -4,5 +4,5 @@ package register
 
 import (
 	// register the zfs driver
-	_ "github.com/containers/storage/drivers/zfs"
+	_ "go.podman.io/storage/drivers/zfs"
 )

@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/containers/image/v5/internal/multierr"
-	"github.com/containers/image/v5/internal/private"
-	"github.com/containers/image/v5/manifest"
+	"go.podman.io/image/v5/internal/multierr"
+	"go.podman.io/image/v5/internal/private"
+	"go.podman.io/image/v5/manifest"
 	digest "github.com/opencontainers/go-digest"
 )
 

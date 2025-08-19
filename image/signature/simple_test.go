@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containers/image/v5/version"
+	"go.podman.io/image/v5/version"
 	"github.com/opencontainers/go-digest"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/stretchr/testify/assert"

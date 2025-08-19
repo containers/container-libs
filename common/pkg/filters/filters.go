@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containers/common/libnetwork/types"
-	"github.com/containers/common/pkg/timetype"
+	"go.podman.io/common/libnetwork/types"
+	"go.podman.io/common/pkg/timetype"
 )
 
 // ComputeUntilTimestamp extracts until timestamp from filters

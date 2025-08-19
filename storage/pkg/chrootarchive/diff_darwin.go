@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/containers/storage/pkg/archive"
+	"go.podman.io/storage/pkg/archive"
 )
 
 // applyLayerHandler parses a diff in the standard layer format from `layer`, and

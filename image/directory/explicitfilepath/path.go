@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/containers/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/fileutils"
 )
 
 // ResolvePathToFullyExplicit returns the input path converted to an absolute, no-symlinks, cleaned up path.

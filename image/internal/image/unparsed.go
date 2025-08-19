@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/internal/imagesource"
-	"github.com/containers/image/v5/internal/private"
-	"github.com/containers/image/v5/internal/signature"
-	"github.com/containers/image/v5/manifest"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/internal/imagesource"
+	"go.podman.io/image/v5/internal/private"
+	"go.podman.io/image/v5/internal/signature"
+	"go.podman.io/image/v5/manifest"
+	"go.podman.io/image/v5/types"
 	"github.com/opencontainers/go-digest"
 )
 

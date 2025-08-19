@@ -10,7 +10,7 @@ import (
 	"slices"
 	"time"
 
-	"github.com/containers/image/v5/signature/internal"
+	"go.podman.io/image/v5/signature/internal"
 	"github.com/sigstore/fulcio/pkg/certificate"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
 )

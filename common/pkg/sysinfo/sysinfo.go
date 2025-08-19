@@ -1,6 +1,6 @@
 package sysinfo
 
-import "github.com/containers/storage/pkg/parsers"
+import "go.podman.io/storage/pkg/parsers"
 
 // SysInfo stores information about which features a kernel supports.
 // TODO Windows: Factor out platform specific capabilities.

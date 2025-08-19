@@ -15,13 +15,13 @@ import (
 	"time"
 
 	"github.com/containernetworking/cni/libcni"
-	"github.com/containers/common/libnetwork/internal/rootlessnetns"
-	"github.com/containers/common/libnetwork/types"
-	"github.com/containers/common/pkg/config"
-	"github.com/containers/common/pkg/version"
-	"github.com/containers/storage/pkg/fileutils"
-	"github.com/containers/storage/pkg/lockfile"
-	"github.com/containers/storage/pkg/unshare"
+	"go.podman.io/common/libnetwork/internal/rootlessnetns"
+	"go.podman.io/common/libnetwork/types"
+	"go.podman.io/common/pkg/config"
+	"go.podman.io/common/pkg/version"
+	"go.podman.io/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/lockfile"
+	"go.podman.io/storage/pkg/unshare"
 	"github.com/sirupsen/logrus"
 )
 

@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containers/storage/pkg/system"
+	"go.podman.io/storage/pkg/system"
 	"golang.org/x/sys/unix"
 	"gotest.tools/v3/assert"
 	is "gotest.tools/v3/assert/cmp"

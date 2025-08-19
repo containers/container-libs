@@ -8,13 +8,13 @@ import (
 	"fmt"
 	"time"
 
-	dirTransport "github.com/containers/image/v5/directory"
-	dockerArchiveTransport "github.com/containers/image/v5/docker/archive"
-	ociArchiveTransport "github.com/containers/image/v5/oci/archive"
-	ociTransport "github.com/containers/image/v5/oci/layout"
-	"github.com/containers/image/v5/transports"
-	"github.com/containers/image/v5/types"
-	"github.com/containers/storage/pkg/fileutils"
+	dirTransport "go.podman.io/image/v5/directory"
+	dockerArchiveTransport "go.podman.io/image/v5/docker/archive"
+	ociArchiveTransport "go.podman.io/image/v5/oci/archive"
+	ociTransport "go.podman.io/image/v5/oci/layout"
+	"go.podman.io/image/v5/transports"
+	"go.podman.io/image/v5/types"
+	"go.podman.io/storage/pkg/fileutils"
 	"github.com/sirupsen/logrus"
 )
 

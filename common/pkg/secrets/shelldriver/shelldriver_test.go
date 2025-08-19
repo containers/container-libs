@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/containers/common/pkg/secrets/define"
+	"go.podman.io/common/pkg/secrets/define"
 	"github.com/stretchr/testify/require"
 )
 

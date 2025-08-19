@@ -13,9 +13,9 @@ import (
 	"path"
 	"testing"
 
-	graphdriver "github.com/containers/storage/drivers"
-	"github.com/containers/storage/pkg/archive"
-	"github.com/containers/storage/pkg/stringid"
+	graphdriver "go.podman.io/storage/drivers"
+	"go.podman.io/storage/pkg/archive"
+	"go.podman.io/storage/pkg/stringid"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )

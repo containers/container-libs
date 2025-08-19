@@ -23,9 +23,9 @@ import (
 	// by the server doesn't match the one in known_hosts:
 	// https://github.com/golang/go/issues/29286
 	// https://github.com/containers/podman/issues/23575
-	"github.com/containers/common/pkg/config"
-	"github.com/containers/storage/pkg/fileutils"
-	"github.com/containers/storage/pkg/homedir"
+	"go.podman.io/common/pkg/config"
+	"go.podman.io/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/homedir"
 	"github.com/pkg/sftp"
 	"github.com/sirupsen/logrus"
 	"github.com/skeema/knownhosts"

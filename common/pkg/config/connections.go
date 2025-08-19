@@ -8,8 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/containers/storage/pkg/ioutils"
-	"github.com/containers/storage/pkg/lockfile"
+	"go.podman.io/storage/pkg/ioutils"
+	"go.podman.io/storage/pkg/lockfile"
 )
 
 const connectionsFile = "podman-connections.json"

@@ -8,8 +8,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/containers/common/pkg/cgroupv2"
-	"github.com/containers/storage/pkg/unshare"
+	"go.podman.io/common/pkg/cgroupv2"
+	"go.podman.io/storage/pkg/unshare"
 )
 
 var (

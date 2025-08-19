@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/containers/storage/pkg/idtools"
+	"go.podman.io/storage/pkg/idtools"
 	"golang.org/x/crypto/ssh"
 )
 

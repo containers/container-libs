@@ -3,8 +3,8 @@ package chrootarchive
 import (
 	"io"
 
-	"github.com/containers/storage/pkg/archive"
-	"github.com/containers/storage/pkg/longpath"
+	"go.podman.io/storage/pkg/archive"
+	"go.podman.io/storage/pkg/longpath"
 )
 
 type unpackDestination struct {

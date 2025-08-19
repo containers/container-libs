@@ -4,7 +4,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/types"
 )
 
 // progressReader is a reader that reports its progress to a types.ProgressProperties channel on an interval.

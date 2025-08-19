@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/containers/image/v5/directory/explicitfilepath"
-	"github.com/containers/image/v5/docker/reference"
-	"github.com/containers/image/v5/internal/image"
-	"github.com/containers/image/v5/transports"
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/directory/explicitfilepath"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/internal/image"
+	"go.podman.io/image/v5/transports"
+	"go.podman.io/image/v5/types"
 )
 
 func init() {

@@ -1,7 +1,7 @@
 package define
 
 import (
-	"github.com/containers/image/v5/manifest"
+	"go.podman.io/image/v5/manifest"
 )
 
 // ManifestListDescriptor describes a manifest that is mentioned in an

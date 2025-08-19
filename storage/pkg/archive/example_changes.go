@@ -12,7 +12,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/containers/storage/pkg/archive"
+	"go.podman.io/storage/pkg/archive"
 	"github.com/sirupsen/logrus"
 )
 

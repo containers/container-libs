@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/containers/storage/internal/opts"
+	"go.podman.io/storage/internal/opts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

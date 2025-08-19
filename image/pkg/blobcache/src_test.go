@@ -5,7 +5,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/containers/image/v5/internal/private"
+	"go.podman.io/image/v5/internal/private"
 	"github.com/stretchr/testify/assert"
 )
 

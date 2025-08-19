@@ -11,7 +11,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/containers/storage/pkg/reexec"
+	"go.podman.io/storage/pkg/reexec"
 	"golang.org/x/sys/unix"
 )
 

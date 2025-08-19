@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/containers/image/v5/types"
+	"go.podman.io/image/v5/types"
 )
 
 // memoryImage is a mostly-implementation of types.Image assembled from data

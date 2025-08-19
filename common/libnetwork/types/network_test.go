@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/containers/common/libnetwork/types"
+	"go.podman.io/common/libnetwork/types"
 )
 
 func TestUnmarshalMacAddress(t *testing.T) {
