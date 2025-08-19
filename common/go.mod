@@ -1,4 +1,4 @@
-module github.com/containers/common
+module go.podman.io/common
 
 // Warning: Ensure the "go" and "toolchain" versions match exactly to prevent unwanted auto-updates
 

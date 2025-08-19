@@ -1,4 +1,4 @@
-module github.com/containers/image/v5
+module go.podman.io/image/v5
 
 go 1.23.3
 
