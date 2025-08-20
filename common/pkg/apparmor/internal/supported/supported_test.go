@@ -5,8 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"go.podman.io/common/pkg/apparmor/internal/supported/supportedfakes"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/common/pkg/apparmor/internal/supported/supportedfakes"
 )
 
 func TestSingleton(t *testing.T) {

@@ -7,6 +7,9 @@ import (
 	"os"
 	"time"
 
+	digest "github.com/opencontainers/go-digest"
+	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/image/v5/internal/imagedestination"
 	"go.podman.io/image/v5/internal/imagedestination/impl"
 	"go.podman.io/image/v5/internal/private"
@@ -14,9 +17,6 @@ import (
 	"go.podman.io/image/v5/types"
 	"go.podman.io/storage/pkg/archive"
 	"go.podman.io/storage/pkg/idtools"
-	digest "github.com/opencontainers/go-digest"
-	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/sirupsen/logrus"
 )
 
 type ociArchiveImageDestination struct {

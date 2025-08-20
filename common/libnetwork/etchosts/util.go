@@ -3,8 +3,8 @@ package etchosts
 import (
 	"fmt"
 
-	"go.podman.io/common/pkg/config"
 	securejoin "github.com/cyphar/filepath-securejoin"
+	"go.podman.io/common/pkg/config"
 )
 
 // GetBaseHostFile return the hosts file which should be used as base.

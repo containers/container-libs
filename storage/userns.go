@@ -8,13 +8,13 @@ import (
 	"os/user"
 	"strconv"
 
+	securejoin "github.com/cyphar/filepath-securejoin"
+	libcontainerUser "github.com/moby/sys/user"
+	"github.com/sirupsen/logrus"
 	drivers "go.podman.io/storage/drivers"
 	"go.podman.io/storage/pkg/idtools"
 	"go.podman.io/storage/pkg/unshare"
 	"go.podman.io/storage/types"
-	securejoin "github.com/cyphar/filepath-securejoin"
-	libcontainerUser "github.com/moby/sys/user"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )
 

@@ -6,6 +6,8 @@ import (
 	"io"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.podman.io/image/v5/directory"
 	"go.podman.io/image/v5/docker"
 	"go.podman.io/image/v5/docker/reference"
@@ -14,8 +16,6 @@ import (
 	internalSigner "go.podman.io/image/v5/internal/signer"
 	"go.podman.io/image/v5/signature/signer"
 	"go.podman.io/image/v5/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // stubSignerImpl is a signer.SigningImplementation that allows us to check the signed identity, without the overhead of actually signing.

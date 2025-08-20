@@ -13,6 +13,10 @@ import (
 	"strings"
 	"sync"
 
+	digest "github.com/opencontainers/go-digest"
+	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/sirupsen/logrus"
+	"github.com/vbauerster/mpb/v8"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/internal/image"
 	"go.podman.io/image/v5/internal/pkg/platform"
@@ -24,10 +28,6 @@ import (
 	"go.podman.io/image/v5/transports"
 	"go.podman.io/image/v5/types"
 	chunkedToc "go.podman.io/storage/pkg/chunked/toc"
-	digest "github.com/opencontainers/go-digest"
-	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/sirupsen/logrus"
-	"github.com/vbauerster/mpb/v8"
 )
 
 // imageCopier tracks state specific to a single image (possibly an item of a manifest list)

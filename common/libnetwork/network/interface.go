@@ -8,13 +8,13 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/sirupsen/logrus"
 	"go.podman.io/common/libnetwork/netavark"
 	"go.podman.io/common/libnetwork/types"
 	"go.podman.io/common/pkg/config"
 	"go.podman.io/storage"
 	"go.podman.io/storage/pkg/ioutils"
 	"go.podman.io/storage/pkg/unshare"
-	"github.com/sirupsen/logrus"
 )
 
 const (

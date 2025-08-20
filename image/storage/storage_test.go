@@ -20,6 +20,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/opencontainers/go-digest"
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	imanifest "go.podman.io/image/v5/internal/manifest"
 	"go.podman.io/image/v5/internal/private"
 	"go.podman.io/image/v5/manifest"
@@ -30,10 +34,6 @@ import (
 	"go.podman.io/storage/pkg/idtools"
 	"go.podman.io/storage/pkg/ioutils"
 	"go.podman.io/storage/pkg/reexec"
-	"github.com/opencontainers/go-digest"
-	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var (

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/go-intervals/intervalset"
 	"go.podman.io/storage/pkg/idtools"
 	"go.podman.io/storage/types"
-	"github.com/google/go-intervals/intervalset"
 )
 
 // idSet represents a set of integer IDs. It is stored as an ordered set of intervals.

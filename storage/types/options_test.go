@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"go.podman.io/storage/pkg/unshare"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/storage/pkg/unshare"
 	"gotest.tools/v3/assert"
 )
 

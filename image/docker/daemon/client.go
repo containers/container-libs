@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"go.podman.io/image/v5/types"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/docker/go-connections/tlsconfig"
+	"go.podman.io/image/v5/types"
 )
 
 // NewDockerClient initializes a new API client based on the passed SystemContext.

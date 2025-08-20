@@ -7,12 +7,12 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/manifoldco/promptui"
+	"github.com/opencontainers/go-digest"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/internal/multierr"
 	"go.podman.io/image/v5/pkg/sysregistriesv2"
 	"go.podman.io/image/v5/types"
-	"github.com/manifoldco/promptui"
-	"github.com/opencontainers/go-digest"
 	"golang.org/x/term"
 )
 

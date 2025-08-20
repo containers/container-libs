@@ -4,9 +4,9 @@ import (
 	"context"
 	"io"
 
+	digest "github.com/opencontainers/go-digest"
 	internal "go.podman.io/image/v5/docker/internal/tarfile"
 	"go.podman.io/image/v5/types"
-	digest "github.com/opencontainers/go-digest"
 )
 
 // Source is a partial implementation of types.ImageSource for reading from tarPath.

@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"go.podman.io/image/v5/types"
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"go.podman.io/image/v5/types"
 )
 
 // This file is named reader.go for consistency with other transports’

@@ -3,8 +3,8 @@ package toc
 import (
 	"errors"
 
-	"go.podman.io/storage/pkg/chunked/internal/minimal"
 	digest "github.com/opencontainers/go-digest"
+	"go.podman.io/storage/pkg/chunked/internal/minimal"
 )
 
 // tocJSONDigestAnnotation is the annotation key for the digest of the estargz

@@ -6,13 +6,13 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	graphdriver "go.podman.io/storage/drivers"
 	"go.podman.io/storage/drivers/graphtest"
 	"go.podman.io/storage/pkg/archive"
 	"go.podman.io/storage/pkg/idtools"
 	"go.podman.io/storage/pkg/reexec"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const driverName = "overlay"

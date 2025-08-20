@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"go.podman.io/common/pkg/signal"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"go.podman.io/common/pkg/signal"
 )
 
 // ImageConfig is a wrapper around the OCIv1 Image Configuration struct exported

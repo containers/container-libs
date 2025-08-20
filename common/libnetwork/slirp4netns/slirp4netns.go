@@ -19,12 +19,12 @@ import (
 	"time"
 
 	"github.com/containernetworking/plugins/pkg/ns"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/common/libnetwork/types"
 	"go.podman.io/common/pkg/config"
 	"go.podman.io/common/pkg/rootlessport"
 	"go.podman.io/common/pkg/servicereaper"
 	"go.podman.io/common/pkg/util"
-	"github.com/sirupsen/logrus"
 )
 
 type slirpFeatures struct {

@@ -1,8 +1,8 @@
 package config
 
 import (
-	"go.podman.io/common/pkg/capabilities"
 	selinux "github.com/opencontainers/selinux/go-selinux"
+	"go.podman.io/common/pkg/capabilities"
 )
 
 const (

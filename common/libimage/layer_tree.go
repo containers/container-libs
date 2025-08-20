@@ -6,11 +6,11 @@ import (
 	"context"
 	"errors"
 
-	"go.podman.io/storage"
-	storageTypes "go.podman.io/storage/types"
 	digest "github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/storage"
+	storageTypes "go.podman.io/storage/types"
 )
 
 // layerTree is an internal representation of local layers.

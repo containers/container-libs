@@ -5,8 +5,8 @@ import (
 	"io"
 	"testing"
 
-	"go.podman.io/image/v5/internal/private"
 	"github.com/stretchr/testify/assert"
+	"go.podman.io/image/v5/internal/private"
 )
 
 func readNextStream(streams chan io.ReadCloser, errs chan error) ([]byte, error) {

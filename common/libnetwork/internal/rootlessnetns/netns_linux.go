@@ -12,6 +12,10 @@ import (
 	"strings"
 
 	"github.com/containernetworking/plugins/pkg/ns"
+	"github.com/hashicorp/go-multierror"
+	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/opencontainers/selinux/go-selinux/label"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/common/libnetwork/pasta"
 	"go.podman.io/common/libnetwork/resolvconf"
 	"go.podman.io/common/libnetwork/slirp4netns"
@@ -22,10 +26,6 @@ import (
 	"go.podman.io/storage/pkg/fileutils"
 	"go.podman.io/storage/pkg/homedir"
 	"go.podman.io/storage/pkg/lockfile"
-	"github.com/hashicorp/go-multierror"
-	"github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/opencontainers/selinux/go-selinux/label"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )
 

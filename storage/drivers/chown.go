@@ -7,9 +7,9 @@ import (
 	"io/fs"
 	"os"
 
+	"github.com/opencontainers/selinux/pkg/pwalkdir"
 	"go.podman.io/storage/pkg/idtools"
 	"go.podman.io/storage/pkg/reexec"
-	"github.com/opencontainers/selinux/pkg/pwalkdir"
 )
 
 const (

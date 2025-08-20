@@ -8,9 +8,9 @@ import (
 	"slices"
 	"strings"
 
-	"go.podman.io/storage/pkg/fileutils"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/storage/pkg/fileutils"
 )
 
 const (

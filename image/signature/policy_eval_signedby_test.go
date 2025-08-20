@@ -6,14 +6,14 @@ import (
 	"path"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.podman.io/image/v5/directory"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/internal/image"
 	"go.podman.io/image/v5/internal/imagesource"
 	"go.podman.io/image/v5/internal/private"
 	"go.podman.io/image/v5/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 // dirImageMock returns a private.UnparsedImage for a directory, claiming a specified dockerReference.

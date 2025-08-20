@@ -6,9 +6,9 @@ import (
 	"net"
 	"slices"
 
+	"github.com/sirupsen/logrus"
 	"go.podman.io/common/libnetwork/types"
 	"go.podman.io/common/pkg/config"
-	"github.com/sirupsen/logrus"
 )
 
 // GetBridgeInterfaceNames returns all bridge interface names

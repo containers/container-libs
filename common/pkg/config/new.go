@@ -11,9 +11,9 @@ import (
 	"sync"
 
 	"github.com/BurntSushi/toml"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/storage/pkg/fileutils"
 	"go.podman.io/storage/pkg/unshare"
-	"github.com/sirupsen/logrus"
 )
 
 var (

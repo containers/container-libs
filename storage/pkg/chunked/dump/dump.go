@@ -11,9 +11,9 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/opencontainers/go-digest"
 	"go.podman.io/storage/pkg/chunked/internal/minimal"
 	storagePath "go.podman.io/storage/pkg/chunked/internal/path"
-	"github.com/opencontainers/go-digest"
 	"golang.org/x/sys/unix"
 )
 

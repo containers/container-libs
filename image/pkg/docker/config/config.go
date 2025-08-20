@@ -14,6 +14,9 @@ import (
 	"runtime"
 	"strings"
 
+	helperclient "github.com/docker/docker-credential-helpers/client"
+	"github.com/docker/docker-credential-helpers/credentials"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/internal/multierr"
 	"go.podman.io/image/v5/internal/set"
@@ -22,9 +25,6 @@ import (
 	"go.podman.io/storage/pkg/fileutils"
 	"go.podman.io/storage/pkg/homedir"
 	"go.podman.io/storage/pkg/ioutils"
-	helperclient "github.com/docker/docker-credential-helpers/client"
-	"github.com/docker/docker-credential-helpers/credentials"
-	"github.com/sirupsen/logrus"
 )
 
 type dockerAuthConfig struct {

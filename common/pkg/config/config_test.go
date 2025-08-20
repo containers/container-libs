@@ -9,12 +9,12 @@ import (
 	"sort"
 	"strings"
 
-	"go.podman.io/common/pkg/apparmor"
-	"go.podman.io/common/pkg/capabilities"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
 	selinux "github.com/opencontainers/selinux/go-selinux"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/common/pkg/apparmor"
+	"go.podman.io/common/pkg/capabilities"
 )
 
 var _ = Describe("Config", func() {

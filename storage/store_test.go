@@ -5,11 +5,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"go.podman.io/storage/pkg/idtools"
-	"go.podman.io/storage/pkg/reexec"
 	digest "github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/storage/pkg/idtools"
+	"go.podman.io/storage/pkg/reexec"
 )
 
 func newTestStore(t *testing.T, testOptions StoreOptions) Store {

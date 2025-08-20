@@ -9,6 +9,10 @@ import (
 	"os"
 	"strings"
 
+	deepcopy "github.com/jinzhu/copier"
+	jsoniter "github.com/json-iterator/go"
+	"github.com/opencontainers/go-digest"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/common/libimage/define"
 	"go.podman.io/common/libimage/platform"
 	"go.podman.io/common/pkg/config"
@@ -18,10 +22,6 @@ import (
 	"go.podman.io/image/v5/transports/alltransports"
 	"go.podman.io/image/v5/types"
 	"go.podman.io/storage"
-	deepcopy "github.com/jinzhu/copier"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/opencontainers/go-digest"
-	"github.com/sirupsen/logrus"
 )
 
 // Faster than the standard library, see https://github.com/json-iterator/go.

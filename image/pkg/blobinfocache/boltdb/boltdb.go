@@ -10,13 +10,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/opencontainers/go-digest"
+	"github.com/sirupsen/logrus"
+	bolt "go.etcd.io/bbolt"
 	"go.podman.io/image/v5/internal/blobinfocache"
 	"go.podman.io/image/v5/pkg/blobinfocache/internal/prioritize"
 	"go.podman.io/image/v5/types"
 	"go.podman.io/storage/pkg/fileutils"
-	"github.com/opencontainers/go-digest"
-	"github.com/sirupsen/logrus"
-	bolt "go.etcd.io/bbolt"
 )
 
 var (

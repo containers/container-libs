@@ -12,6 +12,10 @@ import (
 	"testing"
 	"time"
 
+	digest "github.com/opencontainers/go-digest"
+	specs "github.com/opencontainers/image-spec/specs-go"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/stretchr/testify/assert"
 	cp "go.podman.io/image/v5/copy"
 	"go.podman.io/image/v5/manifest"
 	"go.podman.io/image/v5/pkg/blobinfocache/none"
@@ -19,10 +23,6 @@ import (
 	"go.podman.io/image/v5/transports"
 	"go.podman.io/image/v5/transports/alltransports"
 	"go.podman.io/image/v5/types"
-	digest "github.com/opencontainers/go-digest"
-	specs "github.com/opencontainers/image-spec/specs-go"
-	v1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/stretchr/testify/assert"
 )
 
 var (

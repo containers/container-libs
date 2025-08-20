@@ -11,10 +11,10 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/internal/iolimits"
 	"go.podman.io/image/v5/version"
-	"github.com/sirupsen/logrus"
 )
 
 // openshiftClient is configuration for dealing with a single image stream, for reading or writing.

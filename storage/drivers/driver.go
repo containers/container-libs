@@ -8,15 +8,15 @@ import (
 	"path/filepath"
 	"strings"
 
+	digest "github.com/opencontainers/go-digest"
+	"github.com/sirupsen/logrus"
+	"github.com/vbatts/tar-split/tar/storage"
 	"go.podman.io/storage/internal/dedup"
 	"go.podman.io/storage/internal/tempdir"
 	"go.podman.io/storage/pkg/archive"
 	"go.podman.io/storage/pkg/directory"
 	"go.podman.io/storage/pkg/fileutils"
 	"go.podman.io/storage/pkg/idtools"
-	digest "github.com/opencontainers/go-digest"
-	"github.com/sirupsen/logrus"
-	"github.com/vbatts/tar-split/tar/storage"
 )
 
 // FsMagic unsigned id of the filesystem in use.

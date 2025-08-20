@@ -12,13 +12,13 @@ import (
 	"strconv"
 	"time"
 
-	"go.podman.io/storage/pkg/chunked/internal/minimal"
 	"github.com/klauspost/compress/zstd"
 	"github.com/klauspost/pgzip"
 	digest "github.com/opencontainers/go-digest"
 	"github.com/vbatts/tar-split/archive/tar"
 	"github.com/vbatts/tar-split/tar/asm"
 	"github.com/vbatts/tar-split/tar/storage"
+	"go.podman.io/storage/pkg/chunked/internal/minimal"
 	"golang.org/x/sys/unix"
 )
 

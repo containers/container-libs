@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/opencontainers/go-digest"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/internal/imagedestination/impl"
 	"go.podman.io/image/v5/internal/imagedestination/stubs"
@@ -16,8 +18,6 @@ import (
 	"go.podman.io/image/v5/internal/streamdigest"
 	"go.podman.io/image/v5/manifest"
 	"go.podman.io/image/v5/types"
-	"github.com/opencontainers/go-digest"
-	"github.com/sirupsen/logrus"
 )
 
 // Destination is a partial implementation of private.ImageDestination for writing to a Writer.

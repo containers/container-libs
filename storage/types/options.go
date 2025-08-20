@@ -10,12 +10,12 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
+	"github.com/sirupsen/logrus"
 	cfg "go.podman.io/storage/pkg/config"
 	"go.podman.io/storage/pkg/fileutils"
 	"go.podman.io/storage/pkg/homedir"
 	"go.podman.io/storage/pkg/idtools"
 	"go.podman.io/storage/pkg/unshare"
-	"github.com/sirupsen/logrus"
 )
 
 // TOML-friendly explicit tables used for conversions.

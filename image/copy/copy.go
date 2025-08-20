@@ -9,6 +9,9 @@ import (
 	"slices"
 	"time"
 
+	encconfig "github.com/containers/ocicrypt/config"
+	digest "github.com/opencontainers/go-digest"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/image/v5/docker/reference"
 	internalblobinfocache "go.podman.io/image/v5/internal/blobinfocache"
 	"go.podman.io/image/v5/internal/image"
@@ -23,9 +26,6 @@ import (
 	"go.podman.io/image/v5/signature/signer"
 	"go.podman.io/image/v5/transports"
 	"go.podman.io/image/v5/types"
-	encconfig "github.com/containers/ocicrypt/config"
-	digest "github.com/opencontainers/go-digest"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
 	"golang.org/x/term"
 )

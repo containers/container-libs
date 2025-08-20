@@ -7,10 +7,10 @@ import (
 	"path"
 	"strings"
 
-	"go.podman.io/common/pkg/cgroupv2"
-	"go.podman.io/storage/pkg/fileutils"
 	"github.com/opencontainers/cgroups"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/common/pkg/cgroupv2"
+	"go.podman.io/storage/pkg/fileutils"
 	"golang.org/x/sys/unix"
 )
 

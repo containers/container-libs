@@ -5,8 +5,8 @@ package signature
 import (
 	"context"
 
-	"go.podman.io/image/v5/internal/private"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/image/v5/internal/private"
 )
 
 func (pr *prSignedBaseLayer) isSignatureAuthorAccepted(ctx context.Context, image private.UnparsedImage, sig []byte) (signatureAcceptanceResult, *Signature, error) {

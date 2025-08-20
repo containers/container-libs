@@ -9,11 +9,11 @@ import (
 	"net/url"
 	"os"
 
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/common/pkg/download"
 	storageTransport "go.podman.io/image/v5/storage"
 	tarballTransport "go.podman.io/image/v5/tarball"
-	v1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/sirupsen/logrus"
 )
 
 // ImportOptions allow for customizing image imports.

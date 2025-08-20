@@ -5,8 +5,8 @@ package unshare
 import (
 	"os"
 
-	"go.podman.io/storage/pkg/idtools"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"go.podman.io/storage/pkg/idtools"
 )
 
 const (

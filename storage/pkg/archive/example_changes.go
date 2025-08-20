@@ -12,8 +12,8 @@ import (
 	"os"
 	"path"
 
-	"go.podman.io/storage/pkg/archive"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/storage/pkg/archive"
 )
 
 var (

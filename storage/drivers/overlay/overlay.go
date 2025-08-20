@@ -19,6 +19,11 @@ import (
 	"sync"
 	"syscall"
 
+	units "github.com/docker/go-units"
+	digest "github.com/opencontainers/go-digest"
+	"github.com/opencontainers/selinux/go-selinux"
+	"github.com/opencontainers/selinux/go-selinux/label"
+	"github.com/sirupsen/logrus"
 	graphdriver "go.podman.io/storage/drivers"
 	"go.podman.io/storage/drivers/overlayutils"
 	"go.podman.io/storage/drivers/quota"
@@ -36,11 +41,6 @@ import (
 	"go.podman.io/storage/pkg/parsers"
 	"go.podman.io/storage/pkg/system"
 	"go.podman.io/storage/pkg/unshare"
-	units "github.com/docker/go-units"
-	digest "github.com/opencontainers/go-digest"
-	"github.com/opencontainers/selinux/go-selinux"
-	"github.com/opencontainers/selinux/go-selinux/label"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )
 

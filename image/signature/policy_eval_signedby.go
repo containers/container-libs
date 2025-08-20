@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"slices"
 
+	digest "github.com/opencontainers/go-digest"
 	"go.podman.io/image/v5/internal/multierr"
 	"go.podman.io/image/v5/internal/private"
 	"go.podman.io/image/v5/manifest"
-	digest "github.com/opencontainers/go-digest"
 )
 
 func (pr *prSignedBy) isSignatureAuthorAccepted(ctx context.Context, image private.UnparsedImage, sig []byte) (signatureAcceptanceResult, *Signature, error) {

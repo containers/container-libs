@@ -35,6 +35,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/opencontainers/selinux/go-selinux/label"
+	"github.com/sirupsen/logrus"
+	"github.com/vbatts/tar-split/tar/storage"
 	graphdriver "go.podman.io/storage/drivers"
 	"go.podman.io/storage/internal/tempdir"
 	"go.podman.io/storage/pkg/archive"
@@ -47,9 +50,6 @@ import (
 	"go.podman.io/storage/pkg/parsers"
 	"go.podman.io/storage/pkg/system"
 	"go.podman.io/storage/pkg/unshare"
-	"github.com/opencontainers/selinux/go-selinux/label"
-	"github.com/sirupsen/logrus"
-	"github.com/vbatts/tar-split/tar/storage"
 	"golang.org/x/sys/unix"
 )
 

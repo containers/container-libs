@@ -6,12 +6,12 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"go.podman.io/storage/pkg/archive"
 	"go.podman.io/storage/pkg/chrootarchive"
 	"go.podman.io/storage/pkg/idtools"
 	"go.podman.io/storage/pkg/ioutils"
 	"go.podman.io/storage/pkg/unshare"
-	"github.com/sirupsen/logrus"
 )
 
 // ApplyUncompressedLayer defines the unpack method used by the graph

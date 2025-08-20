@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/opencontainers/go-digest"
+	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	platform "go.podman.io/image/v5/internal/pkg/platform"
 	compression "go.podman.io/image/v5/pkg/compression/types"
 	"go.podman.io/image/v5/types"
-	"github.com/opencontainers/go-digest"
-	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 // Schema2PlatformSpec describes the platform which a particular manifest is

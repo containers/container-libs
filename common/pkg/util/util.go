@@ -7,9 +7,9 @@ import (
 	"regexp"
 	"time"
 
-	"go.podman.io/storage/pkg/fileutils"
 	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/storage/pkg/fileutils"
 )
 
 // StringMatchRegexSlice determines if a given string matches one of the given regexes, returns bool

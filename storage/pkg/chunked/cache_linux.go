@@ -14,14 +14,14 @@ import (
 	"sync"
 	"time"
 
-	storage "go.podman.io/storage"
-	graphdriver "go.podman.io/storage/drivers"
-	"go.podman.io/storage/pkg/chunked/internal/minimal"
-	"go.podman.io/storage/pkg/ioutils"
 	"github.com/docker/go-units"
 	jsoniter "github.com/json-iterator/go"
 	digest "github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
+	storage "go.podman.io/storage"
+	graphdriver "go.podman.io/storage/drivers"
+	"go.podman.io/storage/pkg/chunked/internal/minimal"
+	"go.podman.io/storage/pkg/ioutils"
 	"golang.org/x/sys/unix"
 )
 

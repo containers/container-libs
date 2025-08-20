@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	encconfig "github.com/containers/ocicrypt/config"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/common/libimage/platform"
 	"go.podman.io/common/pkg/config"
 	"go.podman.io/common/pkg/retry"
@@ -23,9 +25,7 @@ import (
 	storageTransport "go.podman.io/image/v5/storage"
 	"go.podman.io/image/v5/transports"
 	"go.podman.io/image/v5/types"
-	encconfig "github.com/containers/ocicrypt/config"
 	"go.podman.io/storage"
-	"github.com/sirupsen/logrus"
 )
 
 const (

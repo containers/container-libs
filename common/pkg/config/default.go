@@ -10,6 +10,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/opencontainers/selinux/go-selinux"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/common/internal/attributedstring"
 	nettypes "go.podman.io/common/libnetwork/types"
 	"go.podman.io/common/pkg/apparmor"
@@ -18,8 +20,6 @@ import (
 	"go.podman.io/storage/pkg/homedir"
 	"go.podman.io/storage/pkg/unshare"
 	"go.podman.io/storage/types"
-	"github.com/opencontainers/selinux/go-selinux"
-	"github.com/sirupsen/logrus"
 )
 
 const (

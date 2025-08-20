@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"go.podman.io/image/v5/types"
 	"github.com/stretchr/testify/assert"
+	"go.podman.io/image/v5/types"
 )
 
 func TestCreateBigFileTemp(t *testing.T) {

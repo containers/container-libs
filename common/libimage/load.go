@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	dirTransport "go.podman.io/image/v5/directory"
 	dockerArchiveTransport "go.podman.io/image/v5/docker/archive"
 	ociArchiveTransport "go.podman.io/image/v5/oci/archive"
@@ -15,7 +16,6 @@ import (
 	"go.podman.io/image/v5/transports"
 	"go.podman.io/image/v5/types"
 	"go.podman.io/storage/pkg/fileutils"
-	"github.com/sirupsen/logrus"
 )
 
 type LoadOptions struct {

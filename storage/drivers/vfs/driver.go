@@ -9,6 +9,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/opencontainers/selinux/go-selinux/label"
+	"github.com/sirupsen/logrus"
+	"github.com/vbatts/tar-split/tar/storage"
 	graphdriver "go.podman.io/storage/drivers"
 	"go.podman.io/storage/internal/dedup"
 	"go.podman.io/storage/internal/tempdir"
@@ -18,9 +21,6 @@ import (
 	"go.podman.io/storage/pkg/idtools"
 	"go.podman.io/storage/pkg/parsers"
 	"go.podman.io/storage/pkg/system"
-	"github.com/opencontainers/selinux/go-selinux/label"
-	"github.com/sirupsen/logrus"
-	"github.com/vbatts/tar-split/tar/storage"
 )
 
 const (

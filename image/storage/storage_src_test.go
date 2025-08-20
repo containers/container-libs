@@ -3,10 +3,10 @@ package storage
 import (
 	"testing"
 
-	"go.podman.io/image/v5/manifest"
-	"go.podman.io/image/v5/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/image/v5/manifest"
+	"go.podman.io/image/v5/types"
 )
 
 func TestBuildLayerInfosForCopy(t *testing.T) {

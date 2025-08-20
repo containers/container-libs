@@ -5,13 +5,13 @@ import (
 	"io"
 	"time"
 
+	"github.com/opencontainers/go-digest"
+	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/internal/blobinfocache"
 	"go.podman.io/image/v5/internal/signature"
 	compression "go.podman.io/image/v5/pkg/compression/types"
 	"go.podman.io/image/v5/types"
-	"github.com/opencontainers/go-digest"
-	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 // ImageSourceInternalOnly is the part of private.ImageSource that is not

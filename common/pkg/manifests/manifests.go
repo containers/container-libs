@@ -8,11 +8,11 @@ import (
 	"slices"
 	"strings"
 
-	"go.podman.io/common/internal"
-	"go.podman.io/image/v5/manifest"
 	digest "github.com/opencontainers/go-digest"
 	imgspec "github.com/opencontainers/image-spec/specs-go"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"go.podman.io/common/internal"
+	"go.podman.io/image/v5/manifest"
 )
 
 // List is a generic interface for manipulating a manifest list or an image

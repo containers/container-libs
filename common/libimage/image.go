@@ -12,6 +12,10 @@ import (
 	"time"
 
 	"github.com/containerd/platforms"
+	"github.com/hashicorp/go-multierror"
+	"github.com/opencontainers/go-digest"
+	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/common/libimage/platform"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/image"
@@ -19,10 +23,6 @@ import (
 	storageTransport "go.podman.io/image/v5/storage"
 	"go.podman.io/image/v5/types"
 	"go.podman.io/storage"
-	"github.com/hashicorp/go-multierror"
-	"github.com/opencontainers/go-digest"
-	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/sirupsen/logrus"
 )
 
 // Image represents an image in the containers storage and allows for further

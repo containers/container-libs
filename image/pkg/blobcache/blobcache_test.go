@@ -14,6 +14,10 @@ import (
 	"strings"
 	"testing"
 
+	digest "github.com/opencontainers/go-digest"
+	specs "github.com/opencontainers/image-spec/specs-go"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/sirupsen/logrus"
 	cp "go.podman.io/image/v5/copy"
 	"go.podman.io/image/v5/directory"
 	"go.podman.io/image/v5/internal/image"
@@ -22,10 +26,6 @@ import (
 	"go.podman.io/image/v5/signature"
 	"go.podman.io/image/v5/types"
 	"go.podman.io/storage/pkg/archive"
-	digest "github.com/opencontainers/go-digest"
-	specs "github.com/opencontainers/image-spec/specs-go"
-	v1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/sirupsen/logrus"
 )
 
 var (

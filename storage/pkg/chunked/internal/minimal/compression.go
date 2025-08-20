@@ -13,11 +13,11 @@ import (
 	"strings"
 	"time"
 
-	"go.podman.io/storage/pkg/archive"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/klauspost/compress/zstd"
 	"github.com/opencontainers/go-digest"
 	"github.com/vbatts/tar-split/archive/tar"
+	"go.podman.io/storage/pkg/archive"
 )
 
 // ZstdWriter is an interface that wraps standard io.WriteCloser and Reset() to reuse the compressor with a new writer.

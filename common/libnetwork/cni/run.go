@@ -12,10 +12,10 @@ import (
 	"github.com/containernetworking/cni/libcni"
 	cnitypes "github.com/containernetworking/cni/pkg/types"
 	types040 "github.com/containernetworking/cni/pkg/types/040"
-	"go.podman.io/common/libnetwork/internal/util"
-	"go.podman.io/common/libnetwork/types"
 	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/common/libnetwork/internal/util"
+	"go.podman.io/common/libnetwork/types"
 )
 
 // Setup will setup the container network namespace. It returns

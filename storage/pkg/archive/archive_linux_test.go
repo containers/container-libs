@@ -8,8 +8,8 @@ import (
 	"syscall"
 	"testing"
 
-	"go.podman.io/storage/pkg/system"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/storage/pkg/system"
 	"golang.org/x/sys/unix"
 )
 

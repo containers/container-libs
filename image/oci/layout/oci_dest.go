@@ -12,6 +12,9 @@ import (
 	"runtime"
 	"slices"
 
+	digest "github.com/opencontainers/go-digest"
+	imgspec "github.com/opencontainers/image-spec/specs-go"
+	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"go.podman.io/image/v5/internal/imagedestination/impl"
 	"go.podman.io/image/v5/internal/imagedestination/stubs"
 	"go.podman.io/image/v5/internal/manifest"
@@ -19,9 +22,6 @@ import (
 	"go.podman.io/image/v5/internal/putblobdigest"
 	"go.podman.io/image/v5/types"
 	"go.podman.io/storage/pkg/fileutils"
-	digest "github.com/opencontainers/go-digest"
-	imgspec "github.com/opencontainers/image-spec/specs-go"
-	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 type ociImageDestination struct {

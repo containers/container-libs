@@ -6,10 +6,10 @@ import (
 	"bytes"
 	"path/filepath"
 
-	"go.podman.io/common/libnetwork/types"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/common/libnetwork/types"
 )
 
 const pluginName = "netavark-testplugin"

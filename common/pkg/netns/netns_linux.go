@@ -31,9 +31,9 @@ import (
 	"time"
 
 	"github.com/containernetworking/plugins/pkg/ns"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/storage/pkg/homedir"
 	"go.podman.io/storage/pkg/unshare"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )
 

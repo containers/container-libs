@@ -17,6 +17,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/klauspost/pgzip"
+	digest "github.com/opencontainers/go-digest"
+	"github.com/opencontainers/selinux/go-selinux"
+	"github.com/sirupsen/logrus"
+	"github.com/vbatts/tar-split/archive/tar"
+	"github.com/vbatts/tar-split/tar/asm"
+	"github.com/vbatts/tar-split/tar/storage"
 	drivers "go.podman.io/storage/drivers"
 	"go.podman.io/storage/internal/tempdir"
 	"go.podman.io/storage/pkg/archive"
@@ -28,13 +35,6 @@ import (
 	"go.podman.io/storage/pkg/system"
 	"go.podman.io/storage/pkg/tarlog"
 	"go.podman.io/storage/pkg/truncindex"
-	"github.com/klauspost/pgzip"
-	digest "github.com/opencontainers/go-digest"
-	"github.com/opencontainers/selinux/go-selinux"
-	"github.com/sirupsen/logrus"
-	"github.com/vbatts/tar-split/archive/tar"
-	"github.com/vbatts/tar-split/tar/asm"
-	"github.com/vbatts/tar-split/tar/storage"
 )
 
 const (

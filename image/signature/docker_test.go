@@ -4,9 +4,9 @@ import (
 	"os"
 	"testing"
 
-	"go.podman.io/image/v5/internal/testing/gpgagent"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/image/v5/internal/testing/gpgagent"
 )
 
 func TestSignDockerManifest(t *testing.T) {

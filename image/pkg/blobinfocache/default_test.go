@@ -9,10 +9,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 
+	"github.com/stretchr/testify/assert"
 	"go.podman.io/image/v5/pkg/blobinfocache/memory"
 	"go.podman.io/image/v5/pkg/blobinfocache/sqlite"
 	"go.podman.io/image/v5/types"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestBlobInfoCacheDir(t *testing.T) {

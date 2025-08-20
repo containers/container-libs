@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"go.podman.io/storage/pkg/fileutils"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/storage/pkg/fileutils"
 )
 
 // Errors used or returned by this file.

@@ -8,11 +8,11 @@ import (
 	"errors"
 	"fmt"
 
+	sigstoreSignature "github.com/sigstore/sigstore/pkg/signature"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/internal/signature"
 	"go.podman.io/image/v5/manifest"
 	"go.podman.io/image/v5/signature/internal"
-	sigstoreSignature "github.com/sigstore/sigstore/pkg/signature"
 )
 
 type Option func(*SigstoreSigner) error

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"testing"
 
+	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/stretchr/testify/assert"
 	"go.podman.io/image/v5/internal/private"
 	"go.podman.io/image/v5/pkg/compression"
 	"go.podman.io/image/v5/types"
-	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestUpdatedBlobInfoFromUpload(t *testing.T) {

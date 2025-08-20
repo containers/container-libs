@@ -8,6 +8,9 @@ import (
 	"os"
 	"sync"
 
+	digest "github.com/opencontainers/go-digest"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/image/v5/internal/image"
 	"go.podman.io/image/v5/internal/imagesource"
 	"go.podman.io/image/v5/internal/imagesource/impl"
@@ -17,9 +20,6 @@ import (
 	"go.podman.io/image/v5/pkg/compression"
 	"go.podman.io/image/v5/transports"
 	"go.podman.io/image/v5/types"
-	digest "github.com/opencontainers/go-digest"
-	v1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/sirupsen/logrus"
 )
 
 type blobCacheSource struct {

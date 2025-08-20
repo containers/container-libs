@@ -1,8 +1,8 @@
 package tarfile
 
 import (
-	"go.podman.io/image/v5/manifest"
 	"github.com/opencontainers/go-digest"
+	"go.podman.io/image/v5/manifest"
 )
 
 // Various data structures.

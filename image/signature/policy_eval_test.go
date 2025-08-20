@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.podman.io/image/v5/docker"
 	"go.podman.io/image/v5/docker/policyconfiguration"
 	"go.podman.io/image/v5/docker/reference"
@@ -12,8 +14,6 @@ import (
 	"go.podman.io/image/v5/internal/testing/mocks"
 	"go.podman.io/image/v5/transports"
 	"go.podman.io/image/v5/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestPolicyRequirementError(t *testing.T) {

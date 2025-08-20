@@ -5,12 +5,12 @@ import (
 	"sync"
 	"time"
 
+	digest "github.com/opencontainers/go-digest"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/image/v5/internal/blobinfocache"
 	"go.podman.io/image/v5/internal/set"
 	"go.podman.io/image/v5/pkg/blobinfocache/internal/prioritize"
 	"go.podman.io/image/v5/types"
-	digest "github.com/opencontainers/go-digest"
-	"github.com/sirupsen/logrus"
 )
 
 // locationKey only exists to make lookup in knownLocations easier.

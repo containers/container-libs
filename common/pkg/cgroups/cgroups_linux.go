@@ -19,13 +19,13 @@ import (
 	"syscall"
 	"time"
 
-	"go.podman.io/storage/pkg/fileutils"
-	"go.podman.io/storage/pkg/unshare"
 	systemdDbus "github.com/coreos/go-systemd/v22/dbus"
 	"github.com/godbus/dbus/v5"
 	"github.com/opencontainers/cgroups"
 	"github.com/opencontainers/cgroups/fs2"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/unshare"
 	"golang.org/x/sys/unix"
 )
 

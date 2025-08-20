@@ -18,15 +18,15 @@ import (
 	"syscall"
 	"time"
 
+	gzip "github.com/klauspost/pgzip"
+	"github.com/sirupsen/logrus"
+	"github.com/ulikunitz/xz"
 	"go.podman.io/storage/pkg/fileutils"
 	"go.podman.io/storage/pkg/idtools"
 	"go.podman.io/storage/pkg/pools"
 	"go.podman.io/storage/pkg/promise"
 	"go.podman.io/storage/pkg/system"
 	"go.podman.io/storage/pkg/unshare"
-	gzip "github.com/klauspost/pgzip"
-	"github.com/sirupsen/logrus"
-	"github.com/ulikunitz/xz"
 )
 
 type (

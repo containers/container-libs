@@ -12,13 +12,13 @@ import (
 	"os"
 	"strings"
 
+	digest "github.com/opencontainers/go-digest"
+	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"go.podman.io/image/v5/internal/multierr"
 	"go.podman.io/image/v5/internal/private"
 	"go.podman.io/image/v5/internal/signature"
 	"go.podman.io/image/v5/manifest"
 	"go.podman.io/image/v5/signature/internal"
-	digest "github.com/opencontainers/go-digest"
-	"github.com/sigstore/sigstore/pkg/cryptoutils"
 )
 
 // configBytesSources contains configuration fields which may result in one or more []byte values

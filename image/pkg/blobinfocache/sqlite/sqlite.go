@@ -9,12 +9,12 @@ import (
 	"sync"
 	"time"
 
-	"go.podman.io/image/v5/internal/blobinfocache"
-	"go.podman.io/image/v5/pkg/blobinfocache/internal/prioritize"
-	"go.podman.io/image/v5/types"
 	_ "github.com/mattn/go-sqlite3" // Registers the "sqlite3" backend backend for database/sql
 	"github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/image/v5/internal/blobinfocache"
+	"go.podman.io/image/v5/pkg/blobinfocache/internal/prioritize"
+	"go.podman.io/image/v5/types"
 )
 
 const (

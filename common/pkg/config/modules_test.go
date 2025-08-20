@@ -4,9 +4,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"go.podman.io/storage/pkg/unshare"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
+	"go.podman.io/storage/pkg/unshare"
 )
 
 const (

@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"slices"
 
-	"go.podman.io/image/v5/signature/internal"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
+	"go.podman.io/image/v5/signature/internal"
 )
 
 type pkiTrustRoot struct {

@@ -22,15 +22,15 @@ import (
 	"time"
 
 	"github.com/containernetworking/plugins/pkg/ns"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	"github.com/sirupsen/logrus"
+	"github.com/vishvananda/netlink"
 	"go.podman.io/common/libnetwork/types"
 	"go.podman.io/common/libnetwork/util"
 	"go.podman.io/common/pkg/netns"
 	"go.podman.io/storage/pkg/stringid"
 	"go.podman.io/storage/pkg/unshare"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-	"github.com/sirupsen/logrus"
-	"github.com/vishvananda/netlink"
 )
 
 var _ = Describe("run netavark", func() {

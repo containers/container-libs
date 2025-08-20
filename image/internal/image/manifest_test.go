@@ -3,9 +3,9 @@ package image
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"go.podman.io/image/v5/manifest"
 	"go.podman.io/image/v5/types"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestManifestLayerInfosToBlobInfos(t *testing.T) {

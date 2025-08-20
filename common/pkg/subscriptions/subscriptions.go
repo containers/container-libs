@@ -8,13 +8,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	"go.podman.io/common/pkg/umask"
-	"go.podman.io/storage/pkg/fileutils"
-	"go.podman.io/storage/pkg/idtools"
 	securejoin "github.com/cyphar/filepath-securejoin"
 	rspec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opencontainers/selinux/go-selinux/label"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/common/pkg/umask"
+	"go.podman.io/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/idtools"
 )
 
 var (

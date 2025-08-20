@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.podman.io/common/pkg/config"
 	"go.podman.io/image/v5/pkg/compression"
 	"go.podman.io/image/v5/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestPush(t *testing.T) {

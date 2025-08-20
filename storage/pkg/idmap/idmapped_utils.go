@@ -10,8 +10,8 @@ import (
 	"runtime"
 	"syscall"
 
-	"go.podman.io/storage/pkg/idtools"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/storage/pkg/idtools"
 	"golang.org/x/sys/unix"
 )
 

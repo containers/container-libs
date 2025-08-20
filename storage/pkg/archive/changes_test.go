@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	"go.podman.io/storage/pkg/idtools"
 	"go.podman.io/storage/pkg/system"
-	"github.com/stretchr/testify/require"
 )
 
 func copyDir(src, dst string) error {

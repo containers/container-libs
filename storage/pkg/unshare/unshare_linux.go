@@ -18,11 +18,11 @@ import (
 	"sync"
 	"syscall"
 
-	"go.podman.io/storage/pkg/idtools"
-	"go.podman.io/storage/pkg/reexec"
 	"github.com/moby/sys/capability"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/storage/pkg/idtools"
+	"go.podman.io/storage/pkg/reexec"
 )
 
 // Cmd wraps an exec.Cmd created by the reexec package in unshare(), and

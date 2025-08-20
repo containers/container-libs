@@ -3,9 +3,9 @@ package manifest
 import (
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	compressiontypes "go.podman.io/image/v5/pkg/compression/types"
 	"go.podman.io/image/v5/types"
-	"github.com/sirupsen/logrus"
 )
 
 // layerInfosToStrings converts a list of layer infos, presumably obtained from a Manifest.LayerInfos()

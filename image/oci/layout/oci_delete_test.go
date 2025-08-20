@@ -10,11 +10,11 @@ import (
 	"slices"
 	"testing"
 
-	"go.podman.io/image/v5/types"
 	digest "github.com/opencontainers/go-digest"
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/image/v5/types"
 )
 
 func TestReferenceDeleteImage_onlyOneImage(t *testing.T) {

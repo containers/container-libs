@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"testing"
 
-	"go.podman.io/image/v5/internal/testing/mocks"
-	"go.podman.io/image/v5/manifest"
-	"go.podman.io/image/v5/pkg/compression"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/image/v5/internal/testing/mocks"
+	"go.podman.io/image/v5/manifest"
+	"go.podman.io/image/v5/pkg/compression"
 )
 
 func TestOrderedSet(t *testing.T) {

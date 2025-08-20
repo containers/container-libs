@@ -5,15 +5,15 @@ import (
 	"os"
 	"testing"
 
+	"github.com/opencontainers/go-digest"
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.podman.io/image/v5/docker/reference"
 	internalSig "go.podman.io/image/v5/internal/signature"
 	internalSigner "go.podman.io/image/v5/internal/signer"
 	"go.podman.io/image/v5/internal/testing/gpgagent"
 	"go.podman.io/image/v5/signature"
-	"github.com/opencontainers/go-digest"
-	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (

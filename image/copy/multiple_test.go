@@ -5,11 +5,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	internalManifest "go.podman.io/image/v5/internal/manifest"
-	"go.podman.io/image/v5/pkg/compression"
 	digest "github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	internalManifest "go.podman.io/image/v5/internal/manifest"
+	"go.podman.io/image/v5/pkg/compression"
 )
 
 // Test `instanceCopyCopy` cases.

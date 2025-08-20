@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"testing"
 
-	"go.podman.io/storage/pkg/unshare"
 	"github.com/opencontainers/cgroups"
+	"go.podman.io/storage/pkg/unshare"
 )
 
 func TestCreated(t *testing.T) {

@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	old "go.podman.io/common/pkg/hooks/0.1.0"
 	current "go.podman.io/common/pkg/hooks/1.0.0"
-	"github.com/sirupsen/logrus"
 )
 
 type reader func(content []byte) (*current.Hook, error)

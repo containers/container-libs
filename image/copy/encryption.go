@@ -6,9 +6,9 @@ import (
 	"slices"
 	"strings"
 
-	"go.podman.io/image/v5/types"
 	"github.com/containers/ocicrypt"
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"go.podman.io/image/v5/types"
 )
 
 // isOciEncrypted returns a bool indicating if a mediatype is encrypted

@@ -4,12 +4,12 @@ import (
 	"net"
 	"sync"
 
+	"github.com/sirupsen/logrus"
 	"go.podman.io/common/libnetwork/types"
 	"go.podman.io/common/libnetwork/util"
 	"go.podman.io/common/pkg/config"
 	"go.podman.io/common/pkg/machine"
 	"go.podman.io/storage/pkg/unshare"
-	"github.com/sirupsen/logrus"
 )
 
 // HostContainersInternalOptions contains the options for GetHostContainersInternalIP()

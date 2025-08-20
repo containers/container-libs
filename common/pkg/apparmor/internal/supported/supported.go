@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"sync"
 
-	"go.podman.io/storage/pkg/unshare"
 	runcaa "github.com/opencontainers/runc/libcontainer/apparmor"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/storage/pkg/unshare"
 )
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 -generate

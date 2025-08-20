@@ -3,8 +3,8 @@ package impl
 import (
 	"context"
 
-	"go.podman.io/image/v5/internal/signature"
 	"github.com/opencontainers/go-digest"
+	"go.podman.io/image/v5/internal/signature"
 )
 
 // NoSignatures implements GetSignatures() that returns nothing.

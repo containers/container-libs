@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
+	digest "github.com/opencontainers/go-digest"
 	"go.podman.io/storage"
 	"go.podman.io/storage/pkg/mflag"
-	digest "github.com/opencontainers/go-digest"
 )
 
 var imagesQuiet = false

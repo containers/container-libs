@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/opencontainers/go-digest"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/image/v5/internal/imagedestination/impl"
 	"go.podman.io/image/v5/internal/imagedestination/stubs"
 	"go.podman.io/image/v5/internal/private"
@@ -16,8 +18,6 @@ import (
 	"go.podman.io/image/v5/internal/signature"
 	"go.podman.io/image/v5/types"
 	"go.podman.io/storage/pkg/fileutils"
-	"github.com/opencontainers/go-digest"
-	"github.com/sirupsen/logrus"
 )
 
 const version = "Directory Transport Version: 1.1\n"

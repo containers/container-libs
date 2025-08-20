@@ -1,8 +1,8 @@
 package blobinfocache
 
 import (
-	"go.podman.io/image/v5/types"
 	digest "github.com/opencontainers/go-digest"
+	"go.podman.io/image/v5/types"
 )
 
 // FromBlobInfoCache returns a BlobInfoCache2 based on a BlobInfoCache, returning the original

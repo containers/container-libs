@@ -14,12 +14,12 @@ import (
 	"sync"
 
 	"github.com/BurntSushi/toml"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/types"
 	"go.podman.io/storage/pkg/fileutils"
 	"go.podman.io/storage/pkg/homedir"
 	"go.podman.io/storage/pkg/regexp"
-	"github.com/sirupsen/logrus"
 )
 
 // systemRegistriesConfPath is the path to the system-wide registry

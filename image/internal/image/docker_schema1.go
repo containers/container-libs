@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/opencontainers/go-digest"
+	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/manifest"
 	"go.podman.io/image/v5/types"
-	"github.com/opencontainers/go-digest"
-	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 type manifestSchema1 struct {

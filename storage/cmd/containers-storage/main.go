@@ -6,13 +6,13 @@ import (
 	"os"
 	"slices"
 
+	"github.com/sirupsen/logrus"
 	"go.podman.io/storage"
 	"go.podman.io/storage/internal/opts"
 	"go.podman.io/storage/pkg/mflag"
 	"go.podman.io/storage/pkg/reexec"
 	"go.podman.io/storage/pkg/unshare"
 	"go.podman.io/storage/types"
-	"github.com/sirupsen/logrus"
 )
 
 type command struct {

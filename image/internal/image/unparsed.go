@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/opencontainers/go-digest"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/internal/imagesource"
 	"go.podman.io/image/v5/internal/private"
 	"go.podman.io/image/v5/internal/signature"
 	"go.podman.io/image/v5/manifest"
 	"go.podman.io/image/v5/types"
-	"github.com/opencontainers/go-digest"
 )
 
 // UnparsedImage implements types.UnparsedImage .

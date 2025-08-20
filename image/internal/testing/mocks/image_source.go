@@ -4,8 +4,8 @@ import (
 	"context"
 	"io"
 
-	"go.podman.io/image/v5/types"
 	"github.com/opencontainers/go-digest"
+	"go.podman.io/image/v5/types"
 )
 
 // ForbiddenImageSource is used when we don't expect the ImageSource to be used in our tests.

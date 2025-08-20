@@ -7,15 +7,15 @@ import (
 	"fmt"
 	"slices"
 
+	ociencspec "github.com/containers/ocicrypt/spec"
+	"github.com/opencontainers/go-digest"
+	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/internal/iolimits"
 	internalManifest "go.podman.io/image/v5/internal/manifest"
 	"go.podman.io/image/v5/manifest"
 	"go.podman.io/image/v5/pkg/blobinfocache/none"
 	"go.podman.io/image/v5/types"
-	ociencspec "github.com/containers/ocicrypt/spec"
-	"github.com/opencontainers/go-digest"
-	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 type manifestOCI1 struct {

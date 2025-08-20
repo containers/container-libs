@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"os"
 
-	"go.podman.io/image/v5/signature/internal"
 	"github.com/proglottis/gpgme"
+	"go.podman.io/image/v5/signature/internal"
 )
 
 // A GPG/OpenPGP signing mechanism, implemented using gpgme.

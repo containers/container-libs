@@ -10,12 +10,12 @@ import (
 	"testing"
 	"time"
 
-	"go.podman.io/image/v5/internal/signature"
-	"go.podman.io/image/v5/version"
 	digest "github.com/opencontainers/go-digest"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/image/v5/internal/signature"
+	"go.podman.io/image/v5/version"
 )
 
 // A short-hand way to get a JSON object field value or panic. No error handling done, we know

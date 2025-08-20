@@ -16,8 +16,8 @@ import (
 	"strings"
 	"testing"
 
-	"go.podman.io/storage/pkg/idtools"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/storage/pkg/idtools"
 )
 
 func getTestTempDirs(t *testing.T) (tmpDirA, tmpDirB string) {

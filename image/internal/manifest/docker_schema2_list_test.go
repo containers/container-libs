@@ -6,11 +6,11 @@ import (
 	"slices"
 	"testing"
 
-	compressionTypes "go.podman.io/image/v5/pkg/compression/types"
 	"github.com/opencontainers/go-digest"
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	compressionTypes "go.podman.io/image/v5/pkg/compression/types"
 )
 
 func TestSchema2ListPublicFromManifest(t *testing.T) {

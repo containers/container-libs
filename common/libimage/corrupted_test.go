@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"go.podman.io/common/pkg/config"
 	"go.podman.io/storage"
 	"go.podman.io/storage/pkg/ioutils"
-	"github.com/stretchr/testify/require"
 )
 
 func TestCorruptedLayers(t *testing.T) {

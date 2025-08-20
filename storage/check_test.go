@@ -4,9 +4,9 @@ import (
 	"archive/tar"
 	"testing"
 
-	"go.podman.io/storage/pkg/archive"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/storage/pkg/archive"
 )
 
 func TestCheckDirectory(t *testing.T) {

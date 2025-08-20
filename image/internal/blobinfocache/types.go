@@ -1,9 +1,9 @@
 package blobinfocache
 
 import (
+	digest "github.com/opencontainers/go-digest"
 	compressiontypes "go.podman.io/image/v5/pkg/compression/types"
 	"go.podman.io/image/v5/types"
-	digest "github.com/opencontainers/go-digest"
 )
 
 const (

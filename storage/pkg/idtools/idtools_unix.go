@@ -12,9 +12,9 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/moby/sys/user"
 	"go.podman.io/storage/pkg/fileutils"
 	"go.podman.io/storage/pkg/system"
-	"github.com/moby/sys/user"
 )
 
 var (

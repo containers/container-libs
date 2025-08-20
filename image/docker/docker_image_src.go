@@ -17,6 +17,8 @@ import (
 	"strings"
 	"sync"
 
+	digest "github.com/opencontainers/go-digest"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/internal/imagesource/impl"
 	"go.podman.io/image/v5/internal/imagesource/stubs"
@@ -28,8 +30,6 @@ import (
 	"go.podman.io/image/v5/pkg/sysregistriesv2"
 	"go.podman.io/image/v5/types"
 	"go.podman.io/storage/pkg/regexp"
-	digest "github.com/opencontainers/go-digest"
-	"github.com/sirupsen/logrus"
 )
 
 // maxLookasideSignatures is an arbitrary limit for the total number of signatures we would try to read from a lookaside server,

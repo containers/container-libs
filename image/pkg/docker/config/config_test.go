@@ -10,8 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	"go.podman.io/image/v5/docker/reference"
-	"go.podman.io/image/v5/types"
 	dockerReference "github.com/distribution/reference"
 	"github.com/docker/cli/cli/config"
 	"github.com/docker/cli/cli/config/configfile"
@@ -20,6 +18,8 @@ import (
 	"github.com/docker/docker/registry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/types"
 )
 
 func TestGetPathToAuth(t *testing.T) {

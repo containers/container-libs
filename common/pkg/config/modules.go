@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"go.podman.io/storage/pkg/fileutils"
 	"github.com/hashicorp/go-multierror"
+	"go.podman.io/storage/pkg/fileutils"
 )
 
 // LoadedModules returns absolute paths to loaded containers.conf modules.

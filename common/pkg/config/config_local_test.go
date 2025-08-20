@@ -9,9 +9,9 @@ import (
 	"runtime"
 	"strings"
 
-	"go.podman.io/common/libnetwork/types"
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
+	"go.podman.io/common/libnetwork/types"
 )
 
 var _ = Describe("Config Local", func() {

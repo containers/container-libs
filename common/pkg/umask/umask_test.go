@@ -6,9 +6,9 @@ import (
 	"syscall"
 	"testing"
 
-	"go.podman.io/common/pkg/umask"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/common/pkg/umask"
 )
 
 func TestMkdirAllIgnoreUmask(t *testing.T) {

@@ -20,6 +20,9 @@ import (
 	_ "go.podman.io/storage/drivers/register"
 	"golang.org/x/sync/errgroup"
 
+	digest "github.com/opencontainers/go-digest"
+	"github.com/opencontainers/selinux/go-selinux/label"
+	"github.com/sirupsen/logrus"
 	drivers "go.podman.io/storage/drivers"
 	"go.podman.io/storage/internal/dedup"
 	"go.podman.io/storage/internal/tempdir"
@@ -32,9 +35,6 @@ import (
 	"go.podman.io/storage/pkg/stringutils"
 	"go.podman.io/storage/pkg/system"
 	"go.podman.io/storage/types"
-	digest "github.com/opencontainers/go-digest"
-	"github.com/opencontainers/selinux/go-selinux/label"
-	"github.com/sirupsen/logrus"
 )
 
 type updateNameOperation int

@@ -8,9 +8,9 @@ import (
 	"runtime"
 	"testing"
 
-	current "go.podman.io/common/pkg/hooks/1.0.0"
 	rspec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/assert"
+	current "go.podman.io/common/pkg/hooks/1.0.0"
 )
 
 // path is the path to an example hook executable.

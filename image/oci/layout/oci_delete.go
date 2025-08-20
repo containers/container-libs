@@ -8,11 +8,11 @@ import (
 	"os"
 	"slices"
 
-	"go.podman.io/image/v5/internal/set"
-	"go.podman.io/image/v5/types"
 	digest "github.com/opencontainers/go-digest"
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/image/v5/internal/set"
+	"go.podman.io/image/v5/types"
 )
 
 // DeleteImage deletes the named image from the directory, if supported.

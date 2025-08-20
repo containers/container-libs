@@ -12,6 +12,7 @@ import (
 	"path"
 	"sync"
 
+	digest "github.com/opencontainers/go-digest"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/internal/imagesource/impl"
 	"go.podman.io/image/v5/internal/imagesource/stubs"
@@ -19,7 +20,6 @@ import (
 	"go.podman.io/image/v5/manifest"
 	"go.podman.io/image/v5/pkg/compression"
 	"go.podman.io/image/v5/types"
-	digest "github.com/opencontainers/go-digest"
 )
 
 // Source is a partial implementation of types.ImageSource for reading from tarPath.

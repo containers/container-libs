@@ -6,10 +6,10 @@ import (
 	"net/url"
 	"time"
 
-	"go.podman.io/image/v5/docker/reference"
-	compression "go.podman.io/image/v5/pkg/compression/types"
 	digest "github.com/opencontainers/go-digest"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"go.podman.io/image/v5/docker/reference"
+	compression "go.podman.io/image/v5/pkg/compression/types"
 )
 
 // ImageTransport is a top-level namespace for ways to store/load an image.

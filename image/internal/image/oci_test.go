@@ -12,16 +12,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/opencontainers/go-digest"
+	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/internal/testing/mocks"
 	"go.podman.io/image/v5/manifest"
 	"go.podman.io/image/v5/pkg/compression"
 	compressiontypes "go.podman.io/image/v5/pkg/compression/types"
 	"go.podman.io/image/v5/types"
-	"github.com/opencontainers/go-digest"
-	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func manifestOCI1FromFixture(t *testing.T, src types.ImageSource, fixture string) genericManifest {

@@ -19,10 +19,10 @@ import (
 	"strings"
 
 	"github.com/containernetworking/plugins/pkg/ns"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/common/libnetwork/types"
 	"go.podman.io/common/libnetwork/util"
 	"go.podman.io/common/pkg/config"
-	"github.com/sirupsen/logrus"
 )
 
 const (

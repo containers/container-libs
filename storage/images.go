@@ -9,13 +9,13 @@ import (
 	"sync"
 	"time"
 
+	digest "github.com/opencontainers/go-digest"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/storage/pkg/ioutils"
 	"go.podman.io/storage/pkg/lockfile"
 	"go.podman.io/storage/pkg/stringid"
 	"go.podman.io/storage/pkg/stringutils"
 	"go.podman.io/storage/pkg/truncindex"
-	digest "github.com/opencontainers/go-digest"
-	"github.com/sirupsen/logrus"
 )
 
 const (

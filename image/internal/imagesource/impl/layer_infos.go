@@ -3,8 +3,8 @@ package impl
 import (
 	"context"
 
-	"go.podman.io/image/v5/types"
 	"github.com/opencontainers/go-digest"
+	"go.podman.io/image/v5/types"
 )
 
 // DoesNotAffectLayerInfosForCopy implements LayerInfosForCopy() that returns nothing.

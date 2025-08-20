@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"go.podman.io/common/libnetwork/internal/rootlessnetns"
 	"go.podman.io/common/libnetwork/internal/util"
 	"go.podman.io/common/libnetwork/types"
@@ -18,7 +19,6 @@ import (
 	"go.podman.io/common/pkg/version"
 	"go.podman.io/storage/pkg/lockfile"
 	"go.podman.io/storage/pkg/unshare"
-	"github.com/sirupsen/logrus"
 )
 
 type netavarkNetwork struct {

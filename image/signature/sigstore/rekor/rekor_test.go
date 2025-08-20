@@ -11,11 +11,11 @@ import (
 	"testing"
 	"time"
 
-	"go.podman.io/image/v5/signature/internal"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/image/v5/signature/internal"
 )
 
 func Test_rekorUploadKeyOrCert(t *testing.T) {

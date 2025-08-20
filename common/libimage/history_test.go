@@ -6,8 +6,8 @@ import (
 	"context"
 	"testing"
 
-	"go.podman.io/common/pkg/config"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/common/pkg/config"
 )
 
 func TestHistory(t *testing.T) {

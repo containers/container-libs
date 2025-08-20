@@ -13,13 +13,13 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	graphdriver "go.podman.io/storage/drivers"
 	"go.podman.io/storage/drivers/graphtest"
 	"go.podman.io/storage/pkg/archive"
 	"go.podman.io/storage/pkg/reexec"
 	"go.podman.io/storage/pkg/stringid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var (

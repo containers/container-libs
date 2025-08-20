@@ -10,12 +10,12 @@ import (
 	"path/filepath"
 	"time"
 
-	"go.podman.io/common/libnetwork/types"
-	"go.podman.io/common/libnetwork/util"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	gomegaTypes "github.com/onsi/gomega/types"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/common/libnetwork/types"
+	"go.podman.io/common/libnetwork/util"
 )
 
 var _ = Describe("Config", func() {

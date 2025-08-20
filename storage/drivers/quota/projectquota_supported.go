@@ -61,8 +61,8 @@ import (
 	"syscall"
 	"unsafe"
 
-	"go.podman.io/storage/pkg/directory"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/storage/pkg/directory"
 	"golang.org/x/sys/unix"
 )
 

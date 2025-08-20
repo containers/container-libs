@@ -8,9 +8,9 @@ import (
 	"syscall"
 	"testing"
 
-	graphdriver "go.podman.io/storage/drivers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	graphdriver "go.podman.io/storage/drivers"
 	"golang.org/x/sys/unix"
 )
 

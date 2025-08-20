@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"go.podman.io/storage/internal/opts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/storage/internal/opts"
 )
 
 func TestValidateIPAddress(t *testing.T) {

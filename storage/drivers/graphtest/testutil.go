@@ -13,11 +13,11 @@ import (
 	"path"
 	"testing"
 
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
 	graphdriver "go.podman.io/storage/drivers"
 	"go.podman.io/storage/pkg/archive"
 	"go.podman.io/storage/pkg/stringid"
-	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/require"
 )
 
 func randomContent(size int, seed int64) []byte {

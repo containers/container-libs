@@ -13,8 +13,8 @@ import (
 	"strconv"
 	"syscall"
 
-	"go.podman.io/storage/pkg/reexec"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/storage/pkg/reexec"
 )
 
 // Cmd wraps an exec.Cmd created by the reexec package in unshare(),

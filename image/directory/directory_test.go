@@ -8,13 +8,13 @@ import (
 	"os"
 	"testing"
 
+	"github.com/opencontainers/go-digest"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.podman.io/image/v5/internal/private"
 	"go.podman.io/image/v5/manifest"
 	"go.podman.io/image/v5/pkg/blobinfocache/memory"
 	"go.podman.io/image/v5/types"
-	"github.com/opencontainers/go-digest"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var _ private.ImageSource = (*dirImageSource)(nil)

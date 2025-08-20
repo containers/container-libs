@@ -12,10 +12,10 @@ import (
 	"go.podman.io/image/v5/docker"
 
 	// this import is needed  where we use the "atomic" transport in TestPolicyUnmarshalJSON
-	_ "go.podman.io/image/v5/openshift"
-	"go.podman.io/image/v5/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	_ "go.podman.io/image/v5/openshift"
+	"go.podman.io/image/v5/types"
 )
 
 type mSA map[string]any // To minimize typing the long name

@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/containernetworking/cni/libcni"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/common/libnetwork/internal/rootlessnetns"
 	"go.podman.io/common/libnetwork/types"
 	"go.podman.io/common/pkg/config"
@@ -22,7 +23,6 @@ import (
 	"go.podman.io/storage/pkg/fileutils"
 	"go.podman.io/storage/pkg/lockfile"
 	"go.podman.io/storage/pkg/unshare"
-	"github.com/sirupsen/logrus"
 )
 
 const defaultRootLockPath = "/run/lock/podman-cni.lock"

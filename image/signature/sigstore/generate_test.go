@@ -7,15 +7,15 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/opencontainers/go-digest"
+	"github.com/sigstore/sigstore/pkg/cryptoutils"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/internal/signature"
 	internalSigner "go.podman.io/image/v5/internal/signer"
 	"go.podman.io/image/v5/manifest"
 	"go.podman.io/image/v5/signature/internal"
-	"github.com/opencontainers/go-digest"
-	"github.com/sigstore/sigstore/pkg/cryptoutils"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGenerateKeyPair(t *testing.T) {

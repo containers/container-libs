@@ -3,8 +3,8 @@ package putblobdigest
 import (
 	"io"
 
-	"go.podman.io/image/v5/types"
 	"github.com/opencontainers/go-digest"
+	"go.podman.io/image/v5/types"
 )
 
 // Digester computes a digest of the provided stream, if not known yet.

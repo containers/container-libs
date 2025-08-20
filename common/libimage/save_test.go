@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"go.podman.io/common/pkg/config"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/common/pkg/config"
 )
 
 func TestSave(t *testing.T) {

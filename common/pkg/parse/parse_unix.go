@@ -7,9 +7,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"go.podman.io/storage/pkg/unshare"
 	"github.com/opencontainers/cgroups/devices/config"
 	"github.com/opencontainers/runc/libcontainer/devices"
+	"go.podman.io/storage/pkg/unshare"
 )
 
 func DeviceFromPath(device string) ([]config.Device, error) {

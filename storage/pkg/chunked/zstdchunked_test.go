@@ -10,8 +10,6 @@ import (
 	"io"
 	"testing"
 
-	"go.podman.io/storage/pkg/chunked/internal/minimal"
-	"go.podman.io/storage/pkg/chunked/toc"
 	"github.com/klauspost/compress/zstd"
 	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
@@ -19,6 +17,8 @@ import (
 	"github.com/vbatts/tar-split/archive/tar"
 	"github.com/vbatts/tar-split/tar/asm"
 	"github.com/vbatts/tar-split/tar/storage"
+	"go.podman.io/storage/pkg/chunked/internal/minimal"
+	"go.podman.io/storage/pkg/chunked/toc"
 )
 
 type seekable struct {

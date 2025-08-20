@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	"go.podman.io/common/pkg/config"
 	"go.podman.io/storage"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDiskUsage(t *testing.T) {

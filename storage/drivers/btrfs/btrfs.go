@@ -29,6 +29,9 @@ import (
 	"sync"
 	"unsafe"
 
+	"github.com/docker/go-units"
+	"github.com/opencontainers/selinux/go-selinux/label"
+	"github.com/sirupsen/logrus"
 	graphdriver "go.podman.io/storage/drivers"
 	"go.podman.io/storage/internal/tempdir"
 	"go.podman.io/storage/pkg/directory"
@@ -37,9 +40,6 @@ import (
 	"go.podman.io/storage/pkg/mount"
 	"go.podman.io/storage/pkg/parsers"
 	"go.podman.io/storage/pkg/system"
-	"github.com/docker/go-units"
-	"github.com/opencontainers/selinux/go-selinux/label"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )
 

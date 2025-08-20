@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"go.podman.io/image/v5/docker/reference"
-	"go.podman.io/image/v5/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/image/v5/docker/reference"
+	"go.podman.io/image/v5/types"
 )
 
 var v1RegistriesConfEmptyTestData = []struct {

@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/sirupsen/logrus"
 	dirTransport "go.podman.io/image/v5/directory"
 	dockerArchiveTransport "go.podman.io/image/v5/docker/archive"
 	"go.podman.io/image/v5/docker/reference"
@@ -16,8 +18,6 @@ import (
 	ociArchiveTransport "go.podman.io/image/v5/oci/archive"
 	ociTransport "go.podman.io/image/v5/oci/layout"
 	"go.podman.io/image/v5/types"
-	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/sirupsen/logrus"
 )
 
 // SaveOptions allow for customizing saving images.

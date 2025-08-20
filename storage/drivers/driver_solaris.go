@@ -20,8 +20,8 @@ import (
 	"path/filepath"
 	"unsafe"
 
-	"go.podman.io/storage/pkg/mount"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/storage/pkg/mount"
 )
 
 const (

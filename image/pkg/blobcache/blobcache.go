@@ -6,11 +6,11 @@ import (
 	"os"
 	"path/filepath"
 
+	digest "github.com/opencontainers/go-digest"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/internal/image"
 	"go.podman.io/image/v5/transports"
 	"go.podman.io/image/v5/types"
-	digest "github.com/opencontainers/go-digest"
 )
 
 const (

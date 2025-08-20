@@ -13,10 +13,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	"go.podman.io/storage/pkg/archive"
 	"go.podman.io/storage/pkg/idtools"
 	"go.podman.io/storage/pkg/reexec"
-	"github.com/stretchr/testify/require"
 )
 
 const (

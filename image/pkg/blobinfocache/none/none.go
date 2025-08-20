@@ -2,9 +2,9 @@
 package none
 
 import (
+	"github.com/opencontainers/go-digest"
 	"go.podman.io/image/v5/internal/blobinfocache"
 	"go.podman.io/image/v5/types"
-	"github.com/opencontainers/go-digest"
 )
 
 // noCache implements a dummy BlobInfoCache which records no data.

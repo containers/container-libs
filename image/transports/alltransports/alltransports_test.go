@@ -3,10 +3,10 @@ package alltransports
 import (
 	"testing"
 
-	"go.podman.io/image/v5/directory"
-	"go.podman.io/image/v5/transports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/image/v5/directory"
+	"go.podman.io/image/v5/transports"
 )
 
 func TestParseImageName(t *testing.T) {

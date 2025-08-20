@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"go.podman.io/common/pkg/config"
 	dockerArchiveTransport "go.podman.io/image/v5/docker/archive"
 	dockerDaemonTransport "go.podman.io/image/v5/docker/daemon"
@@ -14,7 +15,6 @@ import (
 	"go.podman.io/image/v5/manifest"
 	compressiontypes "go.podman.io/image/v5/pkg/compression/types"
 	"go.podman.io/image/v5/transports/alltransports"
-	"github.com/sirupsen/logrus"
 )
 
 // PushOptions allows for customizing image pushes.

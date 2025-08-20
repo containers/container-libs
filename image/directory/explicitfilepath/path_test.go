@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	_ "go.podman.io/image/v5/internal/testing/explicitfilepath-tmpdir"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	_ "go.podman.io/image/v5/internal/testing/explicitfilepath-tmpdir"
 )
 
 type pathResolvingTestCase struct {

@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	ociSpec "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/common/pkg/config"
 	registryTransport "go.podman.io/image/v5/docker"
 	dockerArchiveTransport "go.podman.io/image/v5/docker/archive"
@@ -24,8 +26,6 @@ import (
 	"go.podman.io/image/v5/transports/alltransports"
 	"go.podman.io/image/v5/types"
 	"go.podman.io/storage"
-	ociSpec "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/sirupsen/logrus"
 )
 
 // PullOptions allows for customizing image pulls.

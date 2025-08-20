@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"syscall"
 
+	"github.com/sirupsen/logrus"
 	"go.podman.io/storage/pkg/archive"
 	"go.podman.io/storage/pkg/idmap"
 	"go.podman.io/storage/pkg/idtools"
@@ -17,7 +18,6 @@ import (
 	"go.podman.io/storage/pkg/mount"
 	"go.podman.io/storage/pkg/system"
 	"go.podman.io/storage/pkg/unshare"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )
 

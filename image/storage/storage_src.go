@@ -13,6 +13,9 @@ import (
 	"slices"
 	"sync"
 
+	digest "github.com/opencontainers/go-digest"
+	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/internal/image"
 	"go.podman.io/image/v5/internal/imagesource/impl"
@@ -24,9 +27,6 @@ import (
 	"go.podman.io/storage"
 	"go.podman.io/storage/pkg/archive"
 	"go.podman.io/storage/pkg/ioutils"
-	digest "github.com/opencontainers/go-digest"
-	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/sirupsen/logrus"
 )
 
 type storageImageSource struct {

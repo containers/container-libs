@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/docker/docker/client"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/image/v5/docker/internal/tarfile"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/internal/private"
 	"go.podman.io/image/v5/types"
-	"github.com/docker/docker/client"
-	"github.com/sirupsen/logrus"
 )
 
 type daemonImageDestination struct {

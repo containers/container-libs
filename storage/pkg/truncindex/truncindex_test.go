@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"go.podman.io/storage/pkg/stringid"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/storage/pkg/stringid"
 )
 
 // Test the behavior of TruncIndex, an index for querying IDs from a non-conflicting prefix.

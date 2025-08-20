@@ -3,9 +3,9 @@ package hooks
 import (
 	"context"
 
-	current "go.podman.io/common/pkg/hooks/1.0.0"
 	"github.com/fsnotify/fsnotify"
 	"github.com/sirupsen/logrus"
+	current "go.podman.io/common/pkg/hooks/1.0.0"
 )
 
 // Monitor dynamically monitors hook directories for additions,

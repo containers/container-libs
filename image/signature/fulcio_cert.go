@@ -10,9 +10,9 @@ import (
 	"slices"
 	"time"
 
-	"go.podman.io/image/v5/signature/internal"
 	"github.com/sigstore/fulcio/pkg/certificate"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
+	"go.podman.io/image/v5/signature/internal"
 )
 
 // fulcioTrustRoot contains policy allow validating Fulcio-issued certificates.

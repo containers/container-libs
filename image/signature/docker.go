@@ -8,10 +8,10 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/opencontainers/go-digest"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/manifest"
 	"go.podman.io/image/v5/signature/internal"
-	"github.com/opencontainers/go-digest"
 )
 
 // SignOptions includes optional parameters for signing container images.

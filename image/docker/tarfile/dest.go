@@ -4,11 +4,11 @@ import (
 	"context"
 	"io"
 
+	"github.com/opencontainers/go-digest"
 	internal "go.podman.io/image/v5/docker/internal/tarfile"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/internal/private"
 	"go.podman.io/image/v5/types"
-	"github.com/opencontainers/go-digest"
 )
 
 // Destination is a partial implementation of types.ImageDestination for writing to an io.Writer.

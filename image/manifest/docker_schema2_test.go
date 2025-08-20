@@ -5,11 +5,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"go.podman.io/image/v5/pkg/compression"
-	"go.podman.io/image/v5/types"
 	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/image/v5/pkg/compression"
+	"go.podman.io/image/v5/types"
 )
 
 func manifestSchema2FromFixture(t *testing.T, fixture string) *Schema2 {

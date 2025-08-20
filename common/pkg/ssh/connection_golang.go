@@ -23,12 +23,12 @@ import (
 	// by the server doesn't match the one in known_hosts:
 	// https://github.com/golang/go/issues/29286
 	// https://github.com/containers/podman/issues/23575
-	"go.podman.io/common/pkg/config"
-	"go.podman.io/storage/pkg/fileutils"
-	"go.podman.io/storage/pkg/homedir"
 	"github.com/pkg/sftp"
 	"github.com/sirupsen/logrus"
 	"github.com/skeema/knownhosts"
+	"go.podman.io/common/pkg/config"
+	"go.podman.io/storage/pkg/fileutils"
+	"go.podman.io/storage/pkg/homedir"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 )

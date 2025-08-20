@@ -10,11 +10,11 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"go.podman.io/storage/pkg/fileutils"
 	"go.podman.io/storage/pkg/idtools"
 	"go.podman.io/storage/pkg/pools"
 	"go.podman.io/storage/pkg/system"
-	"github.com/sirupsen/logrus"
 )
 
 // UnpackLayer unpack `layer` to a `dest`. The stream `layer` can be

@@ -8,13 +8,13 @@ import (
 	"slices"
 	"strings"
 
+	digest "github.com/opencontainers/go-digest"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/manifest"
 	"go.podman.io/image/v5/transports"
 	"go.podman.io/image/v5/types"
 	"go.podman.io/storage"
-	digest "github.com/opencontainers/go-digest"
-	"github.com/sirupsen/logrus"
 )
 
 // A storageReference holds an arbitrary name and/or an ID, which is a 32-byte

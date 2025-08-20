@@ -7,10 +7,10 @@ import (
 	"math"
 	"time"
 
-	"go.podman.io/image/v5/internal/private"
-	"go.podman.io/image/v5/types"
 	"github.com/vbauerster/mpb/v8"
 	"github.com/vbauerster/mpb/v8/decor"
+	"go.podman.io/image/v5/internal/private"
+	"go.podman.io/image/v5/types"
 )
 
 // newProgressPool creates a *mpb.Progress.

@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"go.podman.io/image/v5/types"
 	dockerclient "github.com/docker/docker/client"
 	"github.com/stretchr/testify/assert"
+	"go.podman.io/image/v5/types"
 )
 
 func TestDockerClientFromNilSystemContext(t *testing.T) {

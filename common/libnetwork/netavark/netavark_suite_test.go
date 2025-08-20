@@ -9,15 +9,15 @@ import (
 	"reflect"
 	"testing"
 
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+	gomegaTypes "github.com/onsi/gomega/types"
 	"go.podman.io/common/internal/attributedstring"
 	"go.podman.io/common/libnetwork/netavark"
 	"go.podman.io/common/libnetwork/types"
 	"go.podman.io/common/libnetwork/util"
 	"go.podman.io/common/pkg/config"
 	"go.podman.io/storage/pkg/unshare"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-	gomegaTypes "github.com/onsi/gomega/types"
 )
 
 func TestNetavark(t *testing.T) {

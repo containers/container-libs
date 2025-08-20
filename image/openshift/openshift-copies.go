@@ -19,9 +19,9 @@ import (
 	"time"
 
 	"dario.cat/mergo"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/image/v5/internal/multierr"
 	"go.podman.io/storage/pkg/homedir"
-	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 

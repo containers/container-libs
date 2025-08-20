@@ -11,13 +11,13 @@ import (
 	"io"
 	"net/url"
 
-	"go.podman.io/image/v5/internal/useragent"
-	"go.podman.io/image/v5/signature/sigstore/internal"
 	"github.com/sigstore/fulcio/pkg/api"
 	"github.com/sigstore/sigstore/pkg/oauth"
 	"github.com/sigstore/sigstore/pkg/oauthflow"
 	sigstoreSignature "github.com/sigstore/sigstore/pkg/signature"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/image/v5/internal/useragent"
+	"go.podman.io/image/v5/signature/sigstore/internal"
 	"golang.org/x/oauth2"
 )
 

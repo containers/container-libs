@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"go.podman.io/image/v5/version"
 	"github.com/opencontainers/go-digest"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/image/v5/version"
 )
 
 func TestNewUntrustedSignature(t *testing.T) {

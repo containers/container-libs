@@ -12,6 +12,11 @@ import (
 	"slices"
 	"time"
 
+	structcopier "github.com/jinzhu/copier"
+	"github.com/opencontainers/go-digest"
+	imgspec "github.com/opencontainers/image-spec/specs-go"
+	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/common/libimage/define"
 	"go.podman.io/common/libimage/manifests"
 	manifesterrors "go.podman.io/common/pkg/manifests"
@@ -25,11 +30,6 @@ import (
 	"go.podman.io/image/v5/transports/alltransports"
 	"go.podman.io/image/v5/types"
 	"go.podman.io/storage"
-	structcopier "github.com/jinzhu/copier"
-	"github.com/opencontainers/go-digest"
-	imgspec "github.com/opencontainers/image-spec/specs-go"
-	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/sirupsen/logrus"
 )
 
 // NOTE: the abstractions and APIs here are a first step to further merge

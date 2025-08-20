@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"go.podman.io/storage/internal/staging_lockfile"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/storage/internal/staging_lockfile"
 )
 
 /*

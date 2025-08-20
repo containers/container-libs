@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"go.podman.io/image/v5/types"
 	digest "github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/image/v5/types"
 )
 
 func dockerRefFromString(t *testing.T, s string) dockerReference {

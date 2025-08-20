@@ -10,9 +10,9 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"go.podman.io/common/pkg/config"
 	"go.podman.io/image/v5/transports/alltransports"
-	"github.com/stretchr/testify/require"
 )
 
 func TestImageFunctions(t *testing.T) {

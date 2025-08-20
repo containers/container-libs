@@ -15,11 +15,11 @@ import (
 	"strings"
 	"text/template"
 
+	runcaa "github.com/opencontainers/runc/libcontainer/apparmor"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/common/pkg/apparmor/internal/supported"
 	"go.podman.io/storage/pkg/fileutils"
 	"go.podman.io/storage/pkg/unshare"
-	runcaa "github.com/opencontainers/runc/libcontainer/apparmor"
-	"github.com/sirupsen/logrus"
 )
 
 // profileDirectory is the file store for apparmor profiles and macros.

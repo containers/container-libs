@@ -14,11 +14,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"go.podman.io/storage/pkg/fileutils"
 	"go.podman.io/storage/pkg/idtools"
 	"go.podman.io/storage/pkg/pools"
 	"go.podman.io/storage/pkg/system"
-	"github.com/sirupsen/logrus"
 )
 
 // ChangeType represents the change type.

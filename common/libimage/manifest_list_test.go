@@ -18,6 +18,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/opencontainers/go-digest"
+	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.podman.io/common/pkg/config"
 	cp "go.podman.io/image/v5/copy"
 	"go.podman.io/image/v5/image"
@@ -26,10 +30,6 @@ import (
 	"go.podman.io/image/v5/transports/alltransports"
 	"go.podman.io/storage"
 	"go.podman.io/storage/pkg/ioutils"
-	"github.com/opencontainers/go-digest"
-	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestCreateManifestList(t *testing.T) {

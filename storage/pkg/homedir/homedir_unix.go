@@ -14,8 +14,8 @@ import (
 	"sync"
 	"syscall"
 
-	"go.podman.io/storage/pkg/unshare"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/storage/pkg/unshare"
 )
 
 // Key returns the env var name for the user's home dir based on

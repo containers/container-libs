@@ -11,9 +11,9 @@ import (
 	"syscall"
 	"unsafe"
 
+	"github.com/sirupsen/logrus"
 	"go.podman.io/storage/pkg/idtools"
 	"go.podman.io/storage/pkg/system"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )
 

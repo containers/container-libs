@@ -14,12 +14,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	drivers "go.podman.io/storage/drivers"
 	"go.podman.io/storage/pkg/archive"
 	"go.podman.io/storage/pkg/idtools"
 	"go.podman.io/storage/pkg/ioutils"
 	"go.podman.io/storage/types"
-	"github.com/sirupsen/logrus"
 )
 
 var (

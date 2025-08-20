@@ -6,11 +6,11 @@ import (
 	"reflect"
 	"testing"
 
-	"go.podman.io/image/v5/manifest"
-	"go.podman.io/storage/pkg/reexec"
 	digest "github.com/opencontainers/go-digest"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"
+	"go.podman.io/image/v5/manifest"
+	"go.podman.io/storage/pkg/reexec"
 )
 
 const (

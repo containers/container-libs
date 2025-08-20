@@ -13,12 +13,12 @@ import (
 	"sort"
 	"testing"
 
-	graphdriver "go.podman.io/storage/drivers"
-	"go.podman.io/storage/pkg/archive"
-	"go.podman.io/storage/pkg/stringid"
 	"github.com/docker/go-units"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	graphdriver "go.podman.io/storage/drivers"
+	"go.podman.io/storage/pkg/archive"
+	"go.podman.io/storage/pkg/stringid"
 	"golang.org/x/sys/unix"
 )
 

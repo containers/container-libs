@@ -6,12 +6,12 @@ import (
 	"context"
 	"time"
 
-	"go.podman.io/image/v5/image"
-	"go.podman.io/image/v5/manifest"
-	"go.podman.io/image/v5/types"
 	"github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/image/v5/image"
+	"go.podman.io/image/v5/manifest"
+	"go.podman.io/image/v5/types"
 )
 
 // ImageData contains the inspected data of an image.

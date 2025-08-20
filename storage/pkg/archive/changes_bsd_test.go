@@ -7,9 +7,9 @@ import (
 	"path"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"go.podman.io/storage/pkg/idtools"
 	"go.podman.io/storage/pkg/system"
-	"github.com/stretchr/testify/require"
 )
 
 // Verify that file flag changes are reported

@@ -6,8 +6,8 @@ import (
 	"context"
 	"time"
 
-	"go.podman.io/storage"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/storage"
 )
 
 // ImageDiskUsage reports the total size of an image.  That is the size

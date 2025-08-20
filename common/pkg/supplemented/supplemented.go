@@ -8,14 +8,14 @@ import (
 	"io"
 	"slices"
 
+	multierror "github.com/hashicorp/go-multierror"
+	digest "github.com/opencontainers/go-digest"
+	"github.com/sirupsen/logrus"
 	cp "go.podman.io/image/v5/copy"
 	"go.podman.io/image/v5/image"
 	"go.podman.io/image/v5/manifest"
 	"go.podman.io/image/v5/transports"
 	"go.podman.io/image/v5/types"
-	multierror "github.com/hashicorp/go-multierror"
-	digest "github.com/opencontainers/go-digest"
-	"github.com/sirupsen/logrus"
 )
 
 // supplementedImageReference groups multiple references together.

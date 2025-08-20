@@ -6,11 +6,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	_ "go.podman.io/image/v5/internal/testing/explicitfilepath-tmpdir"
-	"go.podman.io/image/v5/types"
 	digest "github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	_ "go.podman.io/image/v5/internal/testing/explicitfilepath-tmpdir"
+	"go.podman.io/image/v5/types"
 )
 
 func TestTransportName(t *testing.T) {

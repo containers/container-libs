@@ -12,15 +12,15 @@ import (
 	"sync"
 	"time"
 
+	zfs "github.com/mistifyio/go-zfs/v3"
+	"github.com/opencontainers/selinux/go-selinux/label"
+	"github.com/sirupsen/logrus"
 	graphdriver "go.podman.io/storage/drivers"
 	"go.podman.io/storage/internal/tempdir"
 	"go.podman.io/storage/pkg/directory"
 	"go.podman.io/storage/pkg/idtools"
 	"go.podman.io/storage/pkg/mount"
 	"go.podman.io/storage/pkg/parsers"
-	zfs "github.com/mistifyio/go-zfs/v3"
-	"github.com/opencontainers/selinux/go-selinux/label"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )
 

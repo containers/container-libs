@@ -11,11 +11,11 @@ import (
 	"syscall"
 	"time"
 
-	"go.podman.io/image/v5/docker"
 	"github.com/docker/distribution/registry/api/errcode"
 	errcodev2 "github.com/docker/distribution/registry/api/v2"
 	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/image/v5/docker"
 )
 
 // Options defines the option to retry.

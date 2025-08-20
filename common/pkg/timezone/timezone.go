@@ -10,9 +10,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"go.podman.io/storage/pkg/fileutils"
 	securejoin "github.com/cyphar/filepath-securejoin"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/storage/pkg/fileutils"
 	"golang.org/x/sys/unix"
 )
 

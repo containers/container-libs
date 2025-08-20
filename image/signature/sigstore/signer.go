@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	internalSigner "go.podman.io/image/v5/internal/signer"
 	"go.podman.io/image/v5/signature/signer"
 	"go.podman.io/image/v5/signature/sigstore/internal"
-	"github.com/sigstore/sigstore/pkg/cryptoutils"
 )
 
 type Option = internal.Option

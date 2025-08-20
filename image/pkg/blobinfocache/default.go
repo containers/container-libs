@@ -5,11 +5,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/sirupsen/logrus"
 	"go.podman.io/image/v5/internal/rootless"
 	"go.podman.io/image/v5/pkg/blobinfocache/memory"
 	"go.podman.io/image/v5/pkg/blobinfocache/sqlite"
 	"go.podman.io/image/v5/types"
-	"github.com/sirupsen/logrus"
 )
 
 const (

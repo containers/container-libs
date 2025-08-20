@@ -16,6 +16,11 @@ import (
 	"time"
 
 	"github.com/containerd/platforms"
+	digest "github.com/opencontainers/go-digest"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.podman.io/common/pkg/manifests"
 	cp "go.podman.io/image/v5/copy"
 	"go.podman.io/image/v5/directory"
@@ -28,11 +33,6 @@ import (
 	"go.podman.io/image/v5/types"
 	"go.podman.io/storage"
 	"go.podman.io/storage/pkg/unshare"
-	digest "github.com/opencontainers/go-digest"
-	v1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var (

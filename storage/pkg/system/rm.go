@@ -7,8 +7,8 @@ import (
 	"syscall"
 	"time"
 
-	"go.podman.io/storage/pkg/mount"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/storage/pkg/mount"
 )
 
 // EnsureRemoveAll wraps `os.RemoveAll` to check for specific errors that can

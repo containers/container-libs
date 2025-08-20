@@ -17,6 +17,10 @@ import (
 	"strings"
 	"time"
 
+	digest "github.com/opencontainers/go-digest"
+	imgspec "github.com/opencontainers/image-spec/specs-go"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/common/internal"
 	"go.podman.io/common/pkg/manifests"
 	"go.podman.io/common/pkg/retry"
@@ -37,10 +41,6 @@ import (
 	"go.podman.io/storage/pkg/fileutils"
 	"go.podman.io/storage/pkg/ioutils"
 	"go.podman.io/storage/pkg/lockfile"
-	digest "github.com/opencontainers/go-digest"
-	imgspec "github.com/opencontainers/image-spec/specs-go"
-	v1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/sirupsen/logrus"
 )
 
 const (

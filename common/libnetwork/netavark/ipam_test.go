@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"net"
 
-	"go.podman.io/common/libnetwork/types"
-	"go.podman.io/common/pkg/config"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/common/libnetwork/types"
+	"go.podman.io/common/pkg/config"
 )
 
 var _ = Describe("IPAM", func() {

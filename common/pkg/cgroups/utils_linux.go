@@ -13,9 +13,9 @@ import (
 	"strings"
 	"sync"
 
-	"go.podman.io/storage/pkg/fileutils"
 	"github.com/opencontainers/cgroups"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/storage/pkg/fileutils"
 	"golang.org/x/sys/unix"
 )
 

@@ -9,13 +9,13 @@ import (
 	"path/filepath"
 	"testing"
 
-	"go.podman.io/image/v5/internal/private"
-	"go.podman.io/image/v5/pkg/blobinfocache/memory"
-	"go.podman.io/image/v5/types"
 	digest "github.com/opencontainers/go-digest"
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/image/v5/internal/private"
+	"go.podman.io/image/v5/pkg/blobinfocache/memory"
+	"go.podman.io/image/v5/types"
 )
 
 var _ private.ImageDestination = (*ociImageDestination)(nil)

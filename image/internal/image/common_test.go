@@ -7,10 +7,10 @@ import (
 	"slices"
 	"testing"
 
-	compressiontypes "go.podman.io/image/v5/pkg/compression/types"
-	"go.podman.io/image/v5/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	compressiontypes "go.podman.io/image/v5/pkg/compression/types"
+	"go.podman.io/image/v5/types"
 )
 
 // assertJSONEqualsFixture tests that jsonBytes is structurally equal to fixture,

@@ -11,6 +11,9 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/docker/go-connections/tlsconfig"
+	"github.com/opencontainers/go-digest"
+	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"go.podman.io/image/v5/internal/imagesource/impl"
 	"go.podman.io/image/v5/internal/imagesource/stubs"
 	"go.podman.io/image/v5/internal/manifest"
@@ -18,9 +21,6 @@ import (
 	"go.podman.io/image/v5/pkg/tlsclientconfig"
 	"go.podman.io/image/v5/types"
 	"go.podman.io/storage/pkg/fileutils"
-	"github.com/docker/go-connections/tlsconfig"
-	"github.com/opencontainers/go-digest"
-	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 // ImageNotFoundError is used when the OCI structure, in principle, exists and seems valid enough,

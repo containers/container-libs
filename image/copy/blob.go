@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/sirupsen/logrus"
 	"go.podman.io/image/v5/internal/private"
 	compressiontypes "go.podman.io/image/v5/pkg/compression/types"
 	"go.podman.io/image/v5/types"
-	"github.com/sirupsen/logrus"
 )
 
 // copyBlobFromStream copies a blob with srcInfo (with known Digest and Annotations and possibly known Size) from srcReader to dest,

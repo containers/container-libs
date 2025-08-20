@@ -10,9 +10,9 @@ import (
 	"strings"
 	"sync"
 
-	current "go.podman.io/common/pkg/hooks/1.0.0"
 	rspec "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
+	current "go.podman.io/common/pkg/hooks/1.0.0"
 )
 
 // Version is the current hook configuration version.

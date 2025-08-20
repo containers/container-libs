@@ -4,11 +4,11 @@ import (
 	"context"
 	"io"
 
+	"github.com/opencontainers/go-digest"
 	"go.podman.io/image/v5/internal/imagedestination/stubs"
 	"go.podman.io/image/v5/internal/private"
 	"go.podman.io/image/v5/internal/signature"
 	"go.podman.io/image/v5/types"
-	"github.com/opencontainers/go-digest"
 )
 
 // wrapped provides the private.ImageDestination operations

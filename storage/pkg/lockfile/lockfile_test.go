@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"go.podman.io/storage/pkg/reexec"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/storage/pkg/reexec"
 )
 
 // Warning: this is not an exhaustive set of tests.

@@ -7,13 +7,13 @@ import (
 	"slices"
 	"strings"
 
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/sirupsen/logrus"
 	internalManifest "go.podman.io/image/v5/internal/manifest"
 	"go.podman.io/image/v5/internal/set"
 	"go.podman.io/image/v5/manifest"
 	compressiontypes "go.podman.io/image/v5/pkg/compression/types"
 	"go.podman.io/image/v5/types"
-	v1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/sirupsen/logrus"
 )
 
 // preferredManifestMIMETypes lists manifest MIME types in order of our preference, if we can't use the original manifest and need to convert.

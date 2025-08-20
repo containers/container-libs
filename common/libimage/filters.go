@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	filtersPkg "go.podman.io/common/pkg/filters"
 	"go.podman.io/common/pkg/timetype"
 	"go.podman.io/image/v5/docker/reference"
-	"github.com/sirupsen/logrus"
 )
 
 // filterFunc is a prototype for a positive image filter.  Returning `true`

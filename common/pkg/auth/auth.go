@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	passwd "go.podman.io/common/pkg/password"
 	"go.podman.io/image/v5/docker"
 	"go.podman.io/image/v5/docker/reference"
@@ -18,7 +19,6 @@ import (
 	"go.podman.io/image/v5/types"
 	"go.podman.io/storage/pkg/fileutils"
 	"go.podman.io/storage/pkg/homedir"
-	"github.com/sirupsen/logrus"
 )
 
 // ErrNewCredentialsInvalid means that the new user-provided credentials are

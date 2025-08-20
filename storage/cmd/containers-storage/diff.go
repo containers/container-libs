@@ -6,6 +6,8 @@ import (
 	"io"
 	"os"
 
+	digest "github.com/opencontainers/go-digest"
+	"github.com/sirupsen/logrus"
 	"go.podman.io/storage"
 	graphdriver "go.podman.io/storage/drivers"
 	"go.podman.io/storage/pkg/archive"
@@ -13,8 +15,6 @@ import (
 	"go.podman.io/storage/pkg/chunked/compressor"
 	"go.podman.io/storage/pkg/ioutils"
 	"go.podman.io/storage/pkg/mflag"
-	digest "github.com/opencontainers/go-digest"
-	"github.com/sirupsen/logrus"
 )
 
 var (

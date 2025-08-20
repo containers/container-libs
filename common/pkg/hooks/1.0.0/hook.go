@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"regexp"
 
-	"go.podman.io/storage/pkg/fileutils"
 	rspec "github.com/opencontainers/runtime-spec/specs-go"
+	"go.podman.io/storage/pkg/fileutils"
 )
 
 // Version is the hook configuration version defined in this package.

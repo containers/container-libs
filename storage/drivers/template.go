@@ -1,8 +1,8 @@
 package graphdriver
 
 import (
-	"go.podman.io/storage/pkg/idtools"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/storage/pkg/idtools"
 )
 
 // TemplateDriver is just barely enough of a driver that we can implement a

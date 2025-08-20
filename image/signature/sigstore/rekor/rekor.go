@@ -12,11 +12,11 @@ import (
 	"net/url"
 	"strings"
 
-	"go.podman.io/image/v5/signature/internal"
-	signerInternal "go.podman.io/image/v5/signature/sigstore/internal"
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/image/v5/signature/internal"
+	signerInternal "go.podman.io/image/v5/signature/sigstore/internal"
 )
 
 const (
