@@ -54,7 +54,7 @@
   "assignees": ["rhatdan", "vrothberg", "Luap99"],
   "postUpdateOptions": [
     "gomodVendor",
-    'gomodTidy"
+    "gomodTidy"
   ],
 
   "customManagers": [
