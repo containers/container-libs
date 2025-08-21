@@ -1,11 +1,9 @@
 package bipartitegraph
 
-import (
-	"fmt"
+import "fmt"
 
-	. "github.com/onsi/gomega/matchers/support/goraph/edge"
-	. "github.com/onsi/gomega/matchers/support/goraph/node"
-)
+import . "github.com/onsi/gomega/matchers/support/goraph/node"
+import . "github.com/onsi/gomega/matchers/support/goraph/edge"
 
 type BipartiteGraph struct {
 	Left  NodeOrderedSet
