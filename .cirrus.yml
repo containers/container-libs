@@ -149,28 +149,28 @@ storage_lint_task:
 
 
 # Update metadata on VM images referenced by this repository state
-# TODO: This is not needed for monorep POC.
-# storage_meta_task:
-#     alias: storage_meta
+images_timestamp_update_task:
+    alias: images_timestamp_update
+    name: "VM Images Timestamp Update"
 
-#     container:
-#         image: "quay.io/libpod/imgts:latest"
-#         cpu: 1
-#         memory: 1
+    container:
+        image: "quay.io/libpod/imgts:latest"
+        cpu: 1
+        memory: 1
 
-#     env:
-#         # Space-separated list of images used by this repository state
-#         IMGNAMES: |-
-#             ${FEDORA_CACHE_IMAGE_NAME}
-#             ${DEBIAN_CACHE_IMAGE_NAME}
-#         BUILDID: "${CIRRUS_BUILD_ID}"
-#         REPOREF: "${CIRRUS_CHANGE_IN_REPO}"
-#         GCPJSON: ENCRYPTED[244a93fe8b386b48b96f748342bf741350e43805eee81dd04b45093bdf737e540b993fc735df41f131835fa0f9b65826]
-#         GCPNAME: ENCRYPTED[91cf7aa421858b26b67835978d224b4a5c46afcf52a0f1ec1b69a99b248715dc8e92a1b56fde18e092acf256fa80ae9c]
-#         GCPPROJECT: ENCRYPTED[79b0f7eb5958e25bc7095d5d368fa8d94447a43ffacb9c693de438186e2f767b7efe9563d6954297ae4730220e10aa9c]
-#         CIRRUS_CLONE_DEPTH: 1  # source not used
+    env:
+        # Space-separated list of images used by this repository state
+        IMGNAMES: |-
+            ${FEDORA_CACHE_IMAGE_NAME}
+            ${DEBIAN_CACHE_IMAGE_NAME}
+        BUILDID: "${CIRRUS_BUILD_ID}"
+        REPOREF: "${CIRRUS_CHANGE_IN_REPO}"
+        GCPJSON: ENCRYPTED[84d8f13981b019af7dfffbe13129ed035aa09ac167c55f2b4ebaccc4f91e8fca0b9c805e2bcf8f18da5b964b35c68203]
+        GCPNAME: ENCRYPTED[abc17b496b2a96dbf232a97e95a3696e71241f6addc82815ee230fcb67ce2908d4a572f13203cc5797ec24176ea40301]
+        GCPPROJECT: ENCRYPTED[dc578f8953d01e33fe6b329886b8b088c7a909246e169e640d621ac3f7f0ac251ea4f41353e162b1e5e6586cfb01520d]
+        CIRRUS_CLONE_DEPTH: 1  # source not used
 
-#     script: '/usr/local/bin/entrypoint.sh |& ${_TIMESTAMP}'
+    script: '/usr/local/bin/entrypoint.sh |& ${_TIMESTAMP}'
 
 
 
@@ -343,8 +343,10 @@ storage_gofix_task:
       cd storage
       go fix ./...
     test_script: |
-      cd storage
-      git diff --diff-filter=M --exit-code
+      # The git diff complains about broken symlinks in some test files.
+      # We therefore filter-out these files, since they are not changed by
+      # gofix anyway.
+      git diff --diff-filter=M --exit-code -- . ":(exclude)*.crt" ":(exclude)*.key" ":(exclude)*.cert"
 
 storage_codespell_task:
     skip: "!changesInclude('storage/**')"
@@ -370,7 +372,7 @@ success_task:
         - storage_lint
         - storage_fedora_testing
         - storage_debian_testing
-        # - storage_meta
+        - images_timestamp_update
         - storage_vendor
         - storage_cross
         - storage_gofix
