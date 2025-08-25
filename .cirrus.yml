@@ -305,7 +305,6 @@ common_testing_task:
       make vendor
     test_script: |
       cd common
-      hack/tree_status.sh
       make build
       make build-cross
       make test
@@ -323,7 +322,6 @@ storage_vendor_task:
       make vendor
     test_script: |
       cd storage
-      hack/tree_status.sh
 
 storage_cross_task:
     skip: "!changesInclude('storage/**')"
