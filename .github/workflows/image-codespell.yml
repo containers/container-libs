@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: install deps
         # Version of codespell bundled with Ubuntu is way old, so use pip.
         run: pip install --break-system-packages codespell==v2.3.0
