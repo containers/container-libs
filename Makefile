@@ -58,3 +58,4 @@ tidy:
 	@$(MAKE) -C common tidy
 	@$(MAKE) -C image tidy
 	@$(MAKE) -C storage tidy
+	$(GO) work sync
