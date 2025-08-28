@@ -15,7 +15,7 @@ import (
 )
 
 func TestCorruptedLayers(t *testing.T) {
-	// Regression tests for https://bugzilla.redhat.com/show_bug.cgi?id=1966872.
+	// Regresssion tests for https://bugzilla.redhat.com/show_bug.cgi?id=1966872.
 	runtime := testNewRuntime(t)
 	ctx := context.Background()
 	pullOptions := &PullOptions{}
