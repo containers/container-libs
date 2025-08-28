@@ -83,6 +83,6 @@ jobs:
         # See comment on lint task
         cache-dependency-path: "**/go.sum"
     - name: run git log
-      run: git log --oneline && echo --- && git log --oneline "HEAD~${{ github.event.pull_request.commits }}..HEAD"
+      run: git log --oneline
     - name: run git-validation
-      run: make git-validation EPOCH_TEST_COMMIT="HEAD~${{ github.event.pull_request.commits }}"
+      run: make .install.gitvalidation && git-validation -no-github
