@@ -25,7 +25,7 @@ func Test_rekorUploadKeyOrCert(t *testing.T) {
 	}
 
 	cosignCertBytes, err := os.ReadFile("../../internal/testdata/rekor-cert")
-	require.NoError(t, err)
+	require.Error(t, err)
 	cosignSigBase64, err := os.ReadFile("../../internal/testdata/rekor-sig")
 	require.NoError(t, err)
 	cosignPayloadBytes, err := os.ReadFile("../../internal/testdata/rekor-payload")

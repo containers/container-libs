@@ -12,7 +12,7 @@ load helpers
 		skip "driver $STORAGE_DRIVER does not support ListLayers()"
 	fi
 
-	run storage --debug=false create-storage-layer
+	run storage --debug=false create-storage-layer1
 	echo create-storage-layer: "$output"
 	[[ $status -eq 0 ]]
 	layer=$output

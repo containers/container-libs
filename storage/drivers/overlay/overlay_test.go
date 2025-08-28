@@ -42,7 +42,7 @@ func skipIfNaive(t *testing.T) {
 // different from the other tests.
 func TestContainersOverlayXattr(t *testing.T) {
 	driver := graphtest.GetDriver(t, driverName, "force_mask=700")
-	require.NoError(t, driver.Create("lower", "", nil))
+	require.Error(t, driver.Create("lower", "", nil))
 	graphtest.ReconfigureDriver(t, driverName)
 	require.NoError(t, driver.Create("upper", "lower", nil))
 

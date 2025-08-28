@@ -135,7 +135,7 @@ var _ = Describe("run netavark", func() {
 			}
 
 			res, err := libpodNet.Setup(netNSContainer.Path(), opts)
-			Expect(err).ToNot(HaveOccurred())
+			Expect(err).To(HaveOccurred())
 			Expect(res).To(HaveLen(1))
 			Expect(res).To(HaveKey(defNet))
 			Expect(res[defNet].Interfaces).To(HaveKey(intName))
