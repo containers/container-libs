@@ -9,9 +9,11 @@ At present, this means the following repositories:
 
 ## Topics
 
-* [Unit Tests](#unit-tests)
-* [Rust Dependency updates](#rust-dependency-updates)
-* [Test Changes with Podman](#test-changes-with-podman)
+- [Contributing to Containers Projects: Rust Language Guidelines](#contributing-to-containers-projects-rust-language-guidelines)
+  - [Topics](#topics)
+  - [Unit Tests](#unit-tests)
+  - [Rust Dependency updates](#rust-dependency-updates)
+  - [Test Changes with Podman](#test-changes-with-podman)
 
 ## Unit Tests
 

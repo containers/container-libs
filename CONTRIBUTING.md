@@ -12,9 +12,7 @@ This document applies to the following projects:
 - [podman](https://github.com/containers/podman)
 - [buildah](https://github.com/containers/buildah)
 - [skopeo](https://github.com/containers/skopeo)
-- [common](https://github.com/containers/common)
-- [image](https://github.com/containers/image)
-- [storage](https://github.com/containers/storage)
+- [container-libs](https://github.com/containers/container-libs)
 - [libhvee](https://github.com/containers/libhvee)
 - [psgo](https://github.com/containers/psgo)
 - [netavark](https://github.com/containers/netavark)
@@ -32,9 +30,15 @@ However, most of the things here listed are very generic and apply when contribu
 
 ## Topics
 
-* [Reporting Issues](#reporting-issues)
-* [Submitting Pull Requests](#submitting-pull-requests)
-* [Find bad changes with git bisect](#find-bad-changes-with-git-bisect)
+- [Contributing to the Containers Projects](#contributing-to-the-containers-projects)
+  - [Topics](#topics)
+  - [Reporting Issues](#reporting-issues)
+  - [Submitting Pull Requests](#submitting-pull-requests)
+    - [Describe your Changes in Commit Messages](#describe-your-changes-in-commit-messages)
+    - [Sign your PRs](#sign-your-prs)
+    - [Code review](#code-review)
+    - [Rebasing](#rebasing)
+  - [Find bad changes with git bisect](#find-bad-changes-with-git-bisect)
 
 ## Reporting Issues
 
@@ -136,7 +140,7 @@ It’s important to describe the change in plain English for the reviewer to ver
 Solve only one problem per patch.
 If your description starts to get long, that’s a sign that you probably need to split up your patch.
 
-If the patch fixes a logged bug entry, refer to that bug entry by number and URL.
+If the patch fixes a logged bug entry, refer to that bug entry by number or URL.
 If the patch follows from a mailing list discussion, give a URL to the mailing list archive.
 Please format these lines as `Fixes:` followed by the URL or, for Github bugs, the bug number preceded by a #.
 For example:

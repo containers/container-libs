@@ -7,17 +7,18 @@ At present, this means the following repositories:
 - [podman](https://github.com/containers/podman)
 - [buildah](https://github.com/containers/buildah)
 - [skopeo](https://github.com/containers/skopeo)
-- [common](https://github.com/containers/common)
-- [image](https://github.com/containers/image)
-- [storage](https://github.com/containers/storage)
+- [container-libs](https://github.com/containers/container-libs)
 - [libhvee](https://github.com/containers/libhvee)
 - [psgo](https://github.com/containers/psgo)
 
 ## Topics
 
-* [Go Dependency updates](#go-dependency-updates)
-* [Testing changes in a dependent repository](#testing-changes-in-a-dependent-repository)
-* [git bisect a change in a Go dependency](#git-bisect-a-change-in-a-go-dependency)
+- [Contributing to Containers Projects: Go Language Guidelines](#contributing-to-containers-projects-go-language-guidelines)
+  - [Topics](#topics)
+  - [Unit Tests](#unit-tests)
+  - [Go Dependency updates](#go-dependency-updates)
+  - [Testing changes in a dependent repository](#testing-changes-in-a-dependent-repository)
+  - [git bisect a change in a go dependency](#git-bisect-a-change-in-a-go-dependency)
 
 ## Unit Tests
 
@@ -31,21 +32,28 @@ The bot automatically opens new PRs with updates that should be merged by mainta
 
 However sometimes, especially during development, it can be the case that you like to update a dependency.
 
-To do so you can use the `go get` command, for example to update containers/storage to the a specific version use:
+To do so you can use the `go get` command, for example to update the storage library to the a specific version use:
 ```
-$ go get github.com/containers/storage@v1.55.1
+$ go get go.podman.io/storage@v1.60.0
 ```
 
 Or to update it to the latest commit from main use:
 ```
-$ go get github.com/containers/storage@main
+$ go get go.podman.io/storage@main
 ```
 
-This command will update the go.mod/go.sum files, because we use [go's vendor mechanism](https://go.dev/ref/mod#vendoring)
-you must also update the files in the vendor dir. To do so use
+This command will update the go.mod/go.sum files, in some repos we use [go's vendor mechanism](https://go.dev/ref/mod#vendoring)
+so there you must also update the files in the vendor dir. To do so use:
 ```
 $ make vendor
 ```
+
+If you are working in the [container-libs](https://github.com/containers/container-libs) monorepo use:
+```
+make tidy
+```
+This command syncs the dependency versions across all modules in the repo.
+
 
 Then commit the changes and open a PR. If you want to add other changes it is recommended to keep the
 dependency updates in their own commit as this makes reviewing them much easier.
@@ -57,16 +65,16 @@ dependencies to ensure all our tools use the same properly tested library versio
 
 Sometimes it is helpful (or a maintainer asks for it) to test your library changes in the final binary, e.g. podman.
 
-Assume we like to test a containers/common PR in Podman so that we can have the full CI tests run there.
-First you need to push your containers/common changes to your github fork (if not already done).
+Assume we like to test a container-libs/common PR in Podman so that we can have the full CI tests run there.
+First you need to push your container-libs/common changes to your github fork (if not already done).
 Now open the podman repository, create a new branch there and then use.
 ```
-$ go mod edit -replace github.com/containers/common=github.com/<account name>/<fork name>@<branch name>
+$ go mod edit -replace go.podman.io/common=github.com/<account name>/<fork name>/common@<branch name>
 ```
-Replace the variable with the correct values, in my case it the reference might be `github.com/Luap99/common@netns-dir`, where
+Replace the variable with the correct values, in my case it the reference might be `github.com/Luap99/container-libs/common@myfeature`, where
  - account name == `Luap99`
- - fork name == `common`
- - branch name that I like to test == `netns-dir`
+ - fork name == `container-libs`
+ - branch name that I like to test == `myfeature`
 
 Then just run the vendor command again.
 ```
@@ -88,12 +96,13 @@ If you performed a the git bisect and the resulting commit is one that updated a
 the problem is in that library instead. In such cases it may be needed to find the bad commit from this
 repository instead. Thankfully this is not much more difficult than the normal bisect usage.
 
-Clone the library repository locally (for this example assume we it is github.com/containers/storage),
+Clone the library repository locally (for this example assume we it is github.com/containers/container-libs)
+which contains the storage library as module in a subdirectory,
 I assume it is in a directory next to the podman repo.
 
 Then in podman run (where you replace the path to the storage repo with your actual one)
 ```
-$ go mod edit -replace github.com/containers/storage=/path/to/storage
+$ go mod edit -replace go.podman.io/storage=/path/to/container-libs/storage
 $ make vendor
 ```
 
