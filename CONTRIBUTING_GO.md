@@ -15,9 +15,12 @@ At present, this means the following repositories:
 
 ## Topics
 
-* [Go Dependency updates](#go-dependency-updates)
-* [Testing changes in a dependent repository](#testing-changes-in-a-dependent-repository)
-* [git bisect a change in a Go dependency](#git-bisect-a-change-in-a-go-dependency)
+- [Contributing to Containers Projects: Go Language Guidelines](#contributing-to-containers-projects-go-language-guidelines)
+  - [Topics](#topics)
+  - [Unit Tests](#unit-tests)
+  - [Go Dependency updates](#go-dependency-updates)
+  - [Testing changes in a dependent repository](#testing-changes-in-a-dependent-repository)
+  - [git bisect a change in a go dependency](#git-bisect-a-change-in-a-go-dependency)
 
 ## Unit Tests
 
