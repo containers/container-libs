@@ -7,9 +7,7 @@ At present, this means the following repositories:
 - [podman](https://github.com/containers/podman)
 - [buildah](https://github.com/containers/buildah)
 - [skopeo](https://github.com/containers/skopeo)
-- [common](https://github.com/containers/common)
-- [image](https://github.com/containers/image)
-- [storage](https://github.com/containers/storage)
+- [container-libs](https://github.com/containers/container-libs)
 - [libhvee](https://github.com/containers/libhvee)
 - [psgo](https://github.com/containers/psgo)
 
