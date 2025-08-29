@@ -18,7 +18,9 @@ prepare:
     how: install
     exclude:
       - ".*"
+    order: 25
   - name: Install the main package
     how: install
     package:
       - containers-common
+    order: 30
