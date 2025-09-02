@@ -1,0 +1,129 @@
+name: 'Open downstream PRs'
+
+on:
+  pull_request:
+    types: [opened, synchronize] # Triggers on PR creation and on new commits to the PR
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Self'
+        uses: actions/checkout@v4
+        # This checks out the code from the PR branch itself
+
+      - name: 'Setup Go'
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: 'Checkout forked buildah'
+        uses: actions/checkout@v4
+        with:
+          repository: 'podmanbot/buildah' # The target repository
+          path: 'buildah'                 # Checkout into a sub-directory
+          # token: ${{ secrets.VENDOR_TOKEN_PODMANBOT }} Use the PAT for write access
+
+      - name: 'Vendor Code from this repo to buildah'
+        run: |
+          # Get the current commit SHA from the PR
+          COMMIT_SHA="${{ github.event.pull_request.head.sha }}"
+          echo "Using commit SHA: $COMMIT_SHA"
+          
+          cd buildah
+          # Create a unique branch name based on the container-libs PR number
+          BRANCH_NAME="sync/container-libs-${{ github.event.pull_request.number }}"
+          git switch -c $BRANCH_NAME
+          git remote add upstream https://github.com/containers/buildah.git
+          git fetch upstream
+          git rebase upstream/main
+          
+          
+          echo "Current go.mod before update:"
+          cat go.mod
+          
+          # Update the go.mod file to use the specific commit
+          go mod edit -replace go.podman.io/common=github.com/containers/container-libs/common@${COMMIT_SHA}
+
+          echo "After go mod edit"
+          cat go.mod
+          
+          # Download and verify the module
+          go mod tidy
+          go mod vendor
+          go mod verify
+          
+          echo "Updated go.mod:"
+          cat go.mod
+          
+      - name: 'Commit and Push to buildah'
+        run: |
+          cd buildah
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          BRANCH_NAME="sync/container-libs-${{ github.event.pull_request.number }}"
+          git switch -c $BRANCH_NAME
+          
+          git add .
+          git commit -m "feat: Vendor changes from podmanbot/container-libs#${{ github.event.pull_request.number }}"
+          
+          # Force push to update the branch if the action re-runs on 'synchronize'
+          git push origin $BRANCH_NAME --force
+          
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+
+      - name: 'Create or Update Pull Request in Buildah'
+        id: create_pr
+        env:
+          GH_TOKEN: ${{ secrets.VENDOR_TOKEN_PODMANBOT }}
+          SELF_REPO_PR_NUMBER: ${{ github.event.pull_request.number }}
+          SELF_REPO_PR_URL: ${{ github.event.pull_request.html_url }}
+          SELF_REPO_PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          cd buildah
+          
+          PR_TITLE="Sync: ${{ env.SELF_REPO_PR_TITLE }}"
+          PR_BODY="This PR automatically vendors changes from [repo-A#${{ env.SELF_REPO_PR_NUMBER }}](${{ env.SELF_REPO_PR_URL }})."
+          
+          # Check if PR already exists for this branch
+          EXISTING_PR_URL=$(gh pr list --head ${{ env.BRANCH_NAME }} --json url --jq '.[0].url' 2>/dev/null || echo "")
+          
+          if [ -n "$EXISTING_PR_URL" ]; then
+            echo "Found existing PR: $EXISTING_PR_URL"
+            # Update existing PR title and body
+            gh pr edit $EXISTING_PR_URL \
+              --title "$PR_TITLE" \
+              --body "$PR_BODY"
+            echo "Updated existing PR: $EXISTING_PR_URL"
+            echo "pr_url=$EXISTING_PR_URL" >> $GITHUB_OUTPUT
+            echo "pr_action=updated" >> $GITHUB_OUTPUT
+          else
+            # Create new PR
+            NEW_PR_URL=$(gh pr create \
+              --repo containers/buildah \
+              --base main \
+              --head ${{ env.BRANCH_NAME }} \
+              --title "$PR_TITLE" \
+              --body "$PR_BODY")
+            echo "Created new PR: $NEW_PR_URL"
+            echo "pr_url=$NEW_PR_URL" >> $GITHUB_OUTPUT
+            echo "pr_action=created" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 'Comment on container-libs PR with the link to buildah PR'
+        env:
+          # GH_TOKEN: ${{ secrets.VENDOR_TOKEN_PODMANBOT }}
+          SELF_REPO_PR_NUMBER: ${{ github.event.pull_request.number }}
+          TARGET_REPO_PR_URL: ${{ steps.create_pr.outputs.pr_url }}
+          PR_ACTION: ${{ steps.create_pr.outputs.pr_action }}
+        run: |
+          if [ "${{ env.PR_ACTION }}" = "created" ]; then
+            COMMENT_BODY="✅ A new PR has been created in buildah to vendor these changes: **${{ env.TARGET_REPO_PR_URL }}**"
+          else
+            COMMENT_BODY="✅ The existing PR in buildah has been updated with these changes: **${{ env.TARGET_REPO_PR_URL }}**"
+          fi
+          
+          gh pr comment ${{ env.SELF_REPO_PR_NUMBER }} \
+            --repo ${{ github.repository }} \
+            --body "$COMMENT_BODY"
