@@ -43,8 +43,14 @@ func TestReferenceDeleteImage_onlyOneImage(t *testing.T) {
 func TestReferenceDeleteImage_onlyOneImageWithSignatures(t *testing.T) {
 	tmpDir := loadFixture(t, "delete_image_with_signature")
 
-	ref, err := NewReference(tmpDir, "imageValue")
+	ref, err := NewReference(tmpDir, "latest")
 	require.NoError(t, err)
+
+	ociRef, ok := ref.(ociReference)
+	require.True(t, ok)
+	index, err := ociRef.getIndex()
+	require.NoError(t, err)
+	require.Equal(t, 2, len(index.Manifests))
 
 	err = ref.DeleteImage(context.Background(), nil)
 	require.NoError(t, err)
@@ -56,9 +62,7 @@ func TestReferenceDeleteImage_onlyOneImageWithSignatures(t *testing.T) {
 	require.Empty(t, files)
 
 	// Check that the index is empty as there is only one image in the fixture
-	ociRef, ok := ref.(ociReference)
-	require.True(t, ok)
-	index, err := ociRef.getIndex()
+	index, err = ociRef.getIndex()
 	require.NoError(t, err)
 	require.Equal(t, 0, len(index.Manifests))
 }

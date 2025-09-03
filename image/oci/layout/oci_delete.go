@@ -198,6 +198,7 @@ func saveJSON(path string, content any) (retErr error) {
 	return json.NewEncoder(file).Encode(content)
 }
 
+// deleteSignatures delete sigstore signatures of the given manifest digest.
 func (ref ociReference) deleteSignatures(ctx context.Context, sys *types.SystemContext, d digest.Digest) error {
 	signTag, err := sigstoreAttachmentTag(d)
 	if err != nil {
@@ -216,6 +217,7 @@ func (ref ociReference) deleteSignatures(ctx context.Context, sys *types.SystemC
 	return err
 }
 
+// isSigstoreTag returns true if the tag is sigstore signature tag.
 func isSigstoreTag(tag string) bool {
 	if !strings.HasSuffix(tag, ".sig") {
 		return false
