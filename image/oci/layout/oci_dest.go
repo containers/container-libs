@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -19,6 +20,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"go.podman.io/image/v5/internal/imagedestination/impl"
 	"go.podman.io/image/v5/internal/imagedestination/stubs"
+	"go.podman.io/image/v5/internal/iolimits"
 	"go.podman.io/image/v5/internal/private"
 	"go.podman.io/image/v5/internal/putblobdigest"
 	"go.podman.io/image/v5/internal/signature"
@@ -336,7 +338,7 @@ func (d *ociImageDestination) PutSignaturesWithFormat(ctx context.Context, signa
 		instanceDigest = &d.manifestDigest
 	}
 
-	sigstoreSignatures := []signature.Sigstore{}
+	var sigstoreSignatures []signature.Sigstore
 	for _, sig := range signatures {
 		if sigstoreSig, ok := sig.(signature.Sigstore); ok {
 			sigstoreSignatures = append(sigstoreSignatures, sigstoreSig)
@@ -356,11 +358,28 @@ func (d *ociImageDestination) PutSignaturesWithFormat(ctx context.Context, signa
 func (d *ociImageDestination) putSignaturesToSigstoreAttachment(ctx context.Context, signatures []signature.Sigstore, manifestDigest digest.Digest) error {
 	var signConfig imgspecv1.Image // Most fields empty by default
 
-	signManifest := manifest.OCI1FromComponents(imgspecv1.Descriptor{
-		MediaType: imgspecv1.MediaTypeImageConfig,
-		Digest:    "", // We will fill this in later.
-		Size:      0,
-	}, nil)
+	signManifest, err := d.ref.getSigstoreAttachmentManifest(manifestDigest, &d.index, d.sharedBlobDir)
+	if err != nil {
+		return err
+	}
+	if signManifest == nil {
+		signManifest = manifest.OCI1FromComponents(imgspecv1.Descriptor{
+			MediaType: imgspecv1.MediaTypeImageConfig,
+			Digest:    "", // We will fill this in later.
+			Size:      0,
+		}, nil)
+		signConfig.RootFS.Type = "layers"
+	} else {
+		logrus.Debugf("Fetching sigstore attachment config %s", signManifest.Config.Digest.String())
+		configBlob, err := d.ref.getOCIDescriptorContents(signManifest.Config, iolimits.MaxConfigBodySize, d.sharedBlobDir)
+		if err != nil {
+			return err
+		}
+		if err := json.Unmarshal(configBlob, &signConfig); err != nil {
+			return fmt.Errorf("parsing sigstore attachment config %s in %s: %w", signManifest.Config.Digest.String(),
+				d.ref.StringWithinTransport(), err)
+		}
+	}
 
 	desc, err := d.getDescriptor(&manifestDigest)
 	if err != nil {
@@ -375,7 +394,14 @@ func (d *ociImageDestination) putSignaturesToSigstoreAttachment(ctx context.Cont
 		payloadBlob := sig.UntrustedPayload()
 		annotations := sig.UntrustedAnnotations()
 
-		sigDesc, err := d.putBlobBytesAsOCI(ctx, payloadBlob, mimeType, private.PutBlobOptions{
+		// Skip if the signature is already on the registry.
+		if slices.ContainsFunc(signManifest.Layers, func(layer imgspecv1.Descriptor) bool {
+			return layerMatchesSigstoreSignature(layer, mimeType, payloadBlob, annotations)
+		}) {
+			continue
+		}
+
+		signDesc, err := d.putBlobBytesAsOCI(ctx, payloadBlob, mimeType, private.PutBlobOptions{
 			Cache:      none.NoCache,
 			IsConfig:   false,
 			EmptyLayer: false,
@@ -384,10 +410,10 @@ func (d *ociImageDestination) putSignaturesToSigstoreAttachment(ctx context.Cont
 		if err != nil {
 			return err
 		}
-		sigDesc.Annotations = annotations
-		signManifest.Layers = append(signManifest.Layers, sigDesc)
-		signConfig.RootFS.DiffIDs = append(signConfig.RootFS.DiffIDs, sigDesc.Digest)
-		logrus.Debugf("Adding new signature, digest %s", sigDesc.Digest.String())
+		signDesc.Annotations = annotations
+		signManifest.Layers = append(signManifest.Layers, signDesc)
+		signConfig.RootFS.DiffIDs = append(signConfig.RootFS.DiffIDs, signDesc.Digest)
+		logrus.Debugf("Adding new signature, digest %s", signDesc.Digest.String())
 	}
 
 	configBlob, err := json.Marshal(signConfig)
@@ -553,6 +579,21 @@ func indexExists(ref ociReference) bool {
 		return true
 	}
 	if os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
+
+func layerMatchesSigstoreSignature(layer imgspecv1.Descriptor, mimeType string,
+	payloadBlob []byte, annotations map[string]string) bool {
+	if layer.MediaType != mimeType ||
+		layer.Size != int64(len(payloadBlob)) ||
+		// This is not quite correct, we should use the layer’s digest algorithm.
+		// But right now we don’t want to deal with corner cases like bad digest formats
+		// or unavailable algorithms; in the worst case we end up with duplicate signature
+		// entries.
+		layer.Digest.String() != digest.FromBytes(payloadBlob).String() ||
+		!maps.Equal(layer.Annotations, annotations) {
 		return false
 	}
 	return true
