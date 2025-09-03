@@ -161,20 +161,7 @@ func (s *ociImageSource) GetBlob(ctx context.Context, info types.BlobInfo, cache
 		}
 	}
 
-	path, err := s.ref.blobPath(info.Digest, s.sharedBlobDir)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	r, err := os.Open(path)
-	if err != nil {
-		return nil, 0, err
-	}
-	fi, err := r.Stat()
-	if err != nil {
-		return nil, 0, err
-	}
-	return r, fi.Size(), nil
+	return s.ref.getBlob(info.Digest, s.sharedBlobDir)
 }
 
 // getExternalBlob returns the reader of the first available blob URL from urls, which must not be empty.
