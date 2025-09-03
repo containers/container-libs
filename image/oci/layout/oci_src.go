@@ -253,32 +253,18 @@ func GetLocalBlobPath(ctx context.Context, src types.ImageSource, digest digest.
 func (s *ociImageSource) GetSignaturesWithFormat(ctx context.Context, instanceDigest *digest.Digest) ([]signature.Signature, error) {
 	if instanceDigest == nil {
 		if s.descriptor.Digest == "" {
-			return nil, errors.New("unknown manifest digest, can't add signatures")
+			return nil, errors.New("unknown manifest digest, can't get signatures")
 		}
 		instanceDigest = &s.descriptor.Digest
 	}
-	signTag, err := sigstoreAttachmentTag(*instanceDigest)
-	if err != nil {
-		return nil, err
-	}
 
-	var signDigest *digest.Digest
-	for _, m := range s.index.Manifests {
-		if m.Annotations[imgspecv1.AnnotationRefName] == signTag {
-			signDigest = &m.Digest
-			break
-		}
-	}
-	if signDigest == nil {
-		return nil, errors.New("no signature found for image")
-	}
-	signBlob, _, err := s.GetManifest(ctx, signDigest)
+	ociManifest, err := s.ref.getSigstoreAttachmentManifest(*instanceDigest, s.index, s.sharedBlobDir)
 	if err != nil {
 		return nil, err
 	}
-	ociManifest, err := manifest.OCI1FromManifest(signBlob)
-	if err != nil {
-		return nil, err
+	if ociManifest == nil {
+		// No signature found
+		return nil, nil
 	}
 
 	signatures := make([]signature.Signature, 0, len(ociManifest.Layers))
@@ -290,7 +276,7 @@ func (s *ociImageSource) GetSignaturesWithFormat(ctx context.Context, instanceDi
 		defer layerBlob.Close()
 		payload, err := iolimits.ReadAtMost(layerBlob, iolimits.MaxSignatureBodySize)
 		if err != nil {
-			return nil, fmt.Errorf("reading blob %s in %s: %w", layer.Digest.String(), signTag, err)
+			return nil, fmt.Errorf("reading blob %s in %s: %w", layer.Digest.String(), instanceDigest, err)
 		}
 		actualDigest := layer.Digest.Algorithm().FromBytes(payload)
 		if actualDigest != layer.Digest {
