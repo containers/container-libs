@@ -335,6 +335,9 @@ func (ref ociReference) getSigstoreAttachmentManifest(d digest.Digest, idx *imgs
 	}
 	defer blobReader.Close()
 	signBlob, err := iolimits.ReadAtMost(blobReader, iolimits.MaxManifestBodySize)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read blob: %w", err)
+	}
 	mimeType := manifest.GuessMIMEType(signBlob)
 	if mimeType != imgspecv1.MediaTypeImageManifest {
 		return nil, fmt.Errorf("unexpected MIME type for sigstore attachment manifest %s: %q",
