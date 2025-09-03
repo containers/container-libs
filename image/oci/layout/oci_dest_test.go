@@ -220,11 +220,9 @@ func TestPutblobFromLocalFile(t *testing.T) {
 
 // TestPutSignaturesWithFormat tests that sigstore signatures are properly stored in OCI layout
 func TestPutSignaturesWithFormat(t *testing.T) {
-	ref, tmpDir := refToTempOCI(t, false)
-	ociRef, ok := ref.(ociReference)
-	require.True(t, ok)
-	putTestManifest(t, ociRef, tmpDir)
-
+	tmpDir := loadFixture(t, "single_image_layout")
+	ref, err := NewReference(tmpDir, "latest")
+	require.NoError(t, err)
 	dest, err := ref.NewImageDestination(context.Background(), nil)
 	require.NoError(t, err)
 	defer dest.Close()
@@ -254,6 +252,54 @@ func TestPutSignaturesWithFormat(t *testing.T) {
 	sign, err := ociSrc.GetSignaturesWithFormat(context.Background(), &desc.Digest)
 	require.NoError(t, err)
 	require.Len(t, sign, 1)
+	require.Equal(t, sigstoreSign, sign[0])
+}
+
+// TestPutSignaturesWithFormatTwice tests PutSignaturesWithFormat twice and checks
+func TestPutSignaturesWithFormatTwice(t *testing.T) {
+	tmpDir := loadFixture(t, "single_image_layout")
+	ref, err := NewReference(tmpDir, "latest")
+	require.NoError(t, err)
+	dest, err := ref.NewImageDestination(context.Background(), nil)
+	require.NoError(t, err)
+	defer dest.Close()
+	ociDest, ok := dest.(*ociImageDestination)
+	require.True(t, ok)
+
+	desc, _, err := ociDest.ref.getManifestDescriptor()
+	require.NoError(t, err)
+	require.NotNil(t, desc)
+
+	sigstoreSign := signature.SigstoreFromComponents(
+		"application/vnd.dev.cosign.simplesigning.v1+json",
+		[]byte("test-payload"),
+		map[string]string{"dev.cosignproject.cosign/signature": "test-signature"},
+	)
+	sigstoreSign2 := signature.SigstoreFromComponents(
+		"application/vnd.dev.cosign.simplesigning.v1+json",
+		[]byte("test-payload2"),
+		map[string]string{"dev.cosignproject.cosign/signature": "test-signature"},
+	)
+
+	err = ociDest.PutSignaturesWithFormat(context.Background(), []signature.Signature{sigstoreSign}, &desc.Digest)
+	require.NoError(t, err)
+
+	err = ociDest.Commit(context.Background(), nil)
+	require.NoError(t, err)
+
+	err = ociDest.PutSignaturesWithFormat(context.Background(), []signature.Signature{sigstoreSign, sigstoreSign2}, &desc.Digest)
+	require.NoError(t, err)
+
+	err = ociDest.Commit(context.Background(), nil)
+	require.NoError(t, err)
+
+	src, err := ref.NewImageSource(context.Background(), nil)
+	require.NoError(t, err)
+	ociSrc, ok := src.(*ociImageSource)
+	require.True(t, ok)
+	sign, err := ociSrc.GetSignaturesWithFormat(context.Background(), &desc.Digest)
+	require.NoError(t, err)
+	require.Len(t, sign, 2)
 	require.Equal(t, sigstoreSign, sign[0])
 }
 
