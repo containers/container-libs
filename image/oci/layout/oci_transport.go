@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,7 +15,8 @@ import (
 	"go.podman.io/image/v5/directory/explicitfilepath"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/internal/image"
-	"go.podman.io/image/v5/internal/manifest"
+	"go.podman.io/image/v5/internal/iolimits"
+	"go.podman.io/image/v5/manifest"
 	"go.podman.io/image/v5/oci/internal"
 	"go.podman.io/image/v5/transports"
 	"go.podman.io/image/v5/types"
@@ -309,4 +311,80 @@ func sigstoreAttachmentTag(d digest.Digest) (string, error) {
 		return "", err
 	}
 	return strings.Replace(d.String(), ":", "-", 1) + ".sig", nil
+}
+
+func (ref ociReference) getSigstoreAttachmentManifest(d digest.Digest, idx *imgspecv1.Index, sharedBlobDir string) (*manifest.OCI1, error) {
+	signTag, err := sigstoreAttachmentTag(d)
+	if err != nil {
+		return nil, err
+	}
+	var signDesc *imgspecv1.Descriptor
+	for _, m := range idx.Manifests {
+		if m.Annotations[imgspecv1.AnnotationRefName] == signTag {
+			signDesc = &m
+			break
+		}
+	}
+	if signDesc == nil {
+		// No signature found
+		return nil, nil
+	}
+	blobReader, _, err := ref.getBlob(signDesc.Digest, sharedBlobDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Blob %s: %w", signTag, err)
+	}
+	defer blobReader.Close()
+	signBlob, err := iolimits.ReadAtMost(blobReader, iolimits.MaxManifestBodySize)
+	mimeType := manifest.GuessMIMEType(signBlob)
+	if mimeType != imgspecv1.MediaTypeImageManifest {
+		return nil, fmt.Errorf("unexpected MIME type for sigstore attachment manifest %s: %q",
+			signTag, mimeType)
+	}
+	res, err := manifest.OCI1FromManifest(signBlob)
+	if err != nil {
+		return nil, fmt.Errorf("parsing manifest %s: %w", signDesc.Digest, err)
+	}
+	return res, nil
+}
+
+func (ref ociReference) getBlob(d digest.Digest, sharedBlobDir string) (io.ReadCloser, int64, error) {
+	path, err := ref.blobPath(d, sharedBlobDir)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	r, err := os.Open(path)
+	if err != nil {
+		return nil, 0, err
+	}
+	fi, err := r.Stat()
+	if err != nil {
+		return nil, 0, err
+	}
+	return r, fi.Size(), nil
+}
+
+func (ref ociReference) getOCIDescriptorContents(desc imgspecv1.Descriptor, maxSize int, sharedBlobDir string) ([]byte, error) {
+	if err := desc.Digest.Validate(); err != nil { // .Algorithm() might panic without this check
+		return nil, fmt.Errorf("invalid digest %q: %w", desc.Digest.String(), err)
+	}
+	digestAlgorithm := desc.Digest.Algorithm()
+	if !digestAlgorithm.Available() {
+		return nil, fmt.Errorf("invalid digest %q: unsupported digest algorithm %q", desc.Digest.String(), digestAlgorithm.String())
+	}
+
+	reader, _, err := ref.getBlob(desc.Digest, sharedBlobDir)
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
+	payload, err := iolimits.ReadAtMost(reader, maxSize)
+	if err != nil {
+		return nil, fmt.Errorf("reading blob %s in %s: %w", desc.Digest.String(), ref.image, err)
+	}
+	actualDigest := digestAlgorithm.FromBytes(payload)
+	if actualDigest != desc.Digest {
+		return nil, fmt.Errorf("digest mismatch, expected %q, got %q", desc.Digest.String(), actualDigest.String())
+	}
+	return payload, nil
 }
