@@ -23,6 +23,7 @@ import (
 	"go.podman.io/image/v5/internal/iolimits"
 	"go.podman.io/image/v5/internal/private"
 	"go.podman.io/image/v5/internal/putblobdigest"
+	"go.podman.io/image/v5/internal/set"
 	"go.podman.io/image/v5/internal/signature"
 	"go.podman.io/image/v5/manifest"
 	"go.podman.io/image/v5/pkg/blobinfocache/none"
@@ -41,6 +42,8 @@ type ociImageDestination struct {
 	sharedBlobDir  string
 	sys            *types.SystemContext
 	manifestDigest digest.Digest
+	// blobsToDelete is a set of digests which may be deleted
+	blobsToDelete *set.Set[digest.Digest]
 }
 
 // newImageDestination returns an ImageDestination for writing to an existing directory.
@@ -83,9 +86,10 @@ func newImageDestination(sys *types.SystemContext, ref ociReference) (private.Im
 		}),
 		NoPutBlobPartialInitialize: stubs.NoPutBlobPartial(ref),
 
-		ref:   ref,
-		index: *index,
-		sys:   sys,
+		ref:           ref,
+		index:         *index,
+		sys:           sys,
+		blobsToDelete: set.New[digest.Digest](),
 	}
 	d.Compat = impl.AddCompat(d)
 	if sys != nil {
@@ -320,6 +324,26 @@ func (d *ociImageDestination) CommitWithOptions(ctx context.Context, options pri
 	if err != nil {
 		return err
 	}
+	// Delete unreferenced blobs (e.g. old signature manifest config)
+	if !d.blobsToDelete.Empty() {
+		count := make(map[digest.Digest]int)
+		err = d.ref.countBlobsReferencedByIndex(count, &d.index, d.sharedBlobDir)
+		if err != nil {
+			return fmt.Errorf("error counting blobs to delete: %w", err)
+		}
+		// Don't delete blobs which are referenced
+		actualBlobsToDelete := set.New[digest.Digest]()
+		for dgst := range d.blobsToDelete.All() {
+			if count[dgst] == 0 {
+				actualBlobsToDelete.Add(dgst)
+			}
+		}
+		err := d.ref.deleteBlobs(actualBlobsToDelete)
+		if err != nil {
+			return fmt.Errorf("error deleting blobs: %w", err)
+		}
+		d.blobsToDelete = set.New[digest.Digest]()
+	}
 	if err := os.WriteFile(d.ref.ociLayoutPath(), layoutBytes, 0o644); err != nil {
 		return err
 	}
@@ -379,6 +403,8 @@ func (d *ociImageDestination) putSignaturesToSigstoreAttachment(ctx context.Cont
 			return fmt.Errorf("parsing sigstore attachment config %s in %s: %w", signManifest.Config.Digest.String(),
 				d.ref.StringWithinTransport(), err)
 		}
+		// The config of the signature manifest will be updated and unreferenced when a new config is created.
+		d.blobsToDelete.Add(signManifest.Config.Digest)
 	}
 
 	desc, err := d.getDescriptor(&manifestDigest)
