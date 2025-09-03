@@ -278,7 +278,14 @@ func (s *ociImageSource) GetSignaturesWithFormat(ctx context.Context, instanceDi
 		if err != nil {
 			return nil, fmt.Errorf("reading blob %s in %s: %w", layer.Digest.String(), instanceDigest, err)
 		}
-		actualDigest := layer.Digest.Algorithm().FromBytes(payload)
+		if err := layer.Digest.Validate(); err != nil {
+			return nil, fmt.Errorf("invalid digest %q: %w", layer.Digest, err)
+		}
+		digestAlgorithm := layer.Digest.Algorithm()
+		if !digestAlgorithm.Available() {
+			return nil, fmt.Errorf("invalid digest %q: unsupported digest algorithm %q", layer.Digest.String(), digestAlgorithm.String())
+		}
+		actualDigest := digestAlgorithm.FromBytes(payload)
 		if actualDigest != layer.Digest {
 			return nil, fmt.Errorf("digest mismatch, expected %q, got %q", layer.Digest.String(), actualDigest.String())
 		}
