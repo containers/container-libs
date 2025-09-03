@@ -301,6 +301,7 @@ func TestPutSignaturesWithFormatTwice(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, sign, 2)
 	require.Equal(t, sigstoreSign, sign[0])
+	require.Equal(t, sigstoreSign2, sign[1])
 }
 
 // TestPutSignaturesWithFormatNilDigest tests error handling when instanceDigest is nil
