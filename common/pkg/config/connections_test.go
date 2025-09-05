@@ -76,7 +76,7 @@ var _ = Describe("Connections conf", func() {
 		count := 50
 		wg := sync.WaitGroup{}
 		wg.Add(count)
-		for i := 0; i < count; i++ {
+		for range count {
 			go func() {
 				defer wg.Done()
 				err := EditConnectionConfig(func(cfg *ConnectionsFile) error {

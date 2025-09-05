@@ -23,8 +23,7 @@ func DriverBenchExists(b *testing.B, drivername string, driveroptions ...string)
 		b.Fatal(err)
 	}
 
-	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		if !driver.Exists(base) {
 			b.Fatal("Newly created image doesn't exist")
 		}
@@ -41,8 +40,7 @@ func DriverBenchGetEmpty(b *testing.B, drivername string, driveroptions ...strin
 		b.Fatal(err)
 	}
 
-	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		_, err := driver.Get(base, graphdriver.MountOpts{})
 		b.StopTimer()
 		if err != nil {
@@ -68,8 +66,7 @@ func DriverBenchDiffBase(b *testing.B, drivername string, driveroptions ...strin
 		b.Fatal(err)
 	}
 
-	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		arch, err := driver.Diff(base, nil, "", nil, "")
 		if err != nil {
 			b.Fatal(err)
@@ -103,8 +100,7 @@ func DriverBenchDiffN(b *testing.B, bottom, top int, drivername string, driverop
 	if err := addManyFiles(driver, upper, top, 6); err != nil {
 		b.Fatal(err)
 	}
-	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		arch, err := driver.Diff(upper, nil, "", nil, "")
 		if err != nil {
 			b.Fatal(err)
@@ -141,9 +137,8 @@ func DriverBenchDiffApplyN(b *testing.B, fileCount int, drivername string, drive
 	if err != nil {
 		b.Fatal(err)
 	}
-	b.ResetTimer()
-	b.StopTimer()
-	for range b.N {
+	for b.Loop() {
+		b.StopTimer()
 		diff := stringid.GenerateRandomID()
 		if err := driver.Create(diff, base, nil); err != nil {
 			b.Fatal(err)
@@ -195,8 +190,7 @@ func DriverBenchDeepLayerDiff(b *testing.B, layerCount int, drivername string, d
 		b.Fatal(err)
 	}
 
-	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		arch, err := driver.Diff(topLayer, nil, "", nil, "")
 		if err != nil {
 			b.Fatal(err)
@@ -238,8 +232,7 @@ func DriverBenchDeepLayerRead(b *testing.B, layerCount int, drivername string, d
 		}
 	}()
 
-	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 
 		// Read content
 		c, err := os.ReadFile(filepath.Join(root, "testfile.txt"))

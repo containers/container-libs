@@ -72,7 +72,7 @@ func TestExist(t *testing.T) {
 
 func BenchmarkExists(b *testing.B) {
 	tempDir := b.TempDir()
-	for range b.N {
+	for b.Loop() {
 		_ = Exists(tempDir)
 		_ = Lexists(tempDir)
 	}
@@ -80,7 +80,7 @@ func BenchmarkExists(b *testing.B) {
 
 func BenchmarkStat(b *testing.B) {
 	tempDir := b.TempDir()
-	for range b.N {
+	for b.Loop() {
 		_, _ = os.Stat(tempDir)
 		_, _ = os.Lstat(tempDir)
 	}

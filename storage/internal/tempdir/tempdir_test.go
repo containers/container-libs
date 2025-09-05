@@ -133,7 +133,7 @@ func TestListPotentialStaleDirs(t *testing.T) {
 
 	expectedIds := map[string]struct{}{}
 
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		lockfile, err := os.CreateTemp(rootDir, tempdirLockPrefix)
 		assert.NoError(t, err)
 		lockfileName := filepath.Base(lockfile.Name())

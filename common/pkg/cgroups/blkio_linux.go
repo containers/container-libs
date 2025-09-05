@@ -61,25 +61,24 @@ func (c *linuxBlkioHandler) Stat(ctr *CgroupControl, m *cgroups.Stats) error {
 			return err
 		}
 		for k, v := range values {
-			d := strings.Split(k, ":")
-			if len(d) != 2 {
+			minorStr, majorStr, ok := strings.Cut(k, ":")
+			if !ok {
 				continue
 			}
-			minor, err := strconv.ParseUint(d[0], 10, 0)
+			minor, err := strconv.ParseUint(minorStr, 10, 0)
 			if err != nil {
 				return err
 			}
-			major, err := strconv.ParseUint(d[1], 10, 0)
+			major, err := strconv.ParseUint(majorStr, 10, 0)
 			if err != nil {
 				return err
 			}
 
 			for _, item := range v {
-				d := strings.Split(item, "=")
-				if len(d) != 2 {
+				op, valueStr, ok := strings.Cut(item, "=")
+				if !ok {
 					continue
 				}
-				op := d[0]
 
 				// Accommodate the cgroup v1 naming
 				switch op {
@@ -89,7 +88,7 @@ func (c *linuxBlkioHandler) Stat(ctr *CgroupControl, m *cgroups.Stats) error {
 					op = "write"
 				}
 
-				value, err := strconv.ParseUint(d[1], 10, 0)
+				value, err := strconv.ParseUint(valueStr, 10, 0)
 				if err != nil {
 					return err
 				}

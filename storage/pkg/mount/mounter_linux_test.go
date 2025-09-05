@@ -111,21 +111,21 @@ func validateMount(t *testing.T, mnt string, opts, optional, vfs string) {
 
 	wantedOpts := make(map[string]struct{})
 	if opts != "" {
-		for _, opt := range strings.Split(opts, ",") {
+		for opt := range strings.SplitSeq(opts, ",") {
 			wantedOpts[opt] = struct{}{}
 		}
 	}
 
 	wantedOptional := make(map[string]struct{})
 	if optional != "" {
-		for _, opt := range strings.Split(optional, ",") {
+		for opt := range strings.SplitSeq(optional, ",") {
 			wantedOptional[opt] = struct{}{}
 		}
 	}
 
 	wantedVFS := make(map[string]struct{})
 	if vfs != "" {
-		for _, opt := range strings.Split(vfs, ",") {
+		for opt := range strings.SplitSeq(vfs, ",") {
 			wantedVFS[opt] = struct{}{}
 		}
 	}
@@ -146,20 +146,20 @@ func validateMount(t *testing.T, mnt string, opts, optional, vfs string) {
 		p := mnts[mi.Parent]
 		pOpts := make(map[string]struct{})
 		if p.Options != "" {
-			for _, opt := range strings.Split(p.Options, ",") {
+			for opt := range strings.SplitSeq(p.Options, ",") {
 				pOpts[clean(opt)] = struct{}{}
 			}
 		}
 		pOptional := make(map[string]struct{})
 		if p.Optional != "" {
-			for _, field := range strings.Split(p.Optional, ",") {
+			for field := range strings.SplitSeq(p.Optional, ",") {
 				pOptional[clean(field)] = struct{}{}
 			}
 		}
 
 		// Validate Options
 		if mi.Options != "" {
-			for _, opt := range strings.Split(mi.Options, ",") {
+			for opt := range strings.SplitSeq(mi.Options, ",") {
 				opt = clean(opt)
 				if !has(volunteeredOPT, opt) && !has(wantedOpts, opt) && !has(pOpts, opt) {
 					t.Errorf("unexpected mount option %q, expected %q", opt, opts)
@@ -173,7 +173,7 @@ func validateMount(t *testing.T, mnt string, opts, optional, vfs string) {
 
 		// Validate Optional
 		if mi.Optional != "" {
-			for _, field := range strings.Split(mi.Optional, ",") {
+			for field := range strings.SplitSeq(mi.Optional, ",") {
 				field = clean(field)
 				if !has(wantedOptional, field) && !has(pOptional, field) {
 					t.Errorf("unexpected optional field %q, expected %q", field, optional)
@@ -188,7 +188,7 @@ func validateMount(t *testing.T, mnt string, opts, optional, vfs string) {
 		// Validate VFS if set
 		if vfs != "" {
 			if mi.VFSOptions != "" {
-				for _, opt := range strings.Split(mi.VFSOptions, ",") {
+				for opt := range strings.SplitSeq(mi.VFSOptions, ",") {
 					opt = clean(opt)
 					if !has(wantedVFS, opt) && !has(volunteeredVFS, opt) {
 						t.Errorf("unexpected vfs option %q, expected %q", opt, vfs)

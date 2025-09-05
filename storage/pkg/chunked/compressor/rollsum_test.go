@@ -79,10 +79,9 @@ func BenchmarkRollsum(b *testing.B) {
 		buf[i] = byte(rand.Int63())
 	}
 
-	b.ResetTimer()
 	rs := NewRollSum()
 	splits := 0
-	for range b.N {
+	for b.Loop() {
 		splits = 0
 		for _, b := range buf {
 			rs.Roll(b)

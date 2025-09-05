@@ -31,7 +31,7 @@ func TestGoodNew(t *testing.T) {
 		if i == 0 {
 			extraStages = ", \"poststart\", \"poststop\""
 		}
-		err := os.WriteFile(jsonPath, []byte(fmt.Sprintf("{\"version\": \"1.0.0\", \"hook\": {\"path\": \"%s\", \"timeout\": %d}, \"when\": {\"always\": true}, \"stages\": [\"prestart\"%s]}", path, i+1, extraStages)), 0o644)
+		err := os.WriteFile(jsonPath, fmt.Appendf(nil, "{\"version\": \"1.0.0\", \"hook\": {\"path\": \"%s\", \"timeout\": %d}, \"when\": {\"always\": true}, \"stages\": [\"prestart\"%s]}", path, i+1, extraStages), 0o644)
 		if err != nil {
 			t.Fatal(err)
 		}

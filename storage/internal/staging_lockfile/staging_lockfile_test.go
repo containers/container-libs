@@ -127,7 +127,7 @@ func TestLockFileRecreation(t *testing.T) {
 func TestConcurrentLocking(t *testing.T) {
 	const n = 10
 	ch := make(chan struct{}, n)
-	for i := 0; i < n; i++ {
+	for range n {
 		go func() {
 			l, _, err := CreateAndLock(t.TempDir(), "concurrent-lock")
 			require.NoError(t, err)
@@ -135,7 +135,7 @@ func TestConcurrentLocking(t *testing.T) {
 			ch <- struct{}{}
 		}()
 	}
-	for i := 0; i < n; i++ {
+	for range n {
 		<-ch
 	}
 	require.Len(t, stagingLockFiles, 0)
@@ -149,7 +149,7 @@ func TestTryLockPathMultiProcess(t *testing.T) {
 
 	expectedErrMsg := fmt.Sprintf("error opening lock file %q: failed to acquire lock on ", fullPath)
 	tryLockTimes := 3
-	for i := 0; i < tryLockTimes; i++ {
+	for range tryLockTimes {
 		cmd, stdout, err := subTryLockPath(fullPath)
 		require.NoError(t, err)
 		stderrBuf := new(strings.Builder)

@@ -232,16 +232,16 @@ func ValidateSysctl(val string) (string, error) {
 		"net.",
 		"fs.mqueue.",
 	}
-	arr := strings.Split(val, "=")
-	if len(arr) < 2 {
+	sysctlName, _, ok := strings.Cut(val, "=")
+	if !ok {
 		return "", fmt.Errorf("sysctl '%s' is not allowed", val)
 	}
-	if validSysctlMap[arr[0]] {
+	if validSysctlMap[sysctlName] {
 		return val, nil
 	}
 
 	for _, vp := range validSysctlPrefixes {
-		if strings.HasPrefix(arr[0], vp) {
+		if strings.HasPrefix(sysctlName, vp) {
 			return val, nil
 		}
 	}

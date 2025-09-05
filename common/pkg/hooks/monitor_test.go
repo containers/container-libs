@@ -32,7 +32,7 @@ func TestMonitorOneDirGood(t *testing.T) {
 	jsonPath := filepath.Join(dir, "a.json")
 
 	t.Run("good-addition", func(t *testing.T) {
-		err = os.WriteFile(jsonPath, []byte(fmt.Sprintf("{\"version\": \"1.0.0\", \"hook\": {\"path\": \"%s\"}, \"when\": {\"always\": true}, \"stages\": [\"prestart\", \"poststart\", \"poststop\"]}", path)), 0o644)
+		err = os.WriteFile(jsonPath, fmt.Appendf(nil, "{\"version\": \"1.0.0\", \"hook\": {\"path\": \"%s\"}, \"when\": {\"always\": true}, \"stages\": [\"prestart\", \"poststart\", \"poststop\"]}", path), 0o644)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -126,7 +126,7 @@ func TestMonitorTwoDirGood(t *testing.T) {
 	}
 
 	fallbackPath := filepath.Join(fallbackDir, "a.json")
-	fallbackJSON := []byte(fmt.Sprintf("{\"version\": \"1.0.0\", \"hook\": {\"path\": \"%s\"}, \"when\": {\"always\": true}, \"stages\": [\"prestart\"]}", path))
+	fallbackJSON := fmt.Appendf(nil, "{\"version\": \"1.0.0\", \"hook\": {\"path\": \"%s\"}, \"when\": {\"always\": true}, \"stages\": [\"prestart\"]}", path)
 	fallbackInjected := &rspec.Hooks{
 		CreateRuntime: []rspec.Hook{
 			{
@@ -153,7 +153,7 @@ func TestMonitorTwoDirGood(t *testing.T) {
 	})
 
 	primaryPath := filepath.Join(primaryDir, "a.json")
-	primaryJSON := []byte(fmt.Sprintf("{\"version\": \"1.0.0\", \"hook\": {\"path\": \"%s\", \"timeout\": 1}, \"when\": {\"always\": true}, \"stages\": [\"prestart\"]}", path))
+	primaryJSON := fmt.Appendf(nil, "{\"version\": \"1.0.0\", \"hook\": {\"path\": \"%s\", \"timeout\": 1}, \"when\": {\"always\": true}, \"stages\": [\"prestart\"]}", path)
 	one := 1
 	primaryInjected := &rspec.Hooks{
 		CreateRuntime: []rspec.Hook{

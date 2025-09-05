@@ -173,7 +173,7 @@ func TestReferenceParse(t *testing.T) {
 		},
 	}
 	for _, testcase := range referenceTestcases {
-		failf := func(format string, v ...interface{}) {
+		failf := func(format string, v ...any) {
 			t.Logf(strconv.Quote(testcase.input)+": "+format, v...)
 			t.Fail()
 		}
@@ -267,7 +267,7 @@ func TestWithNameFailure(t *testing.T) {
 		},
 	}
 	for _, testcase := range testcases {
-		failf := func(format string, v ...interface{}) {
+		failf := func(format string, v ...any) {
 			t.Logf(strconv.Quote(testcase.input)+": "+format, v...)
 			t.Fail()
 		}
@@ -317,7 +317,7 @@ func TestSplitHostname(t *testing.T) {
 		},
 	}
 	for _, testcase := range testcases {
-		failf := func(format string, v ...interface{}) {
+		failf := func(format string, v ...any) {
 			t.Logf(strconv.Quote(testcase.input)+": "+format, v...)
 			t.Fail()
 		}
@@ -373,7 +373,7 @@ func TestSerialization(t *testing.T) {
 		},
 	}
 	for _, testcase := range testcases {
-		failf := func(format string, v ...interface{}) {
+		failf := func(format string, v ...any) {
 			t.Logf(strconv.Quote(testcase.input)+": "+format, v...)
 			t.Fail()
 		}
@@ -457,7 +457,7 @@ func TestSerialization(t *testing.T) {
 
 		// Ensure t.Field is not implementing "Reference" directly, getting
 		// around the Reference type system
-		var fieldInterface interface{} = t.Field
+		var fieldInterface any = t.Field
 		if _, ok := fieldInterface.(Reference); ok {
 			failf("field should not implement Reference interface")
 		}
@@ -499,7 +499,7 @@ func TestWithTag(t *testing.T) {
 		},
 	}
 	for _, testcase := range testcases {
-		failf := func(format string, v ...interface{}) {
+		failf := func(format string, v ...any) {
 			t.Logf(strconv.Quote(testcase.name)+": "+format, v...)
 			t.Fail()
 		}
@@ -556,7 +556,7 @@ func TestWithDigest(t *testing.T) {
 		},
 	}
 	for _, testcase := range testcases {
-		failf := func(format string, v ...interface{}) {
+		failf := func(format string, v ...any) {
 			t.Logf(strconv.Quote(testcase.name)+": "+format, v...)
 			t.Fail()
 		}
@@ -627,7 +627,7 @@ func TestParseNamed(t *testing.T) {
 		},
 	}
 	for _, testcase := range testcases {
-		failf := func(format string, v ...interface{}) {
+		failf := func(format string, v ...any) {
 			t.Logf(strconv.Quote(testcase.input)+": "+format, v...)
 			t.Fail()
 		}

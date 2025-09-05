@@ -145,11 +145,11 @@ func TestValidateLabel(t *testing.T) {
 
 func logOptsValidator(val string) (string, error) {
 	allowedKeys := map[string]string{"max-size": "1", "max-file": "2"}
-	vals := strings.Split(val, "=")
-	if allowedKeys[vals[0]] != "" {
+	key, _, _ := strings.Cut(val, "=")
+	if allowedKeys[key] != "" {
 		return val, nil
 	}
-	return "", fmt.Errorf("invalid key %s", vals[0])
+	return "", fmt.Errorf("invalid key %s", key)
 }
 
 func TestNamedListOpts(t *testing.T) {

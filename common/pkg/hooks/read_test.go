@@ -32,7 +32,7 @@ func TestGoodFile(t *testing.T) {
 	dir := t.TempDir()
 
 	jsonPath := filepath.Join(dir, "hook.json")
-	err := os.WriteFile(jsonPath, []byte(fmt.Sprintf("{\"version\": \"1.0.0\", \"hook\": {\"path\": \"%s\"}, \"when\": {\"always\": true}, \"stages\": [\"prestart\"]}", path)), 0o644)
+	err := os.WriteFile(jsonPath, fmt.Appendf(nil, "{\"version\": \"1.0.0\", \"hook\": {\"path\": \"%s\"}, \"when\": {\"always\": true}, \"stages\": [\"prestart\"]}", path), 0o644)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -121,7 +121,7 @@ func TestGoodDir(t *testing.T) {
 	}
 
 	jsonPath := filepath.Join(dir, "a.json")
-	err = os.WriteFile(jsonPath, []byte(fmt.Sprintf("{\"version\": \"1.0.0\", \"hook\": {\"path\": \"%s\"}, \"when\": {\"always\": true}, \"stages\": [\"prestart\"]}", path)), 0o644)
+	err = os.WriteFile(jsonPath, fmt.Appendf(nil, "{\"version\": \"1.0.0\", \"hook\": {\"path\": \"%s\"}, \"when\": {\"always\": true}, \"stages\": [\"prestart\"]}", path), 0o644)
 	if err != nil {
 		t.Fatal(err)
 	}

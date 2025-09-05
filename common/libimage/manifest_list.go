@@ -303,10 +303,8 @@ func (m *ManifestList) LookupInstance(ctx context.Context, architecture, os, var
 	}
 
 	for _, image := range allImages {
-		for _, imageDigest := range append(image.Digests(), image.Digest()) {
-			if imageDigest == instanceDigest {
-				return image, nil
-			}
+		if slices.Contains(append(image.Digests(), image.Digest()), instanceDigest) {
+			return image, nil
 		}
 	}
 

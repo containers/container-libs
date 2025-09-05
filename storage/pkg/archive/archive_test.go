@@ -811,9 +811,8 @@ func BenchmarkTarUntar(b *testing.B) {
 		b.Fatal(err)
 	}
 
-	b.ResetTimer()
 	b.SetBytes(int64(n))
-	for range b.N {
+	for b.Loop() {
 		err := defaultTarUntar(origin, target)
 		if err != nil {
 			b.Fatal(err)
@@ -831,9 +830,8 @@ func BenchmarkTarUntarWithLinks(b *testing.B) {
 		b.Fatal(err)
 	}
 
-	b.ResetTimer()
 	b.SetBytes(int64(n))
-	for range b.N {
+	for b.Loop() {
 		err := defaultTarUntar(origin, target)
 		if err != nil {
 			b.Fatal(err)

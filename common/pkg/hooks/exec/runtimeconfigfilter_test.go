@@ -13,7 +13,8 @@ import (
 )
 
 func TestRuntimeConfigFilter(t *testing.T) {
-	unexpectedEndOfJSONInput := json.Unmarshal([]byte("{\n"), nil) //nolint:govet // this should force the error
+	var discardedParsingDestination map[string]any
+	unexpectedEndOfJSONInput := json.Unmarshal([]byte("{\n"), &discardedParsingDestination) // this should force the error
 	fileMode := os.FileMode(0o600)
 	rootUint32 := uint32(0)
 	binUser := int(1)

@@ -195,7 +195,9 @@ func getNlink(path string) (uint64, error) {
 	if !ok {
 		return 0, fmt.Errorf("expected type *syscall.Stat_t, got %t", stat.Sys())
 	}
-	return uint64(statT.Nlink), nil //nolint:unconvert // Need the conversion for e.g. linux/arm64.
+	// _nolint_: Whether this conversion is required is hardware- and OS-dependent: the value might be uint64 on Linux, int32 on macOS.
+	// So, this might trigger either "uncovert" (if the conversion is unnecessary) or "nolintlint" (if it is required)
+	return uint64(statT.Nlink), nil //nolint:unconvert,nolintlint
 }
 
 func getInode(path string) (uint64, error) {

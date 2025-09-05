@@ -26,8 +26,10 @@ func Validate(user *url.Userinfo, path string, port int, identity string) (*conf
 	}
 
 	// sometimes we are not going to have a path, this breaks uri.Hostname()
-	if uri.Host == "" && strings.Contains(uri.String(), "@") {
-		uri.Host = strings.Split(uri.String(), "@")[1]
+	if uri.Host == "" {
+		if _, host, ok := strings.Cut(uri.String(), "@"); ok {
+			uri.Host = host
+		}
 	}
 
 	if uri.Port() == "" {
@@ -139,28 +141,26 @@ func ReadLogin() []byte {
 func ParseScpArgs(options ConnectionScpOptions) (string, string, string, bool, error) {
 	// assume load to remote
 	host := options.Destination
-	if strings.Contains(host, "ssh://") {
-		host = strings.Split(host, "ssh://")[1]
+	if _, h, ok := strings.Cut(host, "ssh://"); ok {
+		host = h
 	}
 	localPath := options.Source
-	if strings.Contains(localPath, "ssh://") {
-		localPath = strings.Split(localPath, "ssh://")[1]
+	if _, lp, ok := strings.Cut(localPath, "ssh://"); ok {
+		localPath = lp
 	}
 	var remotePath string
 	swap := false
-	if split := strings.Split(localPath, ":"); len(split) == 2 {
+	if localHost, localRest, ok := strings.Cut(localPath, ":"); ok {
 		// save to remote, load to local
-		host = split[0]
-		remotePath = split[1]
+		host = localHost
+		remotePath = localRest
 		localPath = options.Destination
 		swap = true
 	} else {
-		split = strings.Split(host, ":")
-		if len(split) != 2 {
+		host, remotePath, ok = strings.Cut(host, ":")
+		if !ok {
 			return "", "", "", false, errors.New("no remote destination provided")
 		}
-		host = split[0]
-		remotePath = split[1]
 	}
 	remotePath = strings.TrimSuffix(remotePath, "\n")
 	return host, remotePath, localPath, swap, nil

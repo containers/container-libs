@@ -567,7 +567,7 @@ func (fs *FlagSet) PrintDefaults() {
 				format := "  -%s=%s"
 				fmt.Fprintf(writer, format, strings.Join(names, ", -"), val)
 			}
-			for _, line := range strings.Split(flag.Usage, "\n") {
+			for line := range strings.SplitSeq(flag.Usage, "\n") {
 				fmt.Fprintln(writer, "\t", line)
 			}
 		}
@@ -1094,7 +1094,7 @@ func (fs *FlagSet) Parse(arguments []string) error {
 		if err == ErrRetry {
 			if len(name) > 1 {
 				err = nil
-				for _, letter := range strings.Split(name, "") {
+				for letter := range strings.SplitSeq(name, "") {
 					fs.args = append([]string{"-" + letter}, fs.args...)
 					seen2, _, err2 := fs.parseOne()
 					if seen2 {

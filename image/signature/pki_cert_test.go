@@ -122,10 +122,7 @@ func TestPKIVerify(t *testing.T) {
 	referenceTime := time.Now()
 	testCAKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	require.NoError(t, err)
-	testCASN, err := cryptoutils.GenerateSerialNumber()
-	require.NoError(t, err)
 	testCAContents := x509.Certificate{
-		SerialNumber:          testCASN,
 		Subject:               pkix.Name{CommonName: "root CA"},
 		NotBefore:             referenceTime.Add(-1 * time.Minute),
 		NotAfter:              referenceTime.Add(1 * time.Hour),
@@ -239,10 +236,7 @@ func TestPKIVerify(t *testing.T) {
 	} {
 		testLeafKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 		require.NoError(t, err, c.name)
-		testLeafSN, err := cryptoutils.GenerateSerialNumber()
-		require.NoError(t, err, c.name)
 		testLeafContents := x509.Certificate{
-			SerialNumber:   testLeafSN,
 			Subject:        pkix.Name{CommonName: "leaf"},
 			NotBefore:      referenceTime.Add(-1 * time.Minute),
 			NotAfter:       referenceTime.Add(1 * time.Hour),

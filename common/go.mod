@@ -2,7 +2,7 @@ module go.podman.io/common
 
 // Warning: Ensure the "go" and "toolchain" versions match exactly to prevent unwanted auto-updates
 
-go 1.23.3
+go 1.24.0
 
 require (
 	github.com/BurntSushi/toml v1.5.0

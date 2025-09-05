@@ -474,7 +474,7 @@ func TestNormalizedSplitHostname(t *testing.T) {
 		},
 	}
 	for _, testcase := range testcases {
-		failf := func(format string, v ...interface{}) {
+		failf := func(format string, v ...any) {
 			t.Logf(strconv.Quote(testcase.input)+": "+format, v...)
 			t.Fail()
 		}

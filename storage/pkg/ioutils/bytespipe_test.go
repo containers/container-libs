@@ -138,7 +138,7 @@ func TestBytesPipeWriteRandomChunks(t *testing.T) {
 
 func BenchmarkBytesPipeWrite(b *testing.B) {
 	testData := []byte("pretty short line, because why not?")
-	for range b.N {
+	for b.Loop() {
 		readBuf := make([]byte, 1024)
 		buf := NewBytesPipe()
 		go func() {
@@ -157,7 +157,7 @@ func BenchmarkBytesPipeWrite(b *testing.B) {
 
 func BenchmarkBytesPipeRead(b *testing.B) {
 	rd := make([]byte, 512)
-	for range b.N {
+	for b.Loop() {
 		b.StopTimer()
 		buf := NewBytesPipe()
 		for range 500 {
