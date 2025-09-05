@@ -30,6 +30,9 @@ var (
 	// Transport is an ImageTransport for OCI directories.
 	Transport = ociTransport{}
 
+	// ErrEmptyIndex is an error returned when the index includes no image.
+	ErrEmptyIndex = errors.New("no image in oci")
+
 	// ErrMoreThanOneImage is an error returned when the manifest includes
 	// more than one image and the user should choose which one to use.
 	ErrMoreThanOneImage = errors.New("more than one image in oci, choose an image")
@@ -250,11 +253,33 @@ func (ref ociReference) getManifestDescriptor() (imgspecv1.Descriptor, int, erro
 
 	default:
 		// return manifest if only one image is in the oci directory
-		if len(index.Manifests) != 1 {
-			// ask user to choose image when more than one image in the oci directory
+		if len(index.Manifests) == 0 {
+			return imgspecv1.Descriptor{}, -1, ErrEmptyIndex
+		}
+		// if there's one image return it, even if it is a signature
+		if len(index.Manifests) == 1 {
+			return index.Manifests[0], 0, nil
+		}
+		// when there's more than one image, try to get a non-signature image
+		var desc imgspecv1.Descriptor
+		idx := -1
+		for i, md := range index.Manifests {
+			if isSigstoreTag(md.Annotations[imgspecv1.AnnotationRefName]) {
+				continue
+			}
+			// More than one non-signature image was found
+			if idx != -1 {
+				// ask user to choose image when more than one image in the oci directory
+				return imgspecv1.Descriptor{}, -1, ErrMoreThanOneImage
+			}
+			desc = md
+			idx = i
+		}
+		// there's only multiple signature images
+		if idx == -1 {
 			return imgspecv1.Descriptor{}, -1, ErrMoreThanOneImage
 		}
-		return index.Manifests[0], 0, nil
+		return desc, idx, nil
 	}
 }
 
@@ -390,4 +415,14 @@ func (ref ociReference) getOCIDescriptorContents(desc imgspecv1.Descriptor, maxS
 		return nil, fmt.Errorf("digest mismatch, expected %q, got %q", desc.Digest.String(), actualDigest.String())
 	}
 	return payload, nil
+}
+
+// isSigstoreTag returns true if the tag is sigstore signature tag.
+func isSigstoreTag(tag string) bool {
+	if !strings.HasSuffix(tag, ".sig") {
+		return false
+	}
+	digestPart := strings.TrimSuffix(tag, ".sig")
+	digestPart = strings.Replace(digestPart, "-", ":", 1)
+	return digest.Digest(digestPart).Validate() == nil
 }

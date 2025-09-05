@@ -8,7 +8,6 @@ import (
 	"io/fs"
 	"os"
 	"slices"
-	"strings"
 
 	digest "github.com/opencontainers/go-digest"
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
@@ -215,14 +214,4 @@ func (ref ociReference) deleteSignatures(ctx context.Context, sys *types.SystemC
 		return nil
 	}
 	return err
-}
-
-// isSigstoreTag returns true if the tag is sigstore signature tag.
-func isSigstoreTag(tag string) bool {
-	if !strings.HasSuffix(tag, ".sig") {
-		return false
-	}
-	digestPart := strings.TrimSuffix(tag, ".sig")
-	digestPart = strings.Replace(digestPart, "-", ":", 1)
-	return digest.Digest(digestPart).Validate() == nil
 }
