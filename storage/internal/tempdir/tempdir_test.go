@@ -271,3 +271,63 @@ func TestTempDirFileNaming(t *testing.T) {
 		assert.True(t, found, "Expected file %s not found", expectedName)
 	}
 }
+
+func TestStageAddition(t *testing.T) {
+	rootDir := t.TempDir()
+	td, err := NewTempDir(rootDir)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		assert.NoError(t, td.Cleanup())
+	})
+
+	sa1, err := td.StageAddition()
+	require.NoError(t, err)
+	// Path should not be created by StagedAddition.
+	assert.NoFileExists(t, sa1.Path)
+
+	// ensure we can create file
+	f, err := os.Create(sa1.Path)
+	require.NoError(t, err)
+	require.NoError(t, f.Close())
+
+	// need to use a dest file which does not exist yet
+	dest := filepath.Join(t.TempDir(), "file1")
+
+	err = sa1.Commit(dest)
+	require.NoError(t, err)
+	assert.FileExists(t, dest)
+	assert.NoFileExists(t, sa1.Path)
+
+	// now test the same with a directory
+	sa2, err := td.StageAddition()
+	require.NoError(t, err)
+	// Path should not be created by StagedAddition.
+	assert.NoDirExists(t, sa2.Path)
+
+	// ensure we can create a directory
+	err = os.Mkdir(sa2.Path, 0o755)
+	require.NoError(t, err)
+
+	// need to use a dest which does not exist yet
+	dest = filepath.Join(t.TempDir(), "dir")
+
+	err = sa2.Commit(dest)
+	require.NoError(t, err)
+	assert.DirExists(t, dest)
+	assert.NoDirExists(t, sa2.Path)
+
+	// Commit the same stage addition struct again should error
+	err = sa2.Commit(dest)
+	require.Error(t, err)
+
+	// Cleanup() should cleanup the temp paths from StagedAddition
+	sa3, err := td.StageAddition()
+	require.NoError(t, err)
+
+	err = os.Mkdir(sa3.Path, 0o755)
+	require.NoError(t, err)
+
+	err = td.Cleanup()
+	require.NoError(t, err)
+	assert.NoDirExists(t, sa3.Path)
+}
