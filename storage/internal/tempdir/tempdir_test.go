@@ -1,6 +1,7 @@
 package tempdir
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -270,4 +271,45 @@ func TestTempDirFileNaming(t *testing.T) {
 		}
 		assert.True(t, found, "Expected file %s not found", expectedName)
 	}
+}
+
+func TestStageAddition(t *testing.T) {
+	rootDir := t.TempDir()
+	td, err := NewTempDir(rootDir)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		assert.NoError(t, td.Cleanup())
+	})
+
+	sa, err := td.StageDirectoryAddition(func(path string) error {
+		f, err := os.Create(filepath.Join(path, "file1"))
+		require.NoError(t, err)
+		require.NoError(t, f.Close())
+		return nil
+	})
+	require.NoError(t, err)
+
+	// need to use a dest which does not exist yet
+	dest := filepath.Join(t.TempDir(), "dest")
+
+	err = sa.Commit(dest)
+	require.NoError(t, err)
+	assert.FileExists(t, filepath.Join(dest, "file1"))
+	assert.NoDirExists(t, sa.source)
+}
+
+func TestStageAdditionCallbackError(t *testing.T) {
+	rootDir := t.TempDir()
+	td, err := NewTempDir(rootDir)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		assert.NoError(t, td.Cleanup())
+	})
+
+	customErr := errors.New("custom error")
+
+	_, err = td.StageDirectoryAddition(func(path string) error {
+		return customErr
+	})
+	require.ErrorIs(t, err, customErr)
 }
