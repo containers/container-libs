@@ -16,8 +16,11 @@ import (
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"go.podman.io/image/v5/internal/imagesource/impl"
 	"go.podman.io/image/v5/internal/imagesource/stubs"
-	"go.podman.io/image/v5/internal/manifest"
+	"go.podman.io/image/v5/internal/iolimits"
 	"go.podman.io/image/v5/internal/private"
+	"go.podman.io/image/v5/internal/signature"
+	"go.podman.io/image/v5/manifest"
+	"go.podman.io/image/v5/pkg/blobinfocache/none"
 	"go.podman.io/image/v5/pkg/tlsclientconfig"
 	"go.podman.io/image/v5/types"
 	"go.podman.io/storage/pkg/fileutils"
@@ -158,20 +161,7 @@ func (s *ociImageSource) GetBlob(ctx context.Context, info types.BlobInfo, cache
 		}
 	}
 
-	path, err := s.ref.blobPath(info.Digest, s.sharedBlobDir)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	r, err := os.Open(path)
-	if err != nil {
-		return nil, 0, err
-	}
-	fi, err := r.Stat()
-	if err != nil {
-		return nil, 0, err
-	}
-	return r, fi.Size(), nil
+	return s.ref.getBlob(info.Digest, s.sharedBlobDir)
 }
 
 // getExternalBlob returns the reader of the first available blob URL from urls, which must not be empty.
@@ -245,4 +235,48 @@ func GetLocalBlobPath(ctx context.Context, src types.ImageSource, digest digest.
 	}
 
 	return path, nil
+}
+
+func (s *ociImageSource) GetSignaturesWithFormat(ctx context.Context, instanceDigest *digest.Digest) ([]signature.Signature, error) {
+	if instanceDigest == nil {
+		if s.descriptor.Digest == "" {
+			return nil, errors.New("unknown manifest digest, can't get signatures")
+		}
+		instanceDigest = &s.descriptor.Digest
+	}
+
+	ociManifest, err := s.ref.getSigstoreAttachmentManifest(*instanceDigest, s.index, s.sharedBlobDir)
+	if err != nil {
+		return nil, err
+	}
+	if ociManifest == nil {
+		// No signature found
+		return nil, nil
+	}
+
+	signatures := make([]signature.Signature, 0, len(ociManifest.Layers))
+	for _, layer := range ociManifest.Layers {
+		layerBlob, _, err := s.GetBlob(ctx, types.BlobInfo{Digest: layer.Digest}, none.NoCache)
+		if err != nil {
+			return nil, err
+		}
+		defer layerBlob.Close()
+		payload, err := iolimits.ReadAtMost(layerBlob, iolimits.MaxSignatureBodySize)
+		if err != nil {
+			return nil, fmt.Errorf("reading blob %s in %s: %w", layer.Digest.String(), instanceDigest, err)
+		}
+		if err := layer.Digest.Validate(); err != nil {
+			return nil, fmt.Errorf("invalid digest %q: %w", layer.Digest, err)
+		}
+		digestAlgorithm := layer.Digest.Algorithm()
+		if !digestAlgorithm.Available() {
+			return nil, fmt.Errorf("invalid digest %q: unsupported digest algorithm %q", layer.Digest.String(), digestAlgorithm.String())
+		}
+		actualDigest := digestAlgorithm.FromBytes(payload)
+		if actualDigest != layer.Digest {
+			return nil, fmt.Errorf("digest mismatch, expected %q, got %q", layer.Digest.String(), actualDigest.String())
+		}
+		signatures = append(signatures, signature.SigstoreFromComponents(layer.MediaType, payload, layer.Annotations))
+	}
+	return signatures, nil
 }
