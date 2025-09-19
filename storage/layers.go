@@ -2426,17 +2426,25 @@ func (r *layerStore) applyDiffWithOptions(to string, layerOptions *LayerOptions,
 	var compressedDigest, uncompressedDigest digest.Digest       // = ""
 	var compressedDigester, uncompressedDigester digest.Digester // = nil
 	digestAlgorithm := r.store.GetDigestAlgorithm()
-	if layerOptions != nil && layerOptions.OriginalDigest != "" &&
-		layerOptions.OriginalDigest.Algorithm() == digestAlgorithm {
+	if layerOptions != nil && layerOptions.OriginalDigest != "" {
+		// Use the existing digest if available
 		compressedDigest = layerOptions.OriginalDigest
 	} else {
 		compressedDigester = digestAlgorithm.Digester()
 	}
-	if layerOptions != nil && layerOptions.UncompressedDigest != "" &&
-		layerOptions.UncompressedDigest.Algorithm() == digestAlgorithm {
+	if layerOptions != nil && layerOptions.UncompressedDigest != "" {
+		// Use the existing uncompressed digest if available
 		uncompressedDigest = layerOptions.UncompressedDigest
 	} else if compression != archive.Uncompressed {
-		uncompressedDigester = digestAlgorithm.Digester()
+		// For computing new uncompressed digests, prefer the algorithm from the expected compressed digest
+		// if available and valid, otherwise fall back to the storage's digest algorithm
+		compressedDigestAlgorithm := digestAlgorithm
+		if layerOptions != nil && layerOptions.OriginalDigest != "" {
+			if algo := layerOptions.OriginalDigest.Algorithm(); algo.Available() {
+				compressedDigestAlgorithm = algo
+			}
+		}
+		uncompressedDigester = compressedDigestAlgorithm.Digester()
 	}
 
 	var compressedWriter io.Writer

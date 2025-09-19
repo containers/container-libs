@@ -263,6 +263,7 @@ func TestParseRepositoryInfo(t *testing.T) {
 }
 
 func TestParseReferenceWithTagAndDigest(t *testing.T) {
+	// Test SHA256 digest parsing with tag
 	shortRef := "busybox:latest@sha256:86e0e091d0da6bde2456dbb48306f3956bbeb2eae1b5b9a43045843f69fe4aaa"
 	ref, err := ParseNormalizedNamed(shortRef)
 	if err != nil {
@@ -280,6 +281,26 @@ func TestParseReferenceWithTagAndDigest(t *testing.T) {
 	}
 	if expected, actual := shortRef, FamiliarString(ref); actual != expected {
 		t.Fatalf("Invalid parsed reference for %q: expected %q, got %q", ref, expected, actual)
+	}
+
+	// Test SHA512 digest parsing with tag
+	shortRef512 := "alpine:3.18@sha512:b89d9c93e9ed3597455c90a0b88a8bbb5cb7188438f70953fede212a0c4394e0d200d73e696b8053595e5d7cc4f2b8f5e86b07b5e6d13b8fd1a68d7b8cc2f9b"
+	ref512, err := ParseNormalizedNamed(shortRef512)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if expected, actual := "docker.io/library/"+shortRef512, ref512.String(); actual != expected {
+		t.Fatalf("Invalid parsed reference for %q: expected %q, got %q", ref512, expected, actual)
+	}
+
+	if _, isTagged := ref512.(NamedTagged); !isTagged {
+		t.Fatalf("Reference from %q should support tag", ref512)
+	}
+	if _, isCanonical := ref512.(Canonical); !isCanonical {
+		t.Fatalf("Reference from %q should support digest", ref512)
+	}
+	if expected, actual := shortRef512, FamiliarString(ref512); actual != expected {
+		t.Fatalf("Invalid parsed reference for %q: expected %q, got %q", ref512, expected, actual)
 	}
 }
 

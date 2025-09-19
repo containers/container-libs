@@ -591,7 +591,7 @@ func newContainerStore(dir string, runDir string, transient bool, digestType str
 		lockfile:   lockfile,
 		dir:        dir,
 		digestType: digestType,
-		jsonPath:   [numContainerLocationIndex]string{
+		jsonPath: [numContainerLocationIndex]string{
 			filepath.Join(dir, "containers.json"),
 			filepath.Join(volatileDir, "volatile-containers.json"),
 		},

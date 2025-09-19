@@ -46,6 +46,12 @@ func TestDigestIfUnknown(t *testing.T) {
 			expectedDigest: digest.Digest("unknown-algorithm:uninspected-value"),
 		},
 		{
+			// When a SHA512 digest is provided, it should be returned as-is (no computation)
+			inputDigest:    digest.Digest("sha512:uninspected-value"),
+			computesDigest: false,
+			expectedDigest: digest.Digest("sha512:uninspected-value"),
+		},
+		{
 			inputDigest:    "",
 			computesDigest: true,
 			expectedDigest: digest.Canonical.FromBytes(testData),
@@ -64,6 +70,13 @@ func TestDigestIfCanonicalUnknown(t *testing.T) {
 			inputDigest:    digest.Digest("unknown-algorithm:uninspected-value"),
 			computesDigest: true,
 			expectedDigest: digest.Canonical.FromBytes(testData),
+		},
+		{
+			// When a SHA512 digest is provided, it should compute using SHA512 algorithm
+			// because SHA512 is not canonical (only SHA256 is canonical)
+			inputDigest:    digest.Digest("sha512:uninspected-value"),
+			computesDigest: true,
+			expectedDigest: digest.SHA512.FromBytes(testData),
 		},
 		{
 			inputDigest:    "",

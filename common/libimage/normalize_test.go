@@ -120,8 +120,10 @@ func TestNormalizeName(t *testing.T) {
 
 func TestNormalizeTaggedDigestedString(t *testing.T) {
 	const digestSuffix = "@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+	const digestSuffix512 = "@sha512:b89d9c93e9ed3597455c90a0b88a8bbb5cb7188438f70953fede212a0c4394e0d200d73e696b8053595e5d7cc4f2b8f5e86b07b5e6d13b8fd1a68d7b8cc2f9b"
 
 	for _, test := range []struct{ input, expected string }{
+		// SHA256 test cases (existing)
 		{"$$garbage", ""},
 		{"fedora", "fedora"},
 		{"fedora:tag", "fedora:tag"},
@@ -134,6 +136,15 @@ func TestNormalizeTaggedDigestedString(t *testing.T) {
 		{"quay.io/repo/fedora:tag" + digestSuffix, "quay.io/repo/fedora" + digestSuffix},
 		{"localhost/fedora:anothertag" + digestSuffix, "localhost/fedora" + digestSuffix},
 		{"localhost:5000/fedora:v1.2.3.4.5" + digestSuffix, "localhost:5000/fedora" + digestSuffix},
+		// SHA512 test cases
+		{digestSuffix512, ""},
+		{"docker://alpine:latest" + digestSuffix512, ""},
+		{"alpine" + digestSuffix512, "alpine" + digestSuffix512},
+		{"alpine:latest" + digestSuffix512, "alpine" + digestSuffix512},
+		{"repo/alpine:123456" + digestSuffix512, "repo/alpine" + digestSuffix512},
+		{"quay.io/repo/alpine:tag" + digestSuffix512, "quay.io/repo/alpine" + digestSuffix512},
+		{"localhost/alpine:anothertag" + digestSuffix512, "localhost/alpine" + digestSuffix512},
+		{"localhost:5000/alpine:v1.2.3.4.5" + digestSuffix512, "localhost:5000/alpine" + digestSuffix512},
 	} {
 		res, named, err := normalizeTaggedDigestedString(test.input)
 		if test.expected == "" {

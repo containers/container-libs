@@ -38,7 +38,7 @@ func initCache(sizeCache int) (*cacheFile, string, string, *bloomFilter) {
 
 	bloomFilter := newBloomFilter(sizeCache*factorNM, numberHashes)
 
-	digester := digest.Canonical.Digester()
+	digester := digest.SHA256.Digester()
 	hash := digester.Hash()
 	for range sizeCache {
 		hash.Write([]byte("1"))
@@ -108,7 +108,7 @@ func BenchmarkLookupBloomRaw(b *testing.B) {
 
 func TestBloomFilter(t *testing.T) {
 	bloomFilter := newBloomFilter(1000, 1)
-	digester := digest.Canonical.Digester()
+	digester := digest.SHA256.Digester()
 	hash := digester.Hash()
 	for range 1000 {
 		hash.Write([]byte("1"))

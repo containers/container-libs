@@ -10,7 +10,7 @@ import (
 
 func newTestImageStore(t *testing.T) rwImageStore {
 	t.Helper()
-	store, err := newImageStore(t.TempDir())
+	store, err := newImageStore(t.TempDir(), "sha256")
 	require.Nil(t, err)
 	return store
 }

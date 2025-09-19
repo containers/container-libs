@@ -152,6 +152,44 @@ func TestPutBlobDigestFailure(t *testing.T) {
 	require.True(t, os.IsNotExist(err))
 }
 
+// TestPutBlobDigestFailureSHA512 simulates behavior on SHA512 digest verification failure.
+func TestPutBlobDigestFailureSHA512(t *testing.T) {
+	const digestErrorString = "Simulated SHA512 digest error"
+	const blobDigest = digest.Digest("sha512:cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e")
+
+	ref, _ := refToTempDir(t)
+	dirRef, ok := ref.(dirReference)
+	require.True(t, ok)
+	blobPath, err := dirRef.layerPath(blobDigest)
+	require.NoError(t, err)
+	cache := memory.New()
+
+	firstRead := true
+	reader := readerFromFunc(func(p []byte) (int, error) {
+		_, err := os.Lstat(blobPath)
+		require.Error(t, err)
+		require.True(t, os.IsNotExist(err))
+		if firstRead { // This should always be true, but there is a small race condition
+			firstRead = false
+			copy(p, "sha512 test content")
+			return len("sha512 test content"), nil
+		}
+		return 0, errors.New(digestErrorString)
+	})
+
+	dest, err := ref.NewImageDestination(context.Background(), nil)
+	require.NoError(t, err)
+	defer dest.Close()
+	_, err = dest.PutBlob(context.Background(), reader, types.BlobInfo{Digest: blobDigest, Size: -1}, cache, false)
+	assert.ErrorContains(t, err, digestErrorString)
+	err = dest.Commit(context.Background(), nil) // nil unparsedToplevel is invalid, we don't currently use the value
+	assert.NoError(t, err)
+
+	_, err = os.Lstat(blobPath)
+	require.Error(t, err)
+	require.True(t, os.IsNotExist(err))
+}
+
 func TestGetPutSignatures(t *testing.T) {
 	ref, _ := refToTempDir(t)
 

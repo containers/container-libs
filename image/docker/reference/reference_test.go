@@ -533,6 +533,7 @@ func TestWithDigest(t *testing.T) {
 		tag      string
 		combined string
 	}{
+		// SHA256 test cases
 		{
 			name:     "test.com/foo",
 			digest:   "sha256:1234567890098765432112345667890098765",
@@ -553,6 +554,23 @@ func TestWithDigest(t *testing.T) {
 			digest:   "sha256:1234567890098765432112345667890098765",
 			tag:      "latest",
 			combined: "test.com:8000/foo:latest@sha256:1234567890098765432112345667890098765",
+		},
+		// SHA512 test cases
+		{
+			name:     "test.com/bar",
+			digest:   "sha512:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef12",
+			combined: "test.com/bar@sha512:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef12",
+		},
+		{
+			name:     "registry.io/project",
+			digest:   "sha512:fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321fedcba09",
+			combined: "registry.io/project@sha512:fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321fedcba09",
+		},
+		{
+			name:     "registry.io:8080/project",
+			digest:   "sha512:1111222233334444555566667777888899990000aaaabbbbccccddddeeeeffff1111222233334444555566667777888899990000aaaabbbbccccddddeeeeffff",
+			tag:      "v1.0",
+			combined: "registry.io:8080/project:v1.0@sha512:1111222233334444555566667777888899990000aaaabbbbccccddddeeeeffff1111222233334444555566667777888899990000aaaabbbbccccddddeeeeffff",
 		},
 	}
 	for _, testcase := range testcases {

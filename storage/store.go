@@ -207,6 +207,9 @@ type Store interface {
 	// GetDigestType returns the configured digest type for the store.
 	GetDigestType() string
 
+	// SetDigestType temporarily sets the digest type for the store.
+	SetDigestType(digestType string)
+
 	// GetDigestAlgorithm returns the digest algorithm based on the configured digest type.
 	GetDigestAlgorithm() digest.Algorithm
 
@@ -4005,6 +4008,12 @@ func (s *store) GetDigestType() string {
 		return "sha256" // default value
 	}
 	return s.digestType
+}
+
+// SetDigestType temporarily sets the digest type for this store.
+// This is used for build operations that need a specific digest algorithm.
+func (s *store) SetDigestType(digestType string) {
+	s.digestType = digestType
 }
 
 // GetDigestAlgorithm returns the digest algorithm based on the configured digest type
