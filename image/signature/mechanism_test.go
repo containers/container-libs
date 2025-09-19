@@ -265,17 +265,25 @@ func TestGPGSigningMechanismVerify(t *testing.T) {
 		assert.Equal(t, TestKeyFingerprintPrimaryWithSubkey, signingFingerprint, variant)
 	}
 
+	// Successful verification of a cleartext signature
+	signature, err := os.ReadFile("./fixtures/invalid-cleartext.signature") // Not fixtureVariants, we don't need to retroactively support v3 cleartext inlined signatures.
+	require.NoError(t, err)
+	content, signingFingerprint, err := mech.Verify(signature)
+	require.NoError(t, err)
+	assert.Equal(t, []byte("This is not JSON\n"), content)
+	assert.Equal(t, TestKeyFingerprint, signingFingerprint)
+
 	// For extra paranoia, test that we return nil data on error.
 
 	// Completely invalid signature.
-	content, signingFingerprint, err := mech.Verify([]byte{})
+	content, signingFingerprint, err = mech.Verify([]byte{})
 	assertSigningError(t, content, signingFingerprint, err)
 
 	content, signingFingerprint, err = mech.Verify([]byte("invalid signature"))
 	assertSigningError(t, content, signingFingerprint, err)
 
 	// Literal packet, not a signature
-	signature, err := os.ReadFile("./fixtures/unsigned-literal.signature") // Not fixtureVariants, the “literal data” packet does not have V3/V4 versions.
+	signature, err = os.ReadFile("./fixtures/unsigned-literal.signature") // Not fixtureVariants, the “literal data” packet does not have V3/V4 versions.
 	require.NoError(t, err)
 	content, signingFingerprint, err = mech.Verify(signature)
 	assertSigningError(t, content, signingFingerprint, err)
