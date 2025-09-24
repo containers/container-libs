@@ -436,7 +436,7 @@ func (d *ociImageDestination) putSignaturesToSigstoreAttachment(ctx context.Cont
 		d.blobDeleteCandidates.Add(signManifest.Config.Digest)
 	}
 
-	desc, err := d.getDescriptor(&manifestDigest)
+	desc, err := d.getDescriptor(manifestDigest)
 	if err != nil {
 		return err
 	}
@@ -523,12 +523,9 @@ func (d *ociImageDestination) putSignaturesToSigstoreAttachment(ctx context.Cont
 	return nil
 }
 
-func (d *ociImageDestination) getDescriptor(digest *digest.Digest) (*imgspecv1.Descriptor, error) {
-	if digest == nil {
-		return nil, errors.New("digest is nil")
-	}
+func (d *ociImageDestination) getDescriptor(digest digest.Digest) (*imgspecv1.Descriptor, error) {
 	for _, desc := range d.index.Manifests {
-		if desc.Digest == *digest {
+		if desc.Digest == digest {
 			return &desc, nil
 		}
 	}
