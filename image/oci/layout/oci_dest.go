@@ -34,16 +34,17 @@ import (
 type ociImageDestination struct {
 	impl.Compat
 	impl.PropertyMethodsInitialize
+	stubs.AlwaysSupportsSignatures
 	stubs.IgnoresOriginalOCIConfig
 	stubs.NoPutBlobPartialInitialize
 
 	ref            ociReference
 	index          imgspecv1.Index
 	sharedBlobDir  string
-	sys            *types.SystemContext
-	manifestDigest digest.Digest
-	// blobsToDelete is a set of digests which may be deleted
-	blobsToDelete *set.Set[digest.Digest]
+	manifestDigest digest.Digest // or "" if not yet known.
+	// blobDeleteCandidates is a set of digests which may be deleted _if_ we find no other references to them;
+	// it’s safe to optimistically include entries which may have other references
+	blobDeleteCandidates *set.Set[digest.Digest]
 }
 
 // newImageDestination returns an ImageDestination for writing to an existing directory.
@@ -86,10 +87,9 @@ func newImageDestination(sys *types.SystemContext, ref ociReference) (private.Im
 		}),
 		NoPutBlobPartialInitialize: stubs.NoPutBlobPartial(ref),
 
-		ref:           ref,
-		index:         *index,
-		sys:           sys,
-		blobsToDelete: set.New[digest.Digest](),
+		ref:                  ref,
+		index:                *index,
+		blobDeleteCandidates: set.New[digest.Digest](),
 	}
 	d.Compat = impl.AddCompat(d)
 	if sys != nil {
@@ -352,16 +352,16 @@ func (d *ociImageDestination) CommitWithOptions(ctx context.Context, options pri
 		return err
 	}
 	// Delete unreferenced blobs (e.g. old signature manifest and its config)
-	if !d.blobsToDelete.Empty() {
-		count := make(map[digest.Digest]int)
-		err = d.ref.countBlobsReferencedByIndex(count, &d.index, d.sharedBlobDir)
+	if !d.blobDeleteCandidates.Empty() {
+		blobsUsedInRootIndex := make(map[digest.Digest]int)
+		err = d.ref.countBlobsReferencedByIndex(blobsUsedInRootIndex, &d.index, d.sharedBlobDir)
 		if err != nil {
 			return fmt.Errorf("error counting blobs to delete: %w", err)
 		}
 		// Don't delete blobs which are referenced
 		actualBlobsToDelete := set.New[digest.Digest]()
-		for dgst := range d.blobsToDelete.All() {
-			if count[dgst] == 0 {
+		for dgst := range d.blobDeleteCandidates.All() {
+			if blobsUsedInRootIndex[dgst] == 0 {
 				actualBlobsToDelete.Add(dgst)
 			}
 		}
@@ -369,7 +369,7 @@ func (d *ociImageDestination) CommitWithOptions(ctx context.Context, options pri
 		if err != nil {
 			return fmt.Errorf("error deleting blobs: %w", err)
 		}
-		d.blobsToDelete = set.New[digest.Digest]()
+		d.blobDeleteCandidates = set.New[digest.Digest]()
 	}
 	if err := os.WriteFile(d.ref.ociLayoutPath(), layoutBytes, 0o644); err != nil {
 		return err
@@ -384,6 +384,7 @@ func (d *ociImageDestination) CommitWithOptions(ctx context.Context, options pri
 func (d *ociImageDestination) PutSignaturesWithFormat(ctx context.Context, signatures []signature.Signature, instanceDigest *digest.Digest) error {
 	if instanceDigest == nil {
 		if d.manifestDigest == "" {
+			// This shouldn’t happen, ImageDestination users are required to call PutManifest before PutSignatures
 			return errors.New("unknown manifest digest, can't add signatures")
 		}
 		instanceDigest = &d.manifestDigest
@@ -394,12 +395,11 @@ func (d *ociImageDestination) PutSignaturesWithFormat(ctx context.Context, signa
 		if sigstoreSig, ok := sig.(signature.Sigstore); ok {
 			sigstoreSignatures = append(sigstoreSignatures, sigstoreSig)
 		} else {
-			return errors.New("OCI Layout only supports sigstoreSignatures")
+			return errors.New("oci: layout only supports sigstore signatures")
 		}
 	}
 
-	err := d.putSignaturesToSigstoreAttachment(ctx, sigstoreSignatures, *instanceDigest)
-	if err != nil {
+	if err := d.putSignaturesToSigstoreAttachment(ctx, sigstoreSignatures, *instanceDigest); err != nil {
 		return err
 	}
 
@@ -431,7 +431,7 @@ func (d *ociImageDestination) putSignaturesToSigstoreAttachment(ctx context.Cont
 				d.ref.StringWithinTransport(), err)
 		}
 		// The config of the signature manifest will be updated and unreferenced when a new config is created.
-		d.blobsToDelete.Add(signManifest.Config.Digest)
+		d.blobDeleteCandidates.Add(signManifest.Config.Digest)
 	}
 
 	desc, err := d.getDescriptor(&manifestDigest)
@@ -516,7 +516,7 @@ func (d *ociImageDestination) putSignaturesToSigstoreAttachment(ctx context.Cont
 		if err != nil {
 			return fmt.Errorf("error counting blobs for digest %s: %w", oldDesc.Digest.String(), err)
 		}
-		d.blobsToDelete.AddSeq(maps.Keys(referencedBlobs))
+		d.blobDeleteCandidates.AddSeq(maps.Keys(referencedBlobs))
 	}
 	return nil
 }
@@ -551,10 +551,6 @@ func (d *ociImageDestination) putBlobBytesAsOCI(ctx context.Context, contents []
 		Digest:    info.Digest,
 		Size:      info.Size,
 	}, nil
-}
-
-func (d *ociImageDestination) SupportsSignatures(ctx context.Context) error {
-	return nil
 }
 
 // PutBlobFromLocalFileOption is unused but may receive functionality in the future.
