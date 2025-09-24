@@ -262,11 +262,13 @@ func (d *ociImageDestination) PutManifest(ctx context.Context, m []byte, instanc
 	if err := os.WriteFile(blobPath, m, 0o644); err != nil {
 		return err
 	}
-	d.manifestDigest = digest
 
 	if instanceDigest != nil {
 		return nil
 	}
+	// d.manifestDigest is used for a single image (not a manifest list).
+	// This should be placed after checking instanceDigest is nil.
+	d.manifestDigest = digest
 
 	// If we had platform information, we'd build an imgspecv1.Platform structure here.
 
