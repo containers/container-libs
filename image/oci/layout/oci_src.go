@@ -39,7 +39,6 @@ func (e ImageNotFoundError) Error() string {
 type ociImageSource struct {
 	impl.Compat
 	impl.PropertyMethodsInitialize
-	impl.NoSignatures
 	impl.DoesNotAffectLayerInfosForCopy
 	stubs.NoGetBlobAtInitialize
 
@@ -238,9 +237,6 @@ func GetLocalBlobPath(ctx context.Context, src types.ImageSource, digest digest.
 
 func (s *ociImageSource) GetSignaturesWithFormat(ctx context.Context, instanceDigest *digest.Digest) ([]signature.Signature, error) {
 	if instanceDigest == nil {
-		if s.descriptor.Digest == "" {
-			return nil, errors.New("unknown manifest digest, can't get signatures")
-		}
 		instanceDigest = &s.descriptor.Digest
 	}
 
@@ -255,6 +251,8 @@ func (s *ociImageSource) GetSignaturesWithFormat(ctx context.Context, instanceDi
 
 	signatures := make([]signature.Signature, 0, len(ociManifest.Layers))
 	for _, layer := range ociManifest.Layers {
+		// Note that this copies all kinds of attachments: attestations, and whatever else is there,
+		// not just signatures. We leave the signature consumers to decide based on the MIME type.
 		payload, err := s.ref.getOCIDescriptorContents(layer.Digest, iolimits.MaxSignatureBodySize, s.sharedBlobDir)
 		if err != nil {
 			return nil, err
