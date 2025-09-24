@@ -392,27 +392,27 @@ func (ref ociReference) getBlob(d digest.Digest, sharedBlobDir string) (io.ReadC
 	return r, fi.Size(), nil
 }
 
-func (ref ociReference) getOCIDescriptorContents(desc imgspecv1.Descriptor, maxSize int, sharedBlobDir string) ([]byte, error) {
-	if err := desc.Digest.Validate(); err != nil { // .Algorithm() might panic without this check
-		return nil, fmt.Errorf("invalid digest %q: %w", desc.Digest.String(), err)
+func (ref ociReference) getOCIDescriptorContents(dgst digest.Digest, maxSize int, sharedBlobDir string) ([]byte, error) {
+	if err := dgst.Validate(); err != nil { // .Algorithm() might panic without this check
+		return nil, fmt.Errorf("invalid digest %q: %w", dgst.String(), err)
 	}
-	digestAlgorithm := desc.Digest.Algorithm()
+	digestAlgorithm := dgst.Algorithm()
 	if !digestAlgorithm.Available() {
-		return nil, fmt.Errorf("invalid digest %q: unsupported digest algorithm %q", desc.Digest.String(), digestAlgorithm.String())
+		return nil, fmt.Errorf("invalid digest %q: unsupported digest algorithm %q", dgst.String(), digestAlgorithm.String())
 	}
 
-	reader, _, err := ref.getBlob(desc.Digest, sharedBlobDir)
+	reader, _, err := ref.getBlob(dgst, sharedBlobDir)
 	if err != nil {
 		return nil, err
 	}
 	defer reader.Close()
 	payload, err := iolimits.ReadAtMost(reader, maxSize)
 	if err != nil {
-		return nil, fmt.Errorf("reading blob %s in %s: %w", desc.Digest.String(), ref.image, err)
+		return nil, fmt.Errorf("reading blob %s in %s: %w", dgst.String(), ref.image, err)
 	}
 	actualDigest := digestAlgorithm.FromBytes(payload)
-	if actualDigest != desc.Digest {
-		return nil, fmt.Errorf("digest mismatch, expected %q, got %q", desc.Digest.String(), actualDigest.String())
+	if actualDigest != dgst {
+		return nil, fmt.Errorf("digest mismatch, expected %q, got %q", dgst.String(), actualDigest.String())
 	}
 	return payload, nil
 }

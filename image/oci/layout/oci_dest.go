@@ -422,7 +422,7 @@ func (d *ociImageDestination) putSignaturesToSigstoreAttachment(ctx context.Cont
 		signConfig.RootFS.Type = "layers"
 	} else {
 		logrus.Debugf("Fetching sigstore attachment config %s", signManifest.Config.Digest.String())
-		configBlob, err := d.ref.getOCIDescriptorContents(signManifest.Config, iolimits.MaxConfigBodySize, d.sharedBlobDir)
+		configBlob, err := d.ref.getOCIDescriptorContents(signManifest.Config.Digest, iolimits.MaxConfigBodySize, d.sharedBlobDir)
 		if err != nil {
 			return err
 		}
