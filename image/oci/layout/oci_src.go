@@ -20,7 +20,6 @@ import (
 	"go.podman.io/image/v5/internal/private"
 	"go.podman.io/image/v5/internal/signature"
 	"go.podman.io/image/v5/manifest"
-	"go.podman.io/image/v5/pkg/blobinfocache/none"
 	"go.podman.io/image/v5/pkg/tlsclientconfig"
 	"go.podman.io/image/v5/types"
 	"go.podman.io/storage/pkg/fileutils"
@@ -256,25 +255,9 @@ func (s *ociImageSource) GetSignaturesWithFormat(ctx context.Context, instanceDi
 
 	signatures := make([]signature.Signature, 0, len(ociManifest.Layers))
 	for _, layer := range ociManifest.Layers {
-		layerBlob, _, err := s.GetBlob(ctx, types.BlobInfo{Digest: layer.Digest}, none.NoCache)
+		payload, err := s.ref.getOCIDescriptorContents(layer.Digest, iolimits.MaxSignatureBodySize, s.sharedBlobDir)
 		if err != nil {
 			return nil, err
-		}
-		defer layerBlob.Close()
-		payload, err := iolimits.ReadAtMost(layerBlob, iolimits.MaxSignatureBodySize)
-		if err != nil {
-			return nil, fmt.Errorf("reading blob %s in %s: %w", layer.Digest.String(), instanceDigest, err)
-		}
-		if err := layer.Digest.Validate(); err != nil {
-			return nil, fmt.Errorf("invalid digest %q: %w", layer.Digest, err)
-		}
-		digestAlgorithm := layer.Digest.Algorithm()
-		if !digestAlgorithm.Available() {
-			return nil, fmt.Errorf("invalid digest %q: unsupported digest algorithm %q", layer.Digest.String(), digestAlgorithm.String())
-		}
-		actualDigest := digestAlgorithm.FromBytes(payload)
-		if actualDigest != layer.Digest {
-			return nil, fmt.Errorf("digest mismatch, expected %q, got %q", layer.Digest.String(), actualDigest.String())
 		}
 		signatures = append(signatures, signature.SigstoreFromComponents(layer.MediaType, payload, layer.Annotations))
 	}
