@@ -348,5 +348,5 @@ func TestPutSignaturesWithFormatNonSigstore(t *testing.T) {
 	// Test that PutSignaturesWithFormat fails for non-sigstore signatures
 	err = ociDest.PutSignaturesWithFormat(context.Background(), []signature.Signature{simpleSig}, &testDigest)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "OCI Layout only supports sigstoreSignatures")
+	require.Contains(t, err.Error(), "oci: layout only supports sigstore signatures")
 }
