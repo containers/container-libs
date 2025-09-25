@@ -23,6 +23,7 @@ import (
 	// use this frozen deprecated implementation.
 	//lint:ignore SA1019 See above
 	"golang.org/x/crypto/openpgp" //nolint:staticcheck
+	"golang.org/x/crypto/openpgp/clearsign"
 )
 
 // A GPG/OpenPGP signing mechanism, implemented using x/crypto/openpgp.
@@ -132,6 +133,18 @@ func (m *openpgpSigningMechanism) Sign(input []byte, keyIdentity string) ([]byte
 // is expected to be one of the values returned by NewEphemeralGPGSigningMechanism,
 // or the mechanism should implement signingMechanismWithVerificationIdentityLookup.
 func (m *openpgpSigningMechanism) Verify(unverifiedSignature []byte) (contents []byte, keyIdentity string, err error) {
+	// First, try to decode it as a clearsigned message.
+	block, _ := clearsign.Decode(unverifiedSignature)
+	if block != nil {
+		// It is a clearsigned message.
+		signer, err := openpgp.CheckDetachedSignature(m.keyring, bytes.NewReader(block.Bytes), block.ArmoredSignature.Body)
+		if err != nil {
+			return nil, "", err
+		}
+		return block.Plaintext, strings.ToUpper(fmt.Sprintf("%x", signer.PrimaryKey.Fingerprint)), nil
+	}
+
+	// If it's not a clearsigned message, try to read it as a regular OpenPGP message.
 	md, err := openpgp.ReadMessage(bytes.NewReader(unverifiedSignature), m.keyring, nil, nil)
 	if err != nil {
 		return nil, "", err
