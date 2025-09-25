@@ -79,8 +79,9 @@ type PolicyReferenceMatch interface {
 // PolicyContext encapsulates a policy and possible cached state
 // for speeding up its evaluation.
 type PolicyContext struct {
-	Policy *Policy
-	state  policyContextState // Internal consistency checking
+	Policy         *Policy
+	state          policyContextState // Internal consistency checking
+	rejectInsecure bool
 }
 
 // policyContextState is used internally to verify the users are not misusing a PolicyContext.
@@ -130,6 +131,13 @@ func (pc *PolicyContext) Destroy() error {
 // ONLY use this for log messages, not for any decisions!
 func policyIdentityLogName(ref types.ImageReference) string {
 	return ref.Transport().Name() + ":" + ref.PolicyConfigurationIdentity()
+}
+
+// SetRejectInsecure modifies insecure policy requirement handling. If
+// passed `true`, policy checking by IsRunningImageAllowed will ignore the
+// "insecureAcceptAnything" policy type.
+func (pc *PolicyContext) SetRejectInsecure(val bool) {
+	pc.rejectInsecure = val
 }
 
 // requirementsForImageRef selects the appropriate requirements for ref.
@@ -273,6 +281,24 @@ func (pc *PolicyContext) IsRunningImageAllowed(ctx context.Context, publicImage 
 
 	logrus.Debugf("IsRunningImageAllowed for image %s", policyIdentityLogName(image.Reference()))
 	reqs := pc.requirementsForImageRef(image.Reference())
+
+	// Create a filtered version of the policy which always ignores
+	// insecureAcceptAnything. In practice, it's likely the only requirement, so
+	// then we'd fall in the `len(reqs) == 0` case just below. In theory, it's
+	// possible to have additional requirements combined with insecureAcceptAnything
+	// even if not useful (it'd be the equivalent of a `&& true`).
+	if pc.rejectInsecure {
+		var filteredReqs PolicyRequirements
+		for reqNumber, req := range reqs {
+			_, ok := req.(*prInsecureAcceptAnything)
+			if ok {
+				logrus.Debugf("Requirement %d: ignoring insecureAcceptAnything by runtime request", reqNumber)
+				continue
+			}
+			filteredReqs = append(filteredReqs, req)
+		}
+		reqs = filteredReqs
+	}
 
 	if len(reqs) == 0 {
 		return false, PolicyRequirementError("List of verification policy requirements must not be empty")
