@@ -123,7 +123,7 @@ func TestGenerateAndParseManifest(t *testing.T) {
 
 	ts := minimal.TarSplitData{
 		Data:             tarSplitCompressedData,
-		Digest:           digest.Canonical.FromBytes(tarSplitCompressedData),
+		Digest:           digest.SHA256.FromBytes(tarSplitCompressedData),
 		UncompressedSize: 9,
 	}
 
@@ -134,7 +134,7 @@ func TestGenerateAndParseManifest(t *testing.T) {
 		return minimal.ZstdWriterWithLevel(dest, 9)
 	}
 
-	if err := minimal.WriteZstdChunkedManifest(writer, annotations, offsetManifest, &ts, someFiles[:], createZstdWriter); err != nil {
+	if err := minimal.WriteZstdChunkedManifest(writer, annotations, offsetManifest, &ts, someFiles[:], createZstdWriter, digest.SHA256); err != nil {
 		t.Error(err)
 	}
 	if err := writer.Flush(); err != nil {
@@ -184,7 +184,7 @@ func TestGenerateAndParseManifest(t *testing.T) {
 	tocDigest, err := toc.GetTOCDigest(annotations)
 	require.NoError(t, err)
 	require.NotNil(t, tocDigest)
-	manifest, decodedTOC, _, _, err := readZstdChunkedManifest(t.TempDir(), s, *tocDigest, annotations, true)
+	manifest, decodedTOC, _, _, err := readZstdChunkedManifest(t.TempDir(), s, *tocDigest, annotations, true, digest.SHA256)
 	require.NoError(t, err)
 
 	var toc minimal.TOC

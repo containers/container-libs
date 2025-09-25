@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 
-	digest "github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
 	"go.podman.io/storage"
 	graphdriver "go.podman.io/storage/drivers"
@@ -152,12 +151,12 @@ func applyDiffUsingStagingDirectory(flags *mflag.FlagSet, action string, m stora
 	// a composefs image.
 
 	metadata := make(map[string]string)
-	compressor, err := compressor.ZstdCompressor(tar, metadata, nil)
+	compressor, err := compressor.ZstdCompressor(tar, metadata, nil, m.GetDigestAlgorithm())
 	if err != nil {
 		return 1, err
 	}
 
-	digesterCompressed := digest.Canonical.Digester()
+	digesterCompressed := m.GetDigestAlgorithm().Digester()
 	r := io.TeeReader(tr, digesterCompressed.Hash())
 
 	if _, err := io.Copy(compressor, r); err != nil {

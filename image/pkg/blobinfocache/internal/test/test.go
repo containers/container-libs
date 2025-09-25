@@ -17,15 +17,24 @@ import (
 )
 
 const (
+	// SHA256 digests (existing)
 	digestUnknown             = digest.Digest("sha256:1111111111111111111111111111111111111111111111111111111111111111")
 	digestUncompressed        = digest.Digest("sha256:2222222222222222222222222222222222222222222222222222222222222222")
 	digestCompressedA         = digest.Digest("sha256:3333333333333333333333333333333333333333333333333333333333333333")
 	digestCompressedB         = digest.Digest("sha256:4444444444444444444444444444444444444444444444444444444444444444")
 	digestCompressedUnrelated = digest.Digest("sha256:5555555555555555555555555555555555555555555555555555555555555555")
-	compressorNameU           = blobinfocache.Uncompressed
-	compressorNameA           = compressiontypes.GzipAlgorithmName
-	compressorNameB           = compressiontypes.ZstdAlgorithmName
-	compressorNameCU          = compressiontypes.XzAlgorithmName
+
+	// SHA512 digests (for testing different algorithm support)
+	digestUnknown512             = digest.Digest("sha512:1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111")
+	digestUncompressed512        = digest.Digest("sha512:2222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222")
+	digestCompressedA512         = digest.Digest("sha512:3333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333")
+	digestCompressedB512         = digest.Digest("sha512:4444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444")
+	digestCompressedUnrelated512 = digest.Digest("sha512:5555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555")
+
+	compressorNameU  = blobinfocache.Uncompressed
+	compressorNameA  = compressiontypes.GzipAlgorithmName
+	compressorNameB  = compressiontypes.ZstdAlgorithmName
+	compressorNameCU = compressiontypes.XzAlgorithmName
 
 	digestUnknownLocation       = digest.Digest("sha256:7777777777777777777777777777777777777777777777777777777777777777")
 	digestFilteringUncompressed = digest.Digest("sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
@@ -70,6 +79,7 @@ func GenericCache(t *testing.T, newTestCache func(t *testing.T) blobinfocache.Bl
 }
 
 func testGenericUncompressedDigest(t *testing.T, cache blobinfocache.BlobInfoCache2) {
+	// SHA256 tests (existing functionality)
 	// Nothing is known.
 	assert.Equal(t, digest.Digest(""), cache.UncompressedDigest(digestUnknown))
 
@@ -84,10 +94,27 @@ func testGenericUncompressedDigest(t *testing.T, cache blobinfocache.BlobInfoCac
 	// Known uncompressed→self mapping
 	cache.RecordDigestUncompressedPair(digestCompressedUnrelated, digestCompressedUnrelated)
 	assert.Equal(t, digestCompressedUnrelated, cache.UncompressedDigest(digestCompressedUnrelated))
+
+	// SHA512 tests (testing different digest algorithm support)
+	// Nothing is known for SHA512 digests
+	assert.Equal(t, digest.Digest(""), cache.UncompressedDigest(digestUnknown512))
+
+	cache.RecordDigestUncompressedPair(digestCompressedA512, digestUncompressed512)
+	cache.RecordDigestUncompressedPair(digestCompressedB512, digestUncompressed512)
+	// Known SHA512 compressed→uncompressed mapping
+	assert.Equal(t, digestUncompressed512, cache.UncompressedDigest(digestCompressedA512))
+	assert.Equal(t, digestUncompressed512, cache.UncompressedDigest(digestCompressedB512))
+	// This implicitly marks digestUncompressed512 as uncompressed.
+	assert.Equal(t, digestUncompressed512, cache.UncompressedDigest(digestUncompressed512))
+
+	// Known SHA512 uncompressed→self mapping
+	cache.RecordDigestUncompressedPair(digestCompressedUnrelated512, digestCompressedUnrelated512)
+	assert.Equal(t, digestCompressedUnrelated512, cache.UncompressedDigest(digestCompressedUnrelated512))
 }
 
 func testGenericRecordDigestUncompressedPair(t *testing.T, cache blobinfocache.BlobInfoCache2) {
-	for range 2 { // Record the same data twice to ensure redundant writes don’t break things.
+	for range 2 { // Record the same data twice to ensure redundant writes don't break things.
+		// SHA256 tests (existing functionality)
 		// Known compressed→uncompressed mapping
 		cache.RecordDigestUncompressedPair(digestCompressedA, digestUncompressed)
 		assert.Equal(t, digestUncompressed, cache.UncompressedDigest(digestCompressedA))
@@ -98,10 +125,23 @@ func testGenericRecordDigestUncompressedPair(t *testing.T, cache blobinfocache.B
 		// Mapping an uncompressed digest to self
 		cache.RecordDigestUncompressedPair(digestUncompressed, digestUncompressed)
 		assert.Equal(t, digestUncompressed, cache.UncompressedDigest(digestUncompressed))
+
+		// SHA512 tests (testing different digest algorithm support)
+		// Known SHA512 compressed→uncompressed mapping
+		cache.RecordDigestUncompressedPair(digestCompressedA512, digestUncompressed512)
+		assert.Equal(t, digestUncompressed512, cache.UncompressedDigest(digestCompressedA512))
+		// Two SHA512 mappings to the same uncompressed digest
+		cache.RecordDigestUncompressedPair(digestCompressedB512, digestUncompressed512)
+		assert.Equal(t, digestUncompressed512, cache.UncompressedDigest(digestCompressedB512))
+
+		// Mapping an uncompressed SHA512 digest to self
+		cache.RecordDigestUncompressedPair(digestUncompressed512, digestUncompressed512)
+		assert.Equal(t, digestUncompressed512, cache.UncompressedDigest(digestUncompressed512))
 	}
 }
 
 func testGenericUncompressedDigestForTOC(t *testing.T, cache blobinfocache.BlobInfoCache2) {
+	// SHA256 tests (existing functionality)
 	// Nothing is known.
 	assert.Equal(t, digest.Digest(""), cache.UncompressedDigestForTOC(digestUnknown))
 
@@ -110,16 +150,35 @@ func testGenericUncompressedDigestForTOC(t *testing.T, cache blobinfocache.BlobI
 	// Known TOC→uncompressed mapping
 	assert.Equal(t, digestUncompressed, cache.UncompressedDigestForTOC(digestCompressedA))
 	assert.Equal(t, digestUncompressed, cache.UncompressedDigestForTOC(digestCompressedB))
+
+	// SHA512 tests (testing different digest algorithm support)
+	// Nothing is known for SHA512 digests.
+	assert.Equal(t, digest.Digest(""), cache.UncompressedDigestForTOC(digestUnknown512))
+
+	cache.RecordTOCUncompressedPair(digestCompressedA512, digestUncompressed512)
+	cache.RecordTOCUncompressedPair(digestCompressedB512, digestUncompressed512)
+	// Known SHA512 TOC→uncompressed mapping
+	assert.Equal(t, digestUncompressed512, cache.UncompressedDigestForTOC(digestCompressedA512))
+	assert.Equal(t, digestUncompressed512, cache.UncompressedDigestForTOC(digestCompressedB512))
 }
 
 func testGenericRecordTOCUncompressedPair(t *testing.T, cache blobinfocache.BlobInfoCache2) {
-	for range 2 { // Record the same data twice to ensure redundant writes don’t break things.
+	for range 2 { // Record the same data twice to ensure redundant writes don't break things.
+		// SHA256 tests (existing functionality)
 		// Known TOC→uncompressed mapping
 		cache.RecordTOCUncompressedPair(digestCompressedA, digestUncompressed)
 		assert.Equal(t, digestUncompressed, cache.UncompressedDigestForTOC(digestCompressedA))
 		// Two mappings to the same uncompressed digest
 		cache.RecordTOCUncompressedPair(digestCompressedB, digestUncompressed)
 		assert.Equal(t, digestUncompressed, cache.UncompressedDigestForTOC(digestCompressedB))
+
+		// SHA512 tests (testing different digest algorithm support)
+		// Known SHA512 TOC→uncompressed mapping
+		cache.RecordTOCUncompressedPair(digestCompressedA512, digestUncompressed512)
+		assert.Equal(t, digestUncompressed512, cache.UncompressedDigestForTOC(digestCompressedA512))
+		// Two SHA512 mappings to the same uncompressed digest
+		cache.RecordTOCUncompressedPair(digestCompressedB512, digestUncompressed512)
+		assert.Equal(t, digestUncompressed512, cache.UncompressedDigestForTOC(digestCompressedB512))
 	}
 }
 
