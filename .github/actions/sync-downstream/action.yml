@@ -1,0 +1,162 @@
+name: 'Sync to Downstream Repository'
+description: 'Reusable action to sync container-libs changes to downstream repositories'
+
+inputs:
+  target-repo:
+    description: 'Target repository name (e.g., buildah, podman)'
+    required: true
+  forked-repo:
+    description: 'Forked repository path (e.g., podmanbot/buildah)'
+    required: true
+  upstream-repo:
+    description: 'Upstream repository path (e.g., containers/buildah)'
+    required: true
+  token:
+    description: 'GitHub token for pushing to forked repo'
+    required: true
+  pr-number:
+    description: 'PR number from container-libs'
+    required: true
+  pr-url:
+    description: 'PR URL from container-libs'
+    required: true
+  pr-title:
+    description: 'PR title from container-libs'
+    required: true
+  pr-sha:
+    description: 'PR head SHA from container-libs'
+    required: true
+  pr-repo-full-name:
+    description: 'Full name of the PR head repository'
+    required: true
+
+outputs:
+  pr-url:
+    description: 'URL of the created/updated downstream PR'
+    value: ${{ steps.create_pr.outputs.pr_url }}
+  pr-action:
+    description: 'Action taken (created/updated)'
+    value: ${{ steps.create_pr.outputs.pr_action }}
+  skip-pr:
+    description: 'Whether PR creation was skipped due to no changes'
+    value: ${{ steps.vendor.outputs.skip_pr }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 'Checkout forked repository'
+      uses: actions/checkout@v5
+      with:
+        repository: ${{ inputs.forked-repo }}
+        path: ${{ inputs.target-repo }}
+        fetch-depth: '1'
+        token: ${{ inputs.token }}
+
+    - name: 'Vendor Code from container-libs'
+      id: vendor
+      shell: bash
+      run: |
+        echo "Using commit SHA: ${{ inputs.pr-sha }}"
+
+        cd ${{ inputs.target-repo }}
+        # Create a unique branch name based on the container-libs PR number
+        BRANCH_NAME="sync/container-libs-${{ inputs.pr-number }}"
+        git switch -c $BRANCH_NAME
+        git remote add upstream https://github.com/${{ inputs.upstream-repo }}.git
+        git fetch upstream
+        git rebase upstream/main
+
+        # Function to update module and verify
+        update_module() {
+          local module=$1
+          echo "Updating module: $module"
+          go mod edit -replace ${module}=github.com/${{ inputs.pr-repo-full-name }}/${module#go.podman.io/}@${{ inputs.pr-sha }}
+          GOWORK=off go mod tidy
+        }
+
+        # Update all required modules
+        update_module "go.podman.io/common"
+        update_module "go.podman.io/storage"
+        update_module "go.podman.io/image/v5"
+        GOWORK=off go mod vendor
+        GOWORK=off go mod verify
+
+        echo "Updated go.mod:"
+        cat go.mod
+
+        echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+    - name: 'Commit and Push changes'
+      id: commit
+      shell: bash
+      run: |
+        cd ${{ inputs.target-repo }}
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+        BRANCH_NAME="sync/container-libs-${{ inputs.pr-number }}"
+        git switch $BRANCH_NAME
+
+        # Check if there are any changes to commit
+        if git diff --quiet && git diff --cached --quiet; then
+          echo "No changes to commit, skipping..."
+          echo "skip_pr=true" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+
+        git add .
+        git commit -m "dnm: Vendor changes from containers/container-libs#${{ inputs.pr-number }}"
+
+        # Force push to update the branch if the action re-runs on 'synchronize'
+        git push origin $BRANCH_NAME --force
+
+        # Verify the branch exists remotely
+        if ! git ls-remote --heads origin $BRANCH_NAME | grep -q $BRANCH_NAME; then
+          echo "Failed to push branch $BRANCH_NAME"
+          exit 1
+        fi
+
+        echo "skip_pr=false" >> $GITHUB_OUTPUT
+
+    - name: 'Create or Update Pull Request'
+      id: create_pr
+      if: steps.commit.outputs.skip_pr != 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+      run: |
+        cd ${{ inputs.target-repo }}
+
+        BRANCH_NAME="sync/container-libs-${{ inputs.pr-number }}"
+        PR_TITLE="Sync: ${{ inputs.pr-title }}"
+        PR_BODY="This PR automatically vendors changes from [container-libs#${{ inputs.pr-number }}](${{ inputs.pr-url }})."
+
+        # Check if PR already exists for this branch
+        echo "Searching for existing PR with branch: $BRANCH_NAME"
+
+        EXISTING_PR_URL=$(gh pr list --repo ${{ inputs.upstream-repo }} --head "$BRANCH_NAME" --json url --jq '.[0].url // empty' 2>/dev/null || echo "")
+
+        if [ -n "$EXISTING_PR_URL" ]; then
+          echo "Found existing PR: $EXISTING_PR_URL"
+          # Update existing PR title and body
+          gh pr edit $EXISTING_PR_URL \
+            --title "$PR_TITLE" \
+            --body "$PR_BODY"
+          echo "Updated existing PR: $EXISTING_PR_URL"
+          echo "pr_url=$EXISTING_PR_URL" >> $GITHUB_OUTPUT
+          echo "pr_action=updated" >> $GITHUB_OUTPUT
+        else
+          # Create new PR
+          FORK_OWNER=$(echo "${{ inputs.forked-repo }}" | cut -d'/' -f1)
+          echo "Creating new PR with head: $FORK_OWNER:$BRANCH_NAME"
+          NEW_PR_URL=$(gh pr create \
+            --repo ${{ inputs.upstream-repo }} \
+            --draft \
+            --base main \
+            --head "$FORK_OWNER:$BRANCH_NAME" \
+            --title "$PR_TITLE" \
+            --body "$PR_BODY")
+          echo "Created new PR: $NEW_PR_URL"
+          echo "pr_url=$NEW_PR_URL" >> $GITHUB_OUTPUT
+          echo "pr_action=created" >> $GITHUB_OUTPUT
+        fi

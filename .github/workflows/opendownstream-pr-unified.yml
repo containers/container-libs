@@ -1,0 +1,81 @@
+name: 'Open downstream PRs - Unified'
+
+on:
+  pull_request_target:
+    branches:
+      - 'main'
+    paths:
+      - '**/*.go'
+      - '!vendor/**'
+      - '!**/*_test.go'
+
+jobs:
+  sync-buildah:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Self'
+        uses: actions/checkout@v5
+
+      - name: 'Setup Go'
+        uses: actions/setup-go@v6
+        with:
+          go-version: 'stable'
+
+      - name: 'Sync to Buildah'
+        id: sync_buildah
+        uses: ./.github/actions/sync-downstream
+        with:
+          target-repo: 'buildah'
+          forked-repo: 'podmanbot/buildah'
+          upstream-repo: 'containers/buildah'
+          token: ${{ secrets.VENDOR_TOKEN_PODMANBOT }}
+          pr-number: ${{ github.event.pull_request.number }}
+          pr-url: ${{ github.event.pull_request.html_url }}
+          pr-title: ${{ github.event.pull_request.title }}
+          pr-sha: ${{ github.event.pull_request.head.sha }}
+          pr-repo-full-name: ${{ github.event.pull_request.head.repo.full_name }}
+
+      - name: 'Comment on container-libs PR with buildah link'
+        if: steps.sync_buildah.outputs.skip-pr != 'true' && steps.sync_buildah.outputs.pr-action == 'created'
+        env:
+          GH_TOKEN: ${{ secrets.VENDOR_TOKEN_PODMANBOT }}
+        run: |
+          COMMENT_BODY="✅ A new PR has been created in buildah to vendor these changes: **${{ steps.sync_buildah.outputs.pr-url }}**"
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --body "$COMMENT_BODY"
+
+  sync-podman:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Self'
+        uses: actions/checkout@v5
+
+      - name: 'Setup Go'
+        uses: actions/setup-go@v6
+        with:
+          go-version: 'stable'
+
+      - name: 'Sync to Podman'
+        id: sync_podman
+        uses: ./.github/actions/sync-downstream
+        with:
+          target-repo: 'podman'
+          forked-repo: 'podmanbot/podman'
+          upstream-repo: 'containers/podman'
+          token: ${{ secrets.VENDOR_TOKEN_PODMANBOT }}
+          pr-number: ${{ github.event.pull_request.number }}
+          pr-url: ${{ github.event.pull_request.html_url }}
+          pr-title: ${{ github.event.pull_request.title }}
+          pr-sha: ${{ github.event.pull_request.head.sha }}
+          pr-repo-full-name: ${{ github.event.pull_request.head.repo.full_name }}
+
+      - name: 'Comment on container-libs PR with podman link'
+        if: steps.sync_podman.outputs.skip-pr != 'true' && steps.sync_podman.outputs.pr-action == 'created'
+        env:
+          GH_TOKEN: ${{ secrets.VENDOR_TOKEN_PODMANBOT }}
+        run: |
+          COMMENT_BODY="✅ A new PR has been created in podman to vendor these changes: **${{ steps.sync_podman.outputs.pr-url }}**"
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --body "$COMMENT_BODY"
