@@ -3,6 +3,7 @@ package layout
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -42,7 +43,15 @@ func (ref ociReference) DeleteImage(ctx context.Context, sys *types.SystemContex
 		return err
 	}
 
-	return ref.deleteReferenceFromIndex(descriptorIndex)
+	err = ref.deleteReferenceFromIndex(descriptorIndex)
+	if err != nil {
+		return err
+	}
+
+	if isSigstoreTag(ref.image) {
+		return nil
+	}
+	return ref.deleteSignatures(ctx, sys, descriptor.Digest)
 }
 
 // countBlobsForDescriptor updates dest with usage counts of blobs required for descriptor, INCLUDING descriptor itself.
@@ -186,4 +195,23 @@ func saveJSON(path string, content any) (retErr error) {
 	}()
 
 	return json.NewEncoder(file).Encode(content)
+}
+
+// deleteSignatures delete sigstore signatures of the given manifest digest.
+func (ref ociReference) deleteSignatures(ctx context.Context, sys *types.SystemContext, d digest.Digest) error {
+	signTag, err := sigstoreAttachmentTag(d)
+	if err != nil {
+		return err
+	}
+
+	signRef, err := newReference(ref.dir, signTag, -1)
+	if err != nil {
+		return err
+	}
+
+	err = signRef.DeleteImage(ctx, sys)
+	if err != nil && errors.As(err, &ImageNotFoundError{}) {
+		return nil
+	}
+	return err
 }
