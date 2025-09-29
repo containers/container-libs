@@ -17,9 +17,9 @@
     }
   ],
   "subject": {
-    "mediaType": "application/vnd.oci.image.manifest.v1+json",
-    "digest": "sha256:eaa95f3cfaac07c8a5153eb77c933269586ad0226c83405776be08547e4d2a18",
-    "size": 1506,
+    "mediaType": "application/vnd.oci.image.index.v1+json",
+    "digest": "sha256:a2f798327b3f25e3eff54badcb769953de235e62e3e32051d57a5e66246de4a1",
+    "size": 759,
     "annotations": {
       "org.opencontainers.image.ref.name": "latest"
     }
