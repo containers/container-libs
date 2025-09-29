@@ -315,33 +315,6 @@ func (d *ociImageDestination) addManifest(desc *imgspecv1.Descriptor) {
 	d.index.Manifests = append(slices.Clone(d.index.Manifests), *desc)
 }
 
-// addSignatureManifest is similar to addManifest, but replace the entry based on imgspecv1.AnnotationRefName
-// and returns the old digest to delete it later.
-func (d *ociImageDestination) addSignatureManifest(desc *imgspecv1.Descriptor) (*imgspecv1.Descriptor, error) {
-	if desc.Annotations == nil || desc.Annotations[imgspecv1.AnnotationRefName] == "" {
-		return nil, errors.New("cannot add signature manifest without ref.name")
-	}
-	for i, m := range d.index.Manifests {
-		if m.Annotations[imgspecv1.AnnotationRefName] == desc.Annotations[imgspecv1.AnnotationRefName] {
-			// Replace it completely.
-			oldDesc := d.index.Manifests[i]
-			d.index.Manifests[i] = *desc
-			return &oldDesc, nil
-		}
-	}
-	// It shouldn't happen, but if there's no entry with the same ref name, but the same digest, just replace it.
-	for i, m := range d.index.Manifests {
-		if m.Digest == desc.Digest && m.Annotations[imgspecv1.AnnotationRefName] == "" {
-			// Replace it completely.
-			d.index.Manifests[i] = *desc
-			return nil, nil
-		}
-	}
-	// It's a new entry to be added to the index. Use slices.Clone() to avoid a remote dependency on how d.index was created.
-	d.index.Manifests = append(slices.Clone(d.index.Manifests), *desc)
-	return nil, nil
-}
-
 // CommitWithOptions marks the process of storing the image as successful and asks for the image to be persisted.
 // WARNING: This does not have any transactional semantics:
 // - Uploaded data MAY be visible to others before CommitWithOptions() is called
@@ -411,7 +384,7 @@ func (d *ociImageDestination) PutSignaturesWithFormat(ctx context.Context, signa
 func (d *ociImageDestination) putSignaturesToSigstoreAttachment(ctx context.Context, signatures []signature.Sigstore, manifestDigest digest.Digest) error {
 	var signConfig imgspecv1.Image // Most fields empty by default
 
-	signManifest, err := d.ref.getSigstoreAttachmentManifest(manifestDigest, &d.index, d.sharedBlobDir)
+	signManifest, signDesc, err := d.ref.getSigstoreAttachmentManifest(manifestDigest, &d.index, d.sharedBlobDir)
 	if err != nil {
 		return err
 	}
@@ -432,7 +405,8 @@ func (d *ociImageDestination) putSignaturesToSigstoreAttachment(ctx context.Cont
 			return fmt.Errorf("parsing sigstore attachment config %s in %s: %w", signManifest.Config.Digest.String(),
 				d.ref.StringWithinTransport(), err)
 		}
-		// The config of the signature manifest will be updated and unreferenced when a new config is created.
+		// The signature manifest and its config may be updated and unreferenced when a new config is created.
+		d.blobDeleteCandidates.Add(signDesc.Digest)
 		d.blobDeleteCandidates.Add(signManifest.Config.Digest)
 	}
 
@@ -500,7 +474,7 @@ func (d *ociImageDestination) putSignaturesToSigstoreAttachment(ctx context.Cont
 	if err != nil {
 		return err
 	}
-	oldDesc, err := d.addSignatureManifest(&imgspecv1.Descriptor{
+	d.addManifest(&imgspecv1.Descriptor{
 		MediaType: signManifest.MediaType,
 		Digest:    signDigest,
 		Size:      int64(len(signManifestBlob)),
@@ -508,18 +482,6 @@ func (d *ociImageDestination) putSignaturesToSigstoreAttachment(ctx context.Cont
 			imgspecv1.AnnotationRefName: signTag,
 		},
 	})
-	if err != nil {
-		return err
-	}
-	// If it overwrote an existing signature manifest, delete blobs referenced by the old manifest.
-	if oldDesc != nil {
-		referencedBlobs := make(map[digest.Digest]int)
-		err = d.ref.countBlobsForDescriptor(referencedBlobs, oldDesc, d.sharedBlobDir)
-		if err != nil {
-			return fmt.Errorf("error counting blobs for digest %s: %w", oldDesc.Digest.String(), err)
-		}
-		d.blobDeleteCandidates.AddSeq(maps.Keys(referencedBlobs))
-	}
 	return nil
 }
 

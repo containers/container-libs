@@ -338,10 +338,10 @@ func sigstoreAttachmentTag(d digest.Digest) (string, error) {
 	return strings.Replace(d.String(), ":", "-", 1) + ".sig", nil
 }
 
-func (ref ociReference) getSigstoreAttachmentManifest(d digest.Digest, idx *imgspecv1.Index, sharedBlobDir string) (*manifest.OCI1, error) {
+func (ref ociReference) getSigstoreAttachmentManifest(d digest.Digest, idx *imgspecv1.Index, sharedBlobDir string) (*manifest.OCI1, *imgspecv1.Descriptor, error) {
 	signTag, err := sigstoreAttachmentTag(d)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	var signDesc *imgspecv1.Descriptor
 	for _, m := range idx.Manifests {
@@ -352,26 +352,26 @@ func (ref ociReference) getSigstoreAttachmentManifest(d digest.Digest, idx *imgs
 	}
 	if signDesc == nil {
 		// No signature found
-		return nil, nil
+		return nil, nil, nil
 	}
 	if signDesc.MediaType != imgspecv1.MediaTypeImageManifest {
-		return nil, fmt.Errorf("unexpected MIME type for sigstore attachment manifest %s: %q",
+		return nil, nil, fmt.Errorf("unexpected MIME type for sigstore attachment manifest %s: %q",
 			signTag, signDesc.MediaType)
 	}
 	blobReader, _, err := ref.getBlob(signDesc.Digest, sharedBlobDir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get Blob %s: %w", signTag, err)
+		return nil, nil, fmt.Errorf("failed to get Blob %s: %w", signTag, err)
 	}
 	defer blobReader.Close()
 	signBlob, err := iolimits.ReadAtMost(blobReader, iolimits.MaxManifestBodySize)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read blob: %w", err)
+		return nil, nil, fmt.Errorf("failed to read blob: %w", err)
 	}
 	res, err := manifest.OCI1FromManifest(signBlob)
 	if err != nil {
-		return nil, fmt.Errorf("parsing manifest %s: %w", signDesc.Digest, err)
+		return nil, nil, fmt.Errorf("parsing manifest %s: %w", signDesc.Digest, err)
 	}
-	return res, nil
+	return res, signDesc, nil
 }
 
 func (ref ociReference) getBlob(d digest.Digest, sharedBlobDir string) (io.ReadCloser, int64, error) {

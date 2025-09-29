@@ -240,7 +240,7 @@ func (s *ociImageSource) GetSignaturesWithFormat(ctx context.Context, instanceDi
 		instanceDigest = &s.descriptor.Digest
 	}
 
-	ociManifest, err := s.ref.getSigstoreAttachmentManifest(*instanceDigest, s.index, s.sharedBlobDir)
+	ociManifest, _, err := s.ref.getSigstoreAttachmentManifest(*instanceDigest, s.index, s.sharedBlobDir)
 	if err != nil {
 		return nil, err
 	}
