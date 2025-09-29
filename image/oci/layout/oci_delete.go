@@ -3,7 +3,6 @@ package layout
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -38,6 +37,11 @@ func (ref ociReference) DeleteImage(ctx context.Context, sys *types.SystemContex
 		return err
 	}
 
+	signaturesToDelete, err := ref.getObsoleteSignatures(blobsToDelete)
+	if err != nil {
+		return err
+	}
+
 	err = ref.deleteBlobs(blobsToDelete)
 	if err != nil {
 		return err
@@ -48,10 +52,7 @@ func (ref ociReference) DeleteImage(ctx context.Context, sys *types.SystemContex
 		return err
 	}
 
-	if isSigstoreTag(ref.image) {
-		return nil
-	}
-	return ref.deleteSignatures(ctx, sys, descriptor.Digest)
+	return ref.deleteSignatures(sys, signaturesToDelete)
 }
 
 // countBlobsForDescriptor updates dest with usage counts of blobs required for descriptor, INCLUDING descriptor itself.
@@ -157,6 +158,7 @@ func deleteBlob(blobPath string) error {
 	}
 }
 
+// deleteReferencesFromIndex deletes manifest from the root index.
 func (ref ociReference) deleteReferenceFromIndex(referenceIndex int) error {
 	index, err := ref.getIndex()
 	if err != nil {
@@ -164,6 +166,25 @@ func (ref ociReference) deleteReferenceFromIndex(referenceIndex int) error {
 	}
 
 	index.Manifests = slices.Delete(index.Manifests, referenceIndex, referenceIndex+1)
+
+	return saveJSON(ref.indexPath(), index)
+}
+
+// deleteReferencesFromIndex deletes referenceIndex first, and then remove signatures.
+func (ref ociReference) deleteSignaturesFromIndex(signatures []imgspecv1.Descriptor) error {
+	index, err := ref.getIndex()
+	if err != nil {
+		return err
+	}
+
+	signaturesSet := set.New[digest.Digest]()
+	for _, sign := range signatures {
+		signaturesSet.Add(sign.Digest)
+	}
+
+	index.Manifests = slices.DeleteFunc(index.Manifests, func(d imgspecv1.Descriptor) bool {
+		return signaturesSet.Contains(d.Digest)
+	})
 
 	return saveJSON(ref.indexPath(), index)
 }
@@ -197,21 +218,63 @@ func saveJSON(path string, content any) (retErr error) {
 	return json.NewEncoder(file).Encode(content)
 }
 
+func (ref ociReference) getObsoleteSignatures(blobsToDelete *set.Set[digest.Digest]) (signaturesToDelete []imgspecv1.Descriptor, err error) {
+	// create a mapping from sigstore tag to its descriptor
+	signDigestMap := make(map[string]imgspecv1.Descriptor)
+	index, err := ref.getIndex()
+	if err != nil {
+		return nil, err
+	}
+	for _, m := range index.Manifests {
+		if isSigstoreTag(m.Annotations[imgspecv1.AnnotationRefName]) {
+			signDigestMap[m.Annotations[imgspecv1.AnnotationRefName]] = m
+		}
+	}
+
+	for dgst := range blobsToDelete.All() {
+		sigstoreTag, err := sigstoreAttachmentTag(dgst)
+		if err != nil {
+			// This shouldn't happen because all digests in the root index should be valid.
+			continue
+		}
+		signDesc, ok := signDigestMap[sigstoreTag]
+		if !ok {
+			// No signature found for this digest
+			continue
+		}
+		signaturesToDelete = append(signaturesToDelete, signDesc)
+	}
+	return signaturesToDelete, nil
+}
+
 // deleteSignatures delete sigstore signatures of the given manifest digest.
-func (ref ociReference) deleteSignatures(ctx context.Context, sys *types.SystemContext, d digest.Digest) error {
-	signTag, err := sigstoreAttachmentTag(d)
+func (ref ociReference) deleteSignatures(sys *types.SystemContext, signaturesToDelete []imgspecv1.Descriptor) error {
+	sharedBlobsDir := ""
+	if sys != nil && sys.OCISharedBlobDirPath != "" {
+		sharedBlobsDir = sys.OCISharedBlobDirPath
+	}
+
+	blobsUsedByImage := make(map[digest.Digest]int)
+	for _, descriptor := range signaturesToDelete {
+		if err := ref.countBlobsForDescriptor(blobsUsedByImage, &descriptor, sharedBlobsDir); err != nil {
+			return err
+		}
+	}
+
+	blobsToDelete, err := ref.getBlobsToDelete(blobsUsedByImage, sharedBlobsDir)
 	if err != nil {
 		return err
 	}
 
-	signRef, err := newReference(ref.dir, signTag, -1)
+	err = ref.deleteBlobs(blobsToDelete)
 	if err != nil {
 		return err
 	}
 
-	err = signRef.DeleteImage(ctx, sys)
-	if err != nil && errors.As(err, &ImageNotFoundError{}) {
-		return nil
+	err = ref.deleteSignaturesFromIndex(signaturesToDelete)
+	if err != nil {
+		return err
 	}
-	return err
+
+	return nil
 }
