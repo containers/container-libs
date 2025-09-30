@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	digest "github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
 	graphdriver "go.podman.io/storage/drivers"
 )
@@ -144,22 +145,22 @@ func TestWriteCache(t *testing.T) {
 	dest := bigDataToBuffer{
 		buf: bytes.NewBuffer(nil),
 	}
-	cache, err := writeCache([]byte(jsonTOC), graphdriver.DifferOutputFormatDir, "foobar", &dest)
+	cache, err := writeCache([]byte(jsonTOC), graphdriver.DifferOutputFormatDir, "foobar", &dest, digest.SHA256)
 	if err != nil {
 		t.Errorf("got error from writeCache: %v", err)
 	}
-	if digest, _, _ := findTag("sha256:99fe908c699dc068438b23e28319cadff1f2153c3043bafb8e83a430bba0a2c2", cache); digest != "" {
+	if digestStr, _, _ := findTag("sha256:99fe908c699dc068438b23e28319cadff1f2153c3043bafb8e83a430bba0a2c2", cache); digestStr != "" {
 		t.Error("a present tag was not found")
 	}
 
 	for _, r := range toc {
 		if r.Digest != "" {
 			// find the element in the cache by the digest checksum
-			digest, off, lenTag := findTag(r.Digest, cache)
-			if digest == "" {
+			digestStr, off, lenTag := findTag(r.Digest, cache)
+			if digestStr == "" {
 				t.Error("file tag not found")
 			}
-			if digest != r.Digest {
+			if digestStr != r.Digest {
 				t.Error("wrong file found")
 			}
 			location := cache.vdata[off : off+lenTag]
@@ -167,19 +168,19 @@ func TestWriteCache(t *testing.T) {
 			assert.NoError(t, err)
 
 			assert.Equal(t, fileSize, uint64(r.Size))
-			assert.Equal(t, offFile, uint64(0))
+			assert.Equal(t, offFile, uint64(r.Offset))
 
-			fingerprint, err := calculateHardLinkFingerprint(r)
+			fingerprint, err := calculateHardLinkFingerprint(r, digest.SHA256)
 			if err != nil {
 				t.Errorf("got error from writeCache: %v", err)
 			}
 
 			// find the element in the cache by the hardlink fingerprint
-			digest, off, lenTag = findTag(fingerprint, cache)
-			if digest == "" {
+			digestStr, off, lenTag = findTag(fingerprint, cache)
+			if digestStr == "" {
 				t.Error("file tag not found")
 			}
-			if digest != fingerprint {
+			if digestStr != fingerprint {
 				t.Error("wrong file found")
 			}
 			location = cache.vdata[off : off+lenTag]
@@ -187,15 +188,15 @@ func TestWriteCache(t *testing.T) {
 			assert.NoError(t, err)
 
 			assert.Equal(t, fileSize, uint64(r.Size))
-			assert.Equal(t, offFile, uint64(0))
+			assert.Equal(t, offFile, uint64(r.Offset))
 		}
 		if r.ChunkDigest != "" {
 			// find the element in the cache by the chunk digest checksum
-			digest, off, len := findTag(r.ChunkDigest, cache)
-			if digest == "" {
+			digestStr, off, len := findTag(r.ChunkDigest, cache)
+			if digestStr == "" {
 				t.Error("chunk tag not found")
 			}
-			if digest != r.ChunkDigest {
+			if digestStr != r.ChunkDigest {
 				t.Error("wrong digest found")
 			}
 			expectedLocation := generateFileLocation(0, uint64(r.ChunkOffset), uint64(r.ChunkSize))
@@ -211,7 +212,7 @@ func TestReadCache(t *testing.T) {
 	dest := bigDataToBuffer{
 		buf: bytes.NewBuffer(nil),
 	}
-	cache, err := writeCache([]byte(jsonTOC), graphdriver.DifferOutputFormatDir, "foobar", &dest)
+	cache, err := writeCache([]byte(jsonTOC), graphdriver.DifferOutputFormatDir, "foobar", &dest, digest.SHA256)
 	if err != nil {
 		t.Errorf("got error from writeCache: %v", err)
 	}
@@ -229,7 +230,7 @@ func FuzzReadCache(f *testing.F) {
 	dest := &bigDataToBuffer{
 		buf: bytes.NewBuffer(nil),
 	}
-	_, err := writeCache([]byte(jsonTOC), graphdriver.DifferOutputFormatDir, "foobar", dest)
+	_, err := writeCache([]byte(jsonTOC), graphdriver.DifferOutputFormatDir, "foobar", dest, digest.SHA256)
 	if err != nil {
 		f.Errorf("got error from writeCache: %v", err)
 	}
@@ -274,12 +275,23 @@ func TestUnmarshalToc(t *testing.T) {
 }
 
 func TestMakeBinaryDigest(t *testing.T) {
+	// Test SHA256 digest conversion
 	binDigest, err := makeBinaryDigest("sha256:5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03")
 	assert.NoError(t, err)
 	expected := []byte{0x73, 0x68, 0x61, 0x32, 0x35, 0x36, 0x3a, 0x58, 0x91, 0xb5, 0xb5, 0x22, 0xd5, 0xdf, 0x8, 0x6d, 0xf, 0xf0, 0xb1, 0x10, 0xfb, 0xd9, 0xd2, 0x1b, 0xb4, 0xfc, 0x71, 0x63, 0xaf, 0x34, 0xd0, 0x82, 0x86, 0xa2, 0xe8, 0x46, 0xf6, 0xbe, 0x3}
 	assert.Equal(t, expected, binDigest)
 
+	// Test SHA512 digest conversion
+	binDigest512, err := makeBinaryDigest("sha512:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef12")
+	assert.NoError(t, err)
+	expected512 := []byte{0x73, 0x68, 0x61, 0x35, 0x31, 0x32, 0x3a, 0xab, 0xcd, 0xef, 0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd, 0xef, 0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd, 0xef, 0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd, 0xef, 0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd, 0xef, 0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd, 0xef, 0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd, 0xef, 0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd, 0xef, 0x12}
+	assert.Equal(t, expected512, binDigest512)
+
+	// Test invalid digest formats
 	_, err = makeBinaryDigest("sha256:foo")
+	assert.Error(t, err)
+
+	_, err = makeBinaryDigest("sha512:invalid")
 	assert.Error(t, err)
 
 	_, err = makeBinaryDigest("noAlgorithm")

@@ -73,6 +73,37 @@ func TestDigest(t *testing.T) {
 	assert.Equal(t, digest.Digest(digestSha256EmptyTar), actualDigest)
 }
 
+func TestDigestWithAlgorithm(t *testing.T) {
+	cases := []struct {
+		path           string
+		algorithm      digest.Algorithm
+		expectedDigest digest.Digest
+	}{
+		// SHA256 (canonical algorithm)
+		{"v2s2.manifest.json", digest.SHA256, TestDockerV2S2ManifestDigest},
+		{"v2s1.manifest.json", digest.SHA256, TestDockerV2S1ManifestDigest},
+		// SHA512
+		{"v2s2.manifest.json", digest.SHA512, digest.Digest("sha512:50763a72163eef344fc0b58ec5a2676ceeddfa46b547475013778f3de5c0c1a75e18c947db36483e4622c1d46a908aa26649e6b0ac22514b8100889f74ed2b8c")},
+		{"v2s1.manifest.json", digest.SHA512, digest.Digest("sha512:987d6df9aca32adc296bd0698cc7407f12605b4d5e8f0de2ca5d0c43f22d894082e96fb0a02c0f659db3bb8314912dd0a1fcb5cb421c04cd5cb468ad3829d9f7")},
+	}
+
+	for _, c := range cases {
+		manifest, err := os.ReadFile(filepath.Join("testdata", c.path))
+		require.NoError(t, err)
+		actualDigest, err := DigestWithAlgorithm(manifest, c.algorithm)
+		require.NoError(t, err)
+		assert.Equal(t, c.expectedDigest, actualDigest, "%s with %s", c.path, c.algorithm)
+	}
+
+	// Test empty data with both algorithms
+	for _, algo := range []digest.Algorithm{digest.SHA256, digest.SHA512} {
+		actualDigest, err := DigestWithAlgorithm([]byte{}, algo)
+		require.NoError(t, err)
+		expectedDigest := algo.FromBytes([]byte{})
+		assert.Equal(t, expectedDigest, actualDigest, "empty data with %s", algo)
+	}
+}
+
 func TestMatchesDigest(t *testing.T) {
 	cases := []struct {
 		path           string

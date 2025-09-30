@@ -260,9 +260,13 @@ func TestReferenceNewImageDestination(t *testing.T) {
 }
 
 func TestReferenceTagOrDigest(t *testing.T) {
+	const sha512digestHex = "b89d9c93e9ed3597455c90a0b88a8bbb5cb7188438f70953fede212a0c4394e0d200d73e696b8053595e5d7cc4f2b8f5e86b07b5e6d13b8fd1a68d7b8cc2f9b"
+	const sha512digest = "@sha512:" + sha512digestHex
+
 	for input, expected := range map[string]string{
 		"//busybox:notlatest":      "notlatest",
 		"//busybox" + sha256digest: "sha256:" + sha256digestHex,
+		"//alpine" + sha512digest:  "sha512:" + sha512digestHex,
 	} {
 		ref, err := ParseReference(input)
 		require.NoError(t, err, input)

@@ -98,8 +98,10 @@ func getImageBigData(flags *mflag.FlagSet, action string, m storage.Store, args 
 	return 0, nil
 }
 
-func wrongManifestDigest(b []byte) (digest.Digest, error) {
-	return digest.Canonical.FromBytes(b), nil
+func wrongManifestDigest(m storage.Store) func([]byte) (digest.Digest, error) {
+	return func(b []byte) (digest.Digest, error) {
+		return m.GetDigestAlgorithm().FromBytes(b), nil
+	}
 }
 
 func getImageBigDataSize(flags *mflag.FlagSet, action string, m storage.Store, args []string) (int, error) {
@@ -166,7 +168,7 @@ func setImageBigData(flags *mflag.FlagSet, action string, m storage.Store, args 
 	if err != nil {
 		return 1, err
 	}
-	err = m.SetImageBigData(image.ID, args[1], b, wrongManifestDigest)
+	err = m.SetImageBigData(image.ID, args[1], b, wrongManifestDigest(m))
 	if err != nil {
 		return 1, err
 	}

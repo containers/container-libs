@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -59,7 +60,7 @@ func TestReaderErrWrapperRead(t *testing.T) {
 
 func TestHashData(t *testing.T) {
 	reader := strings.NewReader("hash-me")
-	actual, err := HashData(reader)
+	actual, err := HashData(reader, digest.SHA256)
 	if err != nil {
 		t.Fatal(err)
 	}

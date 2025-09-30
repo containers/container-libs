@@ -13,6 +13,7 @@ import (
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.podman.io/image/v5/internal/blobinfocache"
 	"go.podman.io/image/v5/internal/private"
 	"go.podman.io/image/v5/pkg/blobinfocache/memory"
 	"go.podman.io/image/v5/types"
@@ -215,4 +216,51 @@ func TestPutblobFromLocalFile(t *testing.T) {
 
 	err = ociDest.CommitWithOptions(context.Background(), private.CommitOptions{})
 	require.NoError(t, err)
+}
+
+// TestPutBlobDigestFailureSHA512 simulates behavior on SHA512 digest verification failure.
+func TestPutBlobDigestFailureSHA512(t *testing.T) {
+	const digestErrorString = "Simulated digest error"
+	const blobDigest = "sha512:cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e"
+
+	ref, _ := refToTempOCI(t, false)
+	dirRef, ok := ref.(ociReference)
+	require.True(t, ok)
+	blobPath, err := dirRef.blobPath(blobDigest, "")
+	assert.NoError(t, err)
+	cache := blobinfocache.FromBlobInfoCache(memory.New())
+
+	firstRead := true
+	reader := readerFromFunc(func(p []byte) (int, error) {
+		_, err := os.Lstat(blobPath)
+		if err != nil && os.IsNotExist(err) { // Before the file is created
+			if firstRead { // This should always be true, but there is a small race condition
+				firstRead = false
+				copy(p, "sha512 test content")
+				return len("sha512 test content"), nil
+			}
+		}
+		return 0, errors.New(digestErrorString)
+	})
+
+	dest, err := ref.NewImageDestination(context.Background(), nil)
+	require.NoError(t, err)
+	defer dest.Close()
+
+	// Cast to private.ImageDestinationPublic to access PutBlobWithOptions
+	privateDest, ok := dest.(private.ImageDestinationPublic)
+	require.True(t, ok, "destination should implement private.ImageDestinationPublic")
+
+	_, err = privateDest.PutBlobWithOptions(context.Background(), reader, types.BlobInfo{
+		Digest: blobDigest,
+		Size:   18, // len("sha512 test content")
+	}, private.PutBlobOptions{
+		Cache: cache,
+	})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), digestErrorString)
+
+	// The blob file should be deleted on failure
+	_, err = os.Lstat(blobPath)
+	assert.True(t, os.IsNotExist(err), "Blob file should be deleted on failure")
 }
