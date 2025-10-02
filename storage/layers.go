@@ -1569,7 +1569,7 @@ func (r *layerStore) create(id string, parentLayer *Layer, names []string, mount
 
 	size = -1
 	if diff != nil {
-		if size, err = r.applyDiffWithOptions(layer.ID, moreOptions, diff); err != nil {
+		if size, err = r.applyDiffWithOptions(layer, moreOptions, diff); err != nil {
 			cleanupFailureContext = "applying layer diff"
 			return nil, -1, err
 		}
@@ -2395,18 +2395,17 @@ func updateDigestMap(m *map[digest.Digest][]string, oldvalue, newvalue digest.Di
 
 // Requires startWriting.
 func (r *layerStore) ApplyDiff(to string, diff io.Reader) (size int64, err error) {
-	return r.applyDiffWithOptions(to, nil, diff)
-}
-
-// Requires startWriting.
-func (r *layerStore) applyDiffWithOptions(to string, layerOptions *LayerOptions, diff io.Reader) (size int64, err error) {
-	if !r.lockfile.IsReadWrite() {
-		return -1, fmt.Errorf("not allowed to modify layer contents at %q: %w", r.layerdir, ErrStoreIsReadOnly)
-	}
-
 	layer, ok := r.lookup(to)
 	if !ok {
 		return -1, ErrLayerUnknown
+	}
+	return r.applyDiffWithOptions(layer, nil, diff)
+}
+
+// Requires startWriting.
+func (r *layerStore) applyDiffWithOptions(layer *Layer, layerOptions *LayerOptions, diff io.Reader) (size int64, err error) {
+	if !r.lockfile.IsReadWrite() {
+		return -1, fmt.Errorf("not allowed to modify layer contents at %q: %w", r.layerdir, ErrStoreIsReadOnly)
 	}
 
 	header := make([]byte, 10240)
