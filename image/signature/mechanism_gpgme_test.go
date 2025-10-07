@@ -48,3 +48,17 @@ func TestGPGMESigningMechanismSupportsSigning(t *testing.T) {
 	err = mech.SupportsSigning()
 	assert.NoError(t, err)
 }
+
+func TestGPGMESigningMechanismVerifyCleartext(t *testing.T) {
+	mech, err := newGPGSigningMechanismInDirectory(testGPGHomeDirectory)
+	require.NoError(t, err)
+	defer mech.Close()
+
+	// Successful verification of a cleartext signature
+	signature, err := os.ReadFile("./fixtures/invalid-cleartext.signature")
+	require.NoError(t, err)
+	content, signingFingerprint, err := mech.Verify(signature)
+	require.NoError(t, err)
+	assert.Equal(t, []byte("This is not JSON\n"), content)
+	assert.Equal(t, TestKeyFingerprint, signingFingerprint)
+}
