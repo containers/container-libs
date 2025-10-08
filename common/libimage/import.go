@@ -11,9 +11,11 @@ import (
 
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/common/pkg/digestutils"
 	"go.podman.io/common/pkg/download"
 	storageTransport "go.podman.io/image/v5/storage"
 	tarballTransport "go.podman.io/image/v5/tarball"
+	supportedDigests "go.podman.io/storage/pkg/supported-digests"
 )
 
 // ImportOptions allow for customizing image imports.
@@ -128,5 +130,14 @@ func (r *Runtime) Import(ctx context.Context, path string, options *ImportOption
 		}
 	}
 
-	return "sha256:" + name, nil
+	// Extract the algorithm from the getImageID result
+	// getImageID returns something like "@sha256:abc123" or "@sha512:def456"
+	// We need to preserve the algorithm that was actually used
+	if algorithm, hash := digestutils.ExtractAlgorithmFromDigest(name); algorithm != "" {
+		return algorithm + ":" + hash, nil
+	}
+
+	// Fallback to configured algorithm if we can't parse the digest
+	digestAlgorithm := supportedDigests.TmpDigestForNewObjects()
+	return digestAlgorithm.String() + ":" + name, nil
 }
