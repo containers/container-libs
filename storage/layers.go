@@ -339,7 +339,7 @@ type rwLayerStore interface {
 	CleanupStagingDirectory(stagingDirectory string) error
 
 	// applyDiffFromStagingDirectory uses diffOutput.Target to create the diff.
-	applyDiffFromStagingDirectory(id string, diffOutput *drivers.DriverWithDifferOutput, options *drivers.ApplyDiffWithDifferOpts) error
+	applyDiffFromStagingDirectory(layer *Layer, diffOutput *drivers.DriverWithDifferOutput, options *drivers.ApplyDiffWithDifferOpts) error
 
 	// DifferTarget gets the location where files are stored for the layer.
 	DifferTarget(id string) (string, error)
@@ -1574,7 +1574,7 @@ func (r *layerStore) create(id string, parentLayer *Layer, names []string, mount
 			return nil, -1, err
 		}
 	} else if slo != nil {
-		if err := r.applyDiffFromStagingDirectory(layer.ID, slo.DiffOutput, slo.DiffOptions); err != nil {
+		if err := r.applyDiffFromStagingDirectory(layer, slo.DiffOutput, slo.DiffOptions); err != nil {
 			cleanupFailureContext = "applying staged directory diff"
 			return nil, -1, err
 		}
@@ -2552,14 +2552,10 @@ func (r *layerStore) DifferTarget(id string) (string, error) {
 }
 
 // Requires startWriting.
-func (r *layerStore) applyDiffFromStagingDirectory(id string, diffOutput *drivers.DriverWithDifferOutput, options *drivers.ApplyDiffWithDifferOpts) error {
+func (r *layerStore) applyDiffFromStagingDirectory(layer *Layer, diffOutput *drivers.DriverWithDifferOutput, options *drivers.ApplyDiffWithDifferOpts) error {
 	ddriver, ok := r.driver.(drivers.DriverWithDiffer)
 	if !ok {
 		return ErrNotSupported
-	}
-	layer, ok := r.lookup(id)
-	if !ok {
-		return ErrLayerUnknown
 	}
 	if options == nil {
 		options = &drivers.ApplyDiffWithDifferOpts{
@@ -2621,9 +2617,9 @@ func (r *layerStore) applyDiffFromStagingDirectory(id string, diffOutput *driver
 		}
 	}
 	for k, v := range diffOutput.BigData {
-		if err := r.SetBigData(id, k, bytes.NewReader(v)); err != nil {
-			if err2 := r.deleteWhileHoldingLock(id); err2 != nil {
-				logrus.Errorf("While recovering from a failure to set big data, error deleting layer %#v: %v", id, err2)
+		if err := r.SetBigData(layer.ID, k, bytes.NewReader(v)); err != nil {
+			if err2 := r.deleteWhileHoldingLock(layer.ID); err2 != nil {
+				logrus.Errorf("While recovering from a failure to set big data, error deleting layer %#v: %v", layer.ID, err2)
 			}
 			return err
 		}
