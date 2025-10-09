@@ -15,6 +15,7 @@ import (
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/manifest"
 	"go.podman.io/image/v5/types"
+	supportedDigests "go.podman.io/storage/pkg/supported-digests"
 )
 
 var schema1FixtureLayerInfos = []types.BlobInfo{
@@ -719,4 +720,39 @@ func TestManifestSchema1CanChangeLayerCompression(t *testing.T) {
 	} {
 		assert.True(t, m.CanChangeLayerCompression(""))
 	}
+}
+
+// TestSchema1SHA512Rejection tests that SHA512+Schema1 combinations are explicitly rejected
+func TestSchema1SHA512Rejection(t *testing.T) {
+	// Save original algorithm and restore it after the test
+	originalAlgorithm := supportedDigests.TmpDigestForNewObjects()
+	defer func() {
+		err := supportedDigests.TmpSetDigestForNewObjects(originalAlgorithm)
+		require.NoError(t, err)
+	}()
+
+	// Set SHA512 algorithm
+	err := supportedDigests.TmpSetDigestForNewObjects(digest.SHA512)
+	require.NoError(t, err)
+
+	// Create a schema1 manifest
+	manifestBlob, err := os.ReadFile(filepath.Join("fixtures", "schema1.json"))
+	require.NoError(t, err)
+
+	m, err := manifestSchema1FromManifest(manifestBlob)
+	require.NoError(t, err)
+
+	// Try to convert to schema2 with SHA512 - this should fail
+	schema1Manifest := m.(*manifestSchema1)
+	_, err = schema1Manifest.convertToManifestSchema2(context.Background(), &types.ManifestUpdateOptions{
+		InformationOnly: types.ManifestUpdateInformation{
+			LayerInfos: schema1FixtureLayerInfos,
+		},
+	})
+
+	// Should get an error about SHA512+Schema1 not being supported
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "SHA512+Schema1 is not supported")
+	assert.Contains(t, err.Error(), "Schema1 is deprecated")
+	assert.Contains(t, err.Error(), "Please use SHA256 or convert to Schema2/OCI format")
 }

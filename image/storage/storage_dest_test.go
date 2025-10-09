@@ -91,7 +91,7 @@ func TestLayerID(t *testing.T) {
 			diffID:               diffID,
 			tocDigest:            tocDigest,
 			blobDigest:           "",
-		})
+		}, digest.Canonical)
 		assert.Equal(t, c.expected, res)
 		// blobDigest does not affect the layer ID
 		res = layerID(c.parentID, trustedLayerIdentityData{
@@ -99,7 +99,7 @@ func TestLayerID(t *testing.T) {
 			diffID:               diffID,
 			tocDigest:            tocDigest,
 			blobDigest:           blobDigest,
-		})
+		}, digest.Canonical)
 		assert.Equal(t, c.expected, res)
 	}
 }
