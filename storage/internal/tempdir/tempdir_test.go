@@ -281,7 +281,7 @@ func TestStageAddition(t *testing.T) {
 		assert.NoError(t, td.Cleanup())
 	})
 
-	sa, err := td.StageDirectoryAddition(func(path string) error {
+	sa1, err := td.StageDirectoryAddition(func(path string) error {
 		f, err := os.Create(filepath.Join(path, "file1"))
 		require.NoError(t, err)
 		require.NoError(t, f.Close())
@@ -292,10 +292,25 @@ func TestStageAddition(t *testing.T) {
 	// need to use a dest which does not exist yet
 	dest := filepath.Join(t.TempDir(), "dest")
 
-	err = sa.Commit(dest)
+	err = sa1.Commit(dest)
 	require.NoError(t, err)
 	assert.FileExists(t, filepath.Join(dest, "file1"))
-	assert.NoDirExists(t, sa.source)
+	assert.NoDirExists(t, sa1.source)
+
+	fileContent := []byte("test\n")
+	sa2, err := td.StageFileAddition(func(path string) error {
+		return os.WriteFile(path, fileContent, 0o600)
+	})
+	require.NoError(t, err)
+
+	destfile := filepath.Join(t.TempDir(), "file")
+	err = sa2.Commit(destfile)
+	require.NoError(t, err)
+	assert.NoFileExists(t, sa2.source)
+
+	fileBytes, err := os.ReadFile(destfile)
+	require.NoError(t, err)
+	assert.Equal(t, fileContent, fileBytes)
 }
 
 func TestStageAdditionCallbackError(t *testing.T) {
@@ -309,6 +324,11 @@ func TestStageAdditionCallbackError(t *testing.T) {
 	customErr := errors.New("custom error")
 
 	_, err = td.StageDirectoryAddition(func(path string) error {
+		return customErr
+	})
+	require.ErrorIs(t, err, customErr)
+
+	_, err = td.StageFileAddition(func(path string) error {
 		return customErr
 	})
 	require.ErrorIs(t, err, customErr)
