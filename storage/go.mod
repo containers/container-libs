@@ -14,7 +14,7 @@ require (
 	github.com/klauspost/compress v1.18.0
 	github.com/klauspost/pgzip v1.2.6
 	github.com/mattn/go-shellwords v1.0.12
-	github.com/mistifyio/go-zfs/v3 v3.1.0
+	github.com/mistifyio/go-zfs/v4 v4.0.0
 	github.com/moby/sys/capability v0.4.0
 	github.com/moby/sys/mountinfo v0.7.2
 	github.com/moby/sys/user v0.4.0
