@@ -105,7 +105,7 @@ jobs:
 
           BRANCH_NAME="sync/container-libs-${{ github.event.pull_request.number }}"
           PR_TITLE="Sync: ${SELF_REPO_PR_TITLE}"
-          PR_BODY="This PR automatically vendors changes from [container-libs#${SELF_REPO_PR_NUMBER}](${SELF_REPO_PR_URL})."
+          PR_BODY="This PR automatically vendors changes from [container-libs#${SELF_REPO_PR_NUMBER}](${SELF_REPO_PR_URL}).\n This PR is intended solely for testing purposes and should not be merged. Ideally, upstream maintainers should review any failing tests here and close this PR once the upstream PR is merged. Maintainers of this repository do not need to take any action, but may review the changes and notify upstream maintainers of any breaking issues if they wish."
 
           # Check if PR already exists for this branch
           echo "Searching for existing PR with branch: $BRANCH_NAME"
