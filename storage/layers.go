@@ -2402,16 +2402,38 @@ func (r *layerStore) ApplyDiff(to string, diff io.Reader) (size int64, err error
 	return r.applyDiffWithOptions(layer, nil, diff)
 }
 
+type diffApplyFunc func(id string, parent string, options drivers.ApplyDiffOpts, tsBytes *bytes.Buffer) error
+
 // Requires startWriting.
-func (r *layerStore) applyDiffWithOptions(layer *Layer, layerOptions *LayerOptions, diff io.Reader) (size int64, err error) {
+func (r *layerStore) applyDiffWithOptions(layer *Layer, layerOptions *LayerOptions, diff io.Reader) (int64, error) {
+	var size int64
+	f := func(id string, parent string, options drivers.ApplyDiffOpts, tsBytes *bytes.Buffer) error {
+		var err error
+		size, err = r.driver.ApplyDiff(layer.ID, layer.Parent, options)
+		if err != nil {
+			return err
+		}
+		if err := os.MkdirAll(filepath.Dir(r.tspath(layer.ID)), 0o700); err != nil {
+			return err
+		}
+		if err := ioutils.AtomicWriteFile(r.tspath(layer.ID), tsBytes.Bytes(), 0o600); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	return size, r.applyDiffWithOptionsInner(layer, layerOptions, diff, f)
+}
+
+func (r *layerStore) applyDiffWithOptionsInner(layer *Layer, layerOptions *LayerOptions, diff io.Reader, applyFunc diffApplyFunc) (err error) {
 	if !r.lockfile.IsReadWrite() {
-		return -1, fmt.Errorf("not allowed to modify layer contents at %q: %w", r.layerdir, ErrStoreIsReadOnly)
+		return fmt.Errorf("not allowed to modify layer contents at %q: %w", r.layerdir, ErrStoreIsReadOnly)
 	}
 
 	header := make([]byte, 10240)
 	n, err := diff.Read(header)
 	if err != nil && err != io.EOF {
-		return -1, err
+		return err
 	}
 	compression := archive.DetectCompression(header[:n])
 	defragmented := io.MultiReader(bytes.NewReader(header[:n]), diff)
@@ -2446,10 +2468,10 @@ func (r *layerStore) applyDiffWithOptions(layer *Layer, layerOptions *LayerOptio
 	gidLog := make(map[uint32]struct{})
 	var uncompressedCounter *ioutils.WriteCounter
 
-	size, err = func() (int64, error) { // A scope for defer
+	err = func() error { // A scope for defer
 		compressor, err := pgzip.NewWriterLevel(&tsdata, pgzip.BestSpeed)
 		if err != nil {
-			return -1, err
+			return err
 		}
 		defer compressor.Close()                                        // This must happen before tsdata is consumed.
 		if err := compressor.SetConcurrency(1024*1024, 1); err != nil { // 1024*1024 is the hard-coded default; we're not changing that
@@ -2458,7 +2480,7 @@ func (r *layerStore) applyDiffWithOptions(layer *Layer, layerOptions *LayerOptio
 		metadata := storage.NewJSONPacker(compressor)
 		uncompressed, err := archive.DecompressStream(defragmented)
 		if err != nil {
-			return -1, err
+			return err
 		}
 		defer uncompressed.Close()
 		idLogger, err := tarlog.NewLogger(func(h *tar.Header) {
@@ -2468,7 +2490,7 @@ func (r *layerStore) applyDiffWithOptions(layer *Layer, layerOptions *LayerOptio
 			}
 		})
 		if err != nil {
-			return -1, err
+			return err
 		}
 		defer idLogger.Close() // This must happen before uidLog and gidLog is consumed.
 		uncompressedCounter = ioutils.NewWriteCounter(idLogger)
@@ -2478,29 +2500,19 @@ func (r *layerStore) applyDiffWithOptions(layer *Layer, layerOptions *LayerOptio
 		}
 		payload, err := asm.NewInputTarStream(io.TeeReader(uncompressed, uncompressedWriter), metadata, storage.NewDiscardFilePutter())
 		if err != nil {
-			return -1, err
+			return err
 		}
 		options := drivers.ApplyDiffOpts{
 			Diff:       payload,
 			Mappings:   r.layerMappings(layer),
 			MountLabel: layer.MountLabel,
 		}
-		size, err := r.driver.ApplyDiff(layer.ID, layer.Parent, options)
-		if err != nil {
-			return -1, err
-		}
-		return size, err
+		return applyFunc(layer.ID, layer.Parent, options, &tsdata)
 	}()
 	if err != nil {
-		return -1, err
+		return err
 	}
 
-	if err := os.MkdirAll(filepath.Dir(r.tspath(layer.ID)), 0o700); err != nil {
-		return -1, err
-	}
-	if err := ioutils.AtomicWriteFile(r.tspath(layer.ID), tsdata.Bytes(), 0o600); err != nil {
-		return -1, err
-	}
 	if compressedDigester != nil {
 		compressedDigest = compressedDigester.Digest()
 	}
@@ -2535,7 +2547,7 @@ func (r *layerStore) applyDiffWithOptions(layer *Layer, layerOptions *LayerOptio
 
 	err = r.saveFor(layer)
 
-	return size, err
+	return err
 }
 
 // Requires (startReading or?) startWriting.
