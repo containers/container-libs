@@ -12,6 +12,15 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - repo_name: buildah
+            fork_repo: podmanbot/buildah
+            upstream_repo: containers/buildah
+          - repo_name: podman
+            fork_repo: podmanbot/podman
+            upstream_repo: containers/podman
     steps:
       - name: 'Checkout Self'
         uses: actions/checkout@v5
@@ -22,25 +31,25 @@ jobs:
         with:
           go-version: 'stable'
 
-      - name: 'Checkout forked buildah'
+      - name: 'Checkout forked ${{ matrix.repo_name }}'
         uses: actions/checkout@v5
         with:
-          repository: 'podmanbot/buildah' # The target repository
-          path: 'buildah'                 # Checkout into a sub-directory
+          repository: '${{ matrix.fork_repo }}' # The target repository
+          path: '${{ matrix.repo_name }}'       # Checkout into a sub-directory
           fetch-depth: '1'
           token: ${{ secrets.VENDOR_TOKEN_PODMANBOT }} # We need to push into pobmanbot/buildah
 
-      - name: 'Vendor Code from this repo to buildah'
+      - name: 'Vendor Code from this repo to ${{ matrix.repo_name }}'
         run: |
           # Get the current commit SHA from the PR
           COMMIT_SHA="${{ github.event.pull_request.head.sha }}"
           echo "Using commit SHA: $COMMIT_SHA"
 
-          cd buildah
+          cd ${{ matrix.repo_name }}
           # Create a unique branch name based on the container-libs PR number
           BRANCH_NAME="sync/container-libs-${{ github.event.pull_request.number }}"
           git switch -c $BRANCH_NAME
-          git remote add upstream https://github.com/containers/buildah.git
+          git remote add upstream https://github.com/${{ matrix.upstream_repo }}.git
           git fetch upstream
           git rebase upstream/main
 
@@ -62,9 +71,9 @@ jobs:
           echo "Updated go.mod:"
           cat go.mod
 
-      - name: 'Commit and Push to buildah'
+      - name: 'Commit and Push to ${{ matrix.repo_name }}'
         run: |
-          cd buildah
+          cd ${{ matrix.repo_name }}
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
@@ -92,7 +101,7 @@ jobs:
 
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
 
-      - name: 'Create or Update Pull Request in Buildah'
+      - name: 'Create or Update Pull Request in ${{ matrix.repo_name }}'
         id: create_pr
         if: env.SKIP_PR != 'true'
         env:
@@ -101,7 +110,7 @@ jobs:
           SELF_REPO_PR_URL: ${{ github.event.pull_request.html_url }}
           SELF_REPO_PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          cd buildah
+          cd ${{ matrix.repo_name }}
 
           BRANCH_NAME="sync/container-libs-${{ github.event.pull_request.number }}"
           PR_TITLE="Sync: ${SELF_REPO_PR_TITLE}"
@@ -110,7 +119,7 @@ jobs:
           # Check if PR already exists for this branch
           echo "Searching for existing PR with branch: $BRANCH_NAME"
 
-          EXISTING_PR_URL=$(gh pr list --repo containers/buildah --head "$BRANCH_NAME" --json url --jq '.[0].url // empty' 2>/dev/null || echo "")
+          EXISTING_PR_URL=$(gh pr list --repo ${{ matrix.upstream_repo }} --head "$BRANCH_NAME" --json url --jq '.[0].url // empty' 2>/dev/null || echo "")
 
           if [ -n "$EXISTING_PR_URL" ]; then
             echo "Found existing PR: $EXISTING_PR_URL"
@@ -125,7 +134,7 @@ jobs:
             # Create new PR
             echo "Creating new PR with head: podmanbot:$BRANCH_NAME"
             NEW_PR_URL=$(gh pr create \
-              --repo containers/buildah \
+              --repo ${{ matrix.upstream_repo }} \
               --draft \
               --base main \
               --head "podmanbot:$BRANCH_NAME" \
@@ -136,7 +145,7 @@ jobs:
             echo "pr_action=created" >> $GITHUB_OUTPUT
           fi
 
-      - name: 'Comment on container-libs PR with the link to buildah PR'
+      - name: 'Comment on container-libs PR with the link to ${{ matrix.repo_name }} PR'
         if: env.SKIP_PR != 'true'
         env:
           GH_TOKEN: ${{ secrets.VENDOR_TOKEN_PODMANBOT }}
@@ -145,7 +154,7 @@ jobs:
           PR_ACTION: ${{ steps.create_pr.outputs.pr_action }}
         run: |
           if [ "${{ env.PR_ACTION }}" = "created" ]; then
-            COMMENT_BODY="✅ A new PR has been created in buildah to vendor these changes: **${{ env.TARGET_REPO_PR_URL }}**"
+            COMMENT_BODY="✅ A new PR has been created in ${{ matrix.repo_name }} to vendor these changes: **${{ env.TARGET_REPO_PR_URL }}**"
             gh pr comment ${{ env.SELF_REPO_PR_NUMBER }} \
               --repo ${{ github.repository }} \
               --body "$COMMENT_BODY"
