@@ -1378,6 +1378,19 @@ func (r *layerStore) pickStoreLocation(volatile, writeable bool) layerLocations 
 	}
 }
 
+func checkIdAndNameConflict(r *layerStore, id string, names []string) error {
+	if _, idInUse := r.byid[id]; idInUse {
+		return ErrDuplicateID
+	}
+	names = dedupeStrings(names)
+	for _, name := range names {
+		if _, nameInUse := r.byname[name]; nameInUse {
+			return ErrDuplicateName
+		}
+	}
+	return nil
+}
+
 // Requires startWriting.
 func (r *layerStore) create(id string, parentLayer *Layer, names []string, mountLabel string, options map[string]string, moreOptions *LayerOptions, writeable bool, diff io.Reader, slo *stagedLayerOptions) (layer *Layer, size int64, err error) {
 	if moreOptions == nil {
@@ -1400,14 +1413,9 @@ func (r *layerStore) create(id string, parentLayer *Layer, names []string, mount
 			_, idInUse = r.byid[id]
 		}
 	}
-	if duplicateLayer, idInUse := r.byid[id]; idInUse {
-		return duplicateLayer, -1, ErrDuplicateID
-	}
 	names = dedupeStrings(names)
-	for _, name := range names {
-		if _, nameInUse := r.byname[name]; nameInUse {
-			return nil, -1, ErrDuplicateName
-		}
+	if err := checkIdAndNameConflict(r, id, names); err != nil {
+		return nil, -1, err
 	}
 	parent := ""
 	if parentLayer != nil {
@@ -1448,9 +1456,6 @@ func (r *layerStore) create(id string, parentLayer *Layer, names []string, mount
 		selinux.ReserveLabel(mountLabel)
 	}
 
-	// Before actually creating the layer, make a persistent record of it
-	// with the incomplete flag set, so that future processes have a chance
-	// to clean up after it.
 	layer = &Layer{
 		ID:                 id,
 		Parent:             parent,
@@ -1473,6 +1478,45 @@ func (r *layerStore) create(id string, parentLayer *Layer, names []string, mount
 		location:           r.pickStoreLocation(moreOptions.Volatile, writeable),
 	}
 	layer.Flags[incompleteFlag] = true
+
+	var (
+		cleanupFunctions []tempdir.CleanupTempDirFunc
+		applyDiffFunc    func() error
+		applyDiffSize    int64
+	)
+
+	applyDiffTemporaryDriver, ok := r.driver.(drivers.ApplyDiffStaging)
+	if ok && diff != nil {
+		// CRITICAL, this releases the lock so we can extract this unlocked
+		r.stopWriting()
+
+		var applyDiffError error
+		cleanupFunctions, applyDiffFunc, applyDiffSize, applyDiffError = r.applyDiffUnlocked(applyDiffTemporaryDriver, layer, moreOptions, diff)
+		// We must try to cleanup regardless of if an error was returned or not.
+		defer func() {
+			if err := tempdir.CleanupTemporaryDirectories(cleanupFunctions...); err != nil {
+				logrus.Errorf("Error cleaning up temporary directories: %v", err)
+			}
+		}()
+		// Acquire the lock again, this releases the lock so we can extract this unlocked.
+		// This must be done before checking for the error from applyDiffUnlocked() so the caller doesn't try to unlock again.
+		// FIXME: if startWriting() fails we return unlocked and then the parent unlocks again causing a panic. We should try to avoid that case somehow.
+		if err := r.startWriting(); err != nil {
+			return nil, -1, fmt.Errorf("re-acquire lock after applying layer diff: %w", err)
+		}
+		if applyDiffError != nil {
+			return nil, -1, applyDiffError
+		}
+
+		if err := checkIdAndNameConflict(r, id, names); err != nil {
+			logrus.Debugf("Layer id %s or name from %v was created while staging the layer content unlocked, aborting layer creation", id, names)
+			return nil, -1, err
+		}
+	}
+
+	// Before actually creating the layer, make a persistent record of it
+	// with the incomplete flag set, so that future processes have a chance
+	// to clean up after it.
 
 	r.layers = append(r.layers, layer)
 	// This can only fail if the ID is already missing, which shouldn’t
@@ -1568,7 +1612,13 @@ func (r *layerStore) create(id string, parentLayer *Layer, names []string, mount
 	}
 
 	size = -1
-	if diff != nil {
+	if applyDiffFunc != nil {
+		size = applyDiffSize
+		if err := applyDiffFunc(); err != nil {
+			cleanupFailureContext = "applying staged diff"
+			return nil, -1, err
+		}
+	} else if diff != nil {
 		if size, err = r.applyDiffWithOptions(layer, moreOptions, diff); err != nil {
 			cleanupFailureContext = "applying layer diff"
 			return nil, -1, err
@@ -2404,6 +2454,66 @@ func (r *layerStore) ApplyDiff(to string, diff io.Reader) (size int64, err error
 
 type diffApplyFunc func(id string, parent string, options drivers.ApplyDiffOpts, tsBytes *bytes.Buffer) error
 
+func (r *layerStore) applyDiffUnlocked(dd drivers.ApplyDiffStaging, layer *Layer, layerOptions *LayerOptions, diff io.Reader) ([]tempdir.CleanupTempDirFunc, func() error, int64, error) {
+	var (
+		size           int64
+		cleanFunctions []tempdir.CleanupTempDirFunc
+		applyDiff      func() error
+	)
+
+	f := func(id string, parent string, options drivers.ApplyDiffOpts, tsBytes *bytes.Buffer) error {
+		var (
+			err     error
+			cleanup tempdir.CleanupTempDirFunc
+			commit  tempdir.CommitFunc
+		)
+		cleanup, commit, size, err = dd.StartStagingDiffToApply(layer.ID, layer.Parent, options)
+		cleanFunctions = append(cleanFunctions, cleanup)
+		if err != nil {
+			return err
+		}
+
+		td, err := tempdir.NewTempDir(filepath.Join(r.layerdir, tempDirPath))
+		cleanFunctions = append(cleanFunctions, td.Cleanup)
+		if err != nil {
+			return err
+		}
+
+		sa, err := td.StageFileAddition(func(path string) error {
+			return os.WriteFile(path, tsBytes.Bytes(), 0o600)
+		})
+		cleanFunctions = append(cleanFunctions, td.Cleanup)
+		if err != nil {
+			return err
+		}
+
+		applyDiff = func() error {
+			err := dd.CommitStagedLayer(layer.ID, commit)
+			if err != nil {
+				return fmt.Errorf("commit temporary layer: %w", err)
+			}
+
+			if err := os.MkdirAll(filepath.Dir(r.tspath(layer.ID)), 0o700); err != nil {
+				return err
+			}
+
+			err = sa.Commit(r.tspath(layer.ID))
+			if err != nil {
+				return fmt.Errorf("commit tar split file: %w", err)
+			}
+			return nil
+		}
+		return nil
+	}
+
+	err := r.applyDiffWithOptionsInner(layer, layerOptions, diff, f)
+	if err != nil {
+		return cleanFunctions, nil, 0, err
+	}
+
+	return cleanFunctions, applyDiff, size, nil
+}
+
 // Requires startWriting.
 func (r *layerStore) applyDiffWithOptions(layer *Layer, layerOptions *LayerOptions, diff io.Reader) (int64, error) {
 	var size int64
@@ -2422,7 +2532,12 @@ func (r *layerStore) applyDiffWithOptions(layer *Layer, layerOptions *LayerOptio
 		return nil
 	}
 
-	return size, r.applyDiffWithOptionsInner(layer, layerOptions, diff, f)
+	err := r.applyDiffWithOptionsInner(layer, layerOptions, diff, f)
+	if err != nil {
+		return 0, err
+	}
+
+	return size, r.saveFor(layer)
 }
 
 func (r *layerStore) applyDiffWithOptionsInner(layer *Layer, layerOptions *LayerOptions, diff io.Reader, applyFunc diffApplyFunc) (err error) {
@@ -2545,9 +2660,7 @@ func (r *layerStore) applyDiffWithOptionsInner(layer *Layer, layerOptions *Layer
 	}
 	slices.Sort(layer.GIDs)
 
-	err = r.saveFor(layer)
-
-	return err
+	return nil
 }
 
 // Requires (startReading or?) startWriting.
