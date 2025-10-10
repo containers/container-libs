@@ -1370,6 +1370,14 @@ func (d *Driver) getTempDirRoot(id string) string {
 	return filepath.Join(d.home, tempDirName)
 }
 
+// getTempDirRootForNewLayer returns the correct temp directory root based on where
+// the layer should be created.
+//
+// This must be kept in sync with GetTempDirRootDirs().
+func (d *Driver) getTempDirRootForNewLayer() string {
+	return filepath.Join(d.homeDirForImageStore(), tempDirName)
+}
+
 func (d *Driver) DeferredRemove(id string) (tempdir.CleanupTempDirFunc, error) {
 	tempDirRoot := d.getTempDirRoot(id)
 	t, err := tempdir.NewTempDir(tempDirRoot)
@@ -2383,21 +2391,94 @@ func (d *Driver) DifferTarget(id string) (string, error) {
 	return d.getDiffPath(id)
 }
 
+// StartStagingDiffToApply applies the new layer into a temporary directory.
+// It returns a CleanupTempDirFunc which can nil or set regardless if the function return an error or not.
+// StagedAddition is only set when there is no error returned and the int64 value returns the size of the layer.
+// This can be done without holding the storage lock, if a parent is given the caller must check for existence
+// beforehand while holding a lock.
+//
+// This API is experimental and can be changed without bumping the major version number.
+func (d *Driver) StartStagingDiffToApply(parent string, options graphdriver.ApplyDiffOpts) (tempdir.CleanupTempDirFunc, *tempdir.StagedAddition, int64, error) {
+	tempDirRoot := d.getTempDirRootForNewLayer()
+	t, err := tempdir.NewTempDir(tempDirRoot)
+	if err != nil {
+		return nil, nil, -1, err
+	}
+
+	sa, err := t.StageAddition()
+	if err != nil {
+		return t.Cleanup, nil, -1, err
+	}
+
+	_, forcedSt, st, err := d.getLayerPermissions(parent, options.Mappings.UIDs(), options.Mappings.GIDs())
+	if err != nil {
+		// If we have a ENOENT it means the parent was removed which can happen as we are unlocked here.
+		// In this case also wrap ErrLayerUnknown which some callers can handle to retry after recreating the parent.
+		if errors.Is(err, fs.ErrNotExist) {
+			return t.Cleanup, nil, -1, fmt.Errorf("parent layer %q: %w: %w", parent, graphdriver.ErrLayerUnknown, err)
+		}
+		return t.Cleanup, nil, -1, err
+	}
+
+	if err := idtools.MkdirAs(sa.Path, forcedSt.Mode, forcedSt.IDs.UID, forcedSt.IDs.GID); err != nil {
+		return t.Cleanup, nil, -1, err
+	}
+
+	if d.options.forceMask != nil {
+		st.Mode |= os.ModeDir
+		if err := idtools.SetContainersOverrideXattr(sa.Path, st); err != nil {
+			return t.Cleanup, nil, -1, err
+		}
+	}
+
+	size, err := d.applyDiff(sa.Path, options)
+	if err != nil {
+		return t.Cleanup, nil, -1, err
+	}
+
+	return t.Cleanup, sa, size, nil
+}
+
+// CommitStagedLayer that was created with StartStagingDiffToApply().
+//
+// This API is experimental and can be changed without bumping the major version number.
+func (d *Driver) CommitStagedLayer(id string, sa *tempdir.StagedAddition) error {
+	applyDir, err := d.getDiffPath(id)
+	if err != nil {
+		return err
+	}
+
+	// The os.Rename() function used by CommitFunc errors when the target directory already
+	// exists, as such delete the dir. The create() function creates it and it would be more
+	// complicated to code in a way that it didn't create it.
+	if err := os.Remove(applyDir); err != nil {
+		return err
+	}
+
+	return sa.Commit(applyDir)
+}
+
 // ApplyDiff applies the new layer into a root
 func (d *Driver) ApplyDiff(id, parent string, options graphdriver.ApplyDiffOpts) (size int64, err error) {
+	applyDir, err := d.getDiffPath(id)
+	if err != nil {
+		return 0, err
+	}
+	return d.applyDiff(applyDir, options)
+}
+
+// ApplyDiff applies the new layer into a root.
+// This can run concurrently with any other driver operations, as such it is the
+// callers responsibility to ensure the target path passed is safe to use if that is the case.
+func (d *Driver) applyDiff(target string, options graphdriver.ApplyDiffOpts) (size int64, err error) {
 	idMappings := options.Mappings
 	if idMappings == nil {
 		idMappings = &idtools.IDMappings{}
 	}
 
-	applyDir, err := d.getDiffPath(id)
-	if err != nil {
-		return 0, err
-	}
-
-	logrus.Debugf("Applying tar in %s", applyDir)
+	logrus.Debugf("Applying tar in %s", target)
 	// Overlay doesn't need the parent id to apply the diff
-	if err := untar(options.Diff, applyDir, &archive.TarOptions{
+	if err := untar(options.Diff, target, &archive.TarOptions{
 		UIDMaps:           idMappings.UIDs(),
 		GIDMaps:           idMappings.GIDs(),
 		IgnoreChownErrors: d.options.ignoreChownErrors,
@@ -2408,7 +2489,7 @@ func (d *Driver) ApplyDiff(id, parent string, options graphdriver.ApplyDiffOpts)
 		return 0, err
 	}
 
-	return directory.Size(applyDir)
+	return directory.Size(target)
 }
 
 func (d *Driver) getComposefsData(id string) string {
