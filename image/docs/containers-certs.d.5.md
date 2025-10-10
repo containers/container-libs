@@ -5,7 +5,12 @@ containers-certs.d - Directory for storing custom container-registry TLS configu
 
 # DESCRIPTION
 A custom TLS configuration for a container registry can be configured by creating a directory under `$HOME/.config/containers/certs.d` or `/etc/containers/certs.d`.
-The name of the directory must correspond to the `host:port` of the registry (e.g., `my-registry.com:5000`).
+The name of the directory must correspond to the `host`[`:port`] of the registry (e.g., `my-registry.com:5000`).
+
+The port part presence / absence must precisely match the port usage in image references,
+e.g. to affect `podman pull registry.example/foo`,
+use a directory named `registry.example`, not `registry.example:443`.
+`registry.example:443` would affect `podman pull registry.example:443/foo`.
 
 ## Directory Structure
 A certs directory can contain one or more files with the following extensions:
@@ -18,7 +23,7 @@ Note that the client certificate-key pair will be selected by the file name (e.g
 An exemplary setup for a registry running at `my-registry.com:5000` may look as follows:
 ```
 /etc/containers/certs.d/    <- Certificate directory
-└── my-registry.com:5000    <- Hostname:port
+└── my-registry.com:5000    <- Hostname[:port]
    ├── client.cert          <- Client certificate
    ├── client.key           <- Client key
    └── ca.crt               <- Certificate authority that signed the registry certificate
