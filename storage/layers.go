@@ -31,6 +31,7 @@ import (
 	"go.podman.io/storage/pkg/ioutils"
 	"go.podman.io/storage/pkg/lockfile"
 	"go.podman.io/storage/pkg/mount"
+	"go.podman.io/storage/pkg/pools"
 	"go.podman.io/storage/pkg/stringid"
 	"go.podman.io/storage/pkg/system"
 	"go.podman.io/storage/pkg/tarlog"
@@ -2452,63 +2453,58 @@ func (r *layerStore) ApplyDiff(to string, diff io.Reader) (size int64, err error
 	return r.applyDiffWithOptions(layer, nil, diff)
 }
 
-type diffApplyFunc func(id string, parent string, options drivers.ApplyDiffOpts, tsBytes *bytes.Buffer) error
+type diffApplyFunc func(id string, parent string, options drivers.ApplyDiffOpts) error
 
 func (r *layerStore) applyDiffUnlocked(dd drivers.ApplyDiffStaging, layer *Layer, layerOptions *LayerOptions, diff io.Reader) ([]tempdir.CleanupTempDirFunc, func() error, int64, error) {
 	var (
 		size           int64
 		cleanFunctions []tempdir.CleanupTempDirFunc
-		applyDiff      func() error
+		commit         tempdir.CommitFunc
 	)
 
-	f := func(id string, parent string, options drivers.ApplyDiffOpts, tsBytes *bytes.Buffer) error {
+	f := func(id string, parent string, options drivers.ApplyDiffOpts) error {
 		var (
 			err     error
 			cleanup tempdir.CleanupTempDirFunc
-			commit  tempdir.CommitFunc
 		)
 		cleanup, commit, size, err = dd.StartStagingDiffToApply(layer.ID, layer.Parent, options)
 		cleanFunctions = append(cleanFunctions, cleanup)
-		if err != nil {
-			return err
-		}
-
-		td, err := tempdir.NewTempDir(filepath.Join(r.layerdir, tempDirPath))
-		cleanFunctions = append(cleanFunctions, td.Cleanup)
-		if err != nil {
-			return err
-		}
-
-		sa, err := td.StageFileAddition(func(path string) error {
-			return os.WriteFile(path, tsBytes.Bytes(), 0o600)
-		})
-		cleanFunctions = append(cleanFunctions, td.Cleanup)
-		if err != nil {
-			return err
-		}
-
-		applyDiff = func() error {
-			err := dd.CommitStagedLayer(layer.ID, commit)
-			if err != nil {
-				return fmt.Errorf("commit temporary layer: %w", err)
-			}
-
-			if err := os.MkdirAll(filepath.Dir(r.tspath(layer.ID)), 0o700); err != nil {
-				return err
-			}
-
-			err = sa.Commit(r.tspath(layer.ID))
-			if err != nil {
-				return fmt.Errorf("commit tar split file: %w", err)
-			}
-			return nil
-		}
-		return nil
+		return err
 	}
 
-	err := r.applyDiffWithOptionsInner(layer, layerOptions, diff, f)
+	td, err := tempdir.NewTempDir(filepath.Join(r.layerdir, tempDirPath))
+	cleanFunctions = append(cleanFunctions, td.Cleanup)
 	if err != nil {
 		return cleanFunctions, nil, 0, err
+	}
+
+	sa, err := td.StageFileAddition(func(path string) error {
+		tsFile, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0o600)
+		if err != nil {
+			return err
+		}
+		defer tsFile.Close()
+		return r.applyDiffWithOptionsInner(layer, layerOptions, diff, f, tsFile)
+	})
+	if err != nil {
+		return cleanFunctions, nil, 0, err
+	}
+
+	applyDiff := func() error {
+		err := dd.CommitStagedLayer(layer.ID, commit)
+		if err != nil {
+			return fmt.Errorf("commit temporary layer: %w", err)
+		}
+
+		if err := os.MkdirAll(filepath.Dir(r.tspath(layer.ID)), 0o700); err != nil {
+			return err
+		}
+
+		err = sa.Commit(r.tspath(layer.ID))
+		if err != nil {
+			return fmt.Errorf("commit tar split file: %w", err)
+		}
+		return nil
 	}
 
 	return cleanFunctions, applyDiff, size, nil
@@ -2517,22 +2513,22 @@ func (r *layerStore) applyDiffUnlocked(dd drivers.ApplyDiffStaging, layer *Layer
 // Requires startWriting.
 func (r *layerStore) applyDiffWithOptions(layer *Layer, layerOptions *LayerOptions, diff io.Reader) (int64, error) {
 	var size int64
-	f := func(id string, parent string, options drivers.ApplyDiffOpts, tsBytes *bytes.Buffer) error {
+	f := func(id string, parent string, options drivers.ApplyDiffOpts) error {
 		var err error
 		size, err = r.driver.ApplyDiff(layer.ID, layer.Parent, options)
-		if err != nil {
-			return err
-		}
-		if err := os.MkdirAll(filepath.Dir(r.tspath(layer.ID)), 0o700); err != nil {
-			return err
-		}
-		if err := ioutils.AtomicWriteFile(r.tspath(layer.ID), tsBytes.Bytes(), 0o600); err != nil {
-			return err
-		}
-		return nil
+		return err
 	}
 
-	err := r.applyDiffWithOptionsInner(layer, layerOptions, diff, f)
+	if err := os.MkdirAll(filepath.Dir(r.tspath(layer.ID)), 0o700); err != nil {
+		return -1, err
+	}
+	tsFile, err := os.OpenFile(r.tspath(layer.ID), os.O_CREATE|os.O_WRONLY, 0o600)
+	if err != nil {
+		return -1, err
+	}
+	defer tsFile.Close()
+
+	err = r.applyDiffWithOptionsInner(layer, layerOptions, diff, f, tsFile)
 	if err != nil {
 		return 0, err
 	}
@@ -2540,7 +2536,7 @@ func (r *layerStore) applyDiffWithOptions(layer *Layer, layerOptions *LayerOptio
 	return size, r.saveFor(layer)
 }
 
-func (r *layerStore) applyDiffWithOptionsInner(layer *Layer, layerOptions *LayerOptions, diff io.Reader, applyFunc diffApplyFunc) (err error) {
+func (r *layerStore) applyDiffWithOptionsInner(layer *Layer, layerOptions *LayerOptions, diff io.Reader, applyFunc diffApplyFunc, tsFile *os.File) (err error) {
 	if !r.lockfile.IsReadWrite() {
 		return fmt.Errorf("not allowed to modify layer contents at %q: %w", r.layerdir, ErrStoreIsReadOnly)
 	}
@@ -2578,13 +2574,14 @@ func (r *layerStore) applyDiffWithOptionsInner(layer *Layer, layerOptions *Layer
 	compressedCounter := ioutils.NewWriteCounter(compressedWriter)
 	defragmented = io.TeeReader(defragmented, compressedCounter)
 
-	tsdata := bytes.Buffer{}
+	tsdata := pools.BufioWriter32KPool.Get(tsFile)
+	defer tsdata.Flush()
 	uidLog := make(map[uint32]struct{})
 	gidLog := make(map[uint32]struct{})
 	var uncompressedCounter *ioutils.WriteCounter
 
 	err = func() error { // A scope for defer
-		compressor, err := pgzip.NewWriterLevel(&tsdata, pgzip.BestSpeed)
+		compressor, err := pgzip.NewWriterLevel(tsdata, pgzip.BestSpeed)
 		if err != nil {
 			return err
 		}
@@ -2622,7 +2619,7 @@ func (r *layerStore) applyDiffWithOptionsInner(layer *Layer, layerOptions *Layer
 			Mappings:   r.layerMappings(layer),
 			MountLabel: layer.MountLabel,
 		}
-		return applyFunc(layer.ID, layer.Parent, options, &tsdata)
+		return applyFunc(layer.ID, layer.Parent, options)
 	}()
 	if err != nil {
 		return err
