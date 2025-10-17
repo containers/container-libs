@@ -58,7 +58,7 @@ func moveProcessToScope(pid int, slice, scope string) error {
 	return err
 }
 
-// MoveRootlessNetnsProcessToUserSlice moves the slirp4netns process for the rootless netns
+// MoveRootlessNetnsProcessToUserSlice moves the process for the rootless netns
 // into a different scope so that systemd does not kill it with a container.
 func MoveRootlessNetnsProcessToUserSlice(pid int) error {
 	randBytes := make([]byte, 4)
