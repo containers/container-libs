@@ -6,7 +6,7 @@ module go.podman.io/storage
 
 require (
 	github.com/BurntSushi/toml v1.5.0
-	github.com/containerd/stargz-snapshotter/estargz v0.17.0
+	github.com/containerd/stargz-snapshotter/estargz v0.18.0
 	github.com/cyphar/filepath-securejoin v0.4.1
 	github.com/docker/go-units v0.5.0
 	github.com/google/go-intervals v0.0.2
@@ -25,7 +25,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/tchap/go-patricia/v2 v2.3.3
 	github.com/ulikunitz/xz v0.5.15
-	github.com/vbatts/tar-split v0.12.1
+	github.com/vbatts/tar-split v0.12.2
 	golang.org/x/sync v0.17.0
 	golang.org/x/sys v0.37.0
 	gotest.tools/v3 v3.5.2
