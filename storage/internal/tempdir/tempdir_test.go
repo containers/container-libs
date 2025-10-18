@@ -1,6 +1,7 @@
 package tempdir
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -270,4 +271,65 @@ func TestTempDirFileNaming(t *testing.T) {
 		}
 		assert.True(t, found, "Expected file %s not found", expectedName)
 	}
+}
+
+func TestStageAddition(t *testing.T) {
+	rootDir := t.TempDir()
+	td, err := NewTempDir(rootDir)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		assert.NoError(t, td.Cleanup())
+	})
+
+	sa1, err := td.StageDirectoryAddition(func(path string) error {
+		f, err := os.Create(filepath.Join(path, "file1"))
+		require.NoError(t, err)
+		require.NoError(t, f.Close())
+		return nil
+	})
+	require.NoError(t, err)
+
+	// need to use a dest which does not exist yet
+	dest := filepath.Join(t.TempDir(), "dest")
+
+	err = sa1.Commit(dest)
+	require.NoError(t, err)
+	assert.FileExists(t, filepath.Join(dest, "file1"))
+	assert.NoDirExists(t, sa1.source)
+
+	fileContent := []byte("test\n")
+	sa2, err := td.StageFileAddition(func(path string) error {
+		return os.WriteFile(path, fileContent, 0o600)
+	})
+	require.NoError(t, err)
+
+	destfile := filepath.Join(t.TempDir(), "file")
+	err = sa2.Commit(destfile)
+	require.NoError(t, err)
+	assert.NoFileExists(t, sa2.source)
+
+	fileBytes, err := os.ReadFile(destfile)
+	require.NoError(t, err)
+	assert.Equal(t, fileContent, fileBytes)
+}
+
+func TestStageAdditionCallbackError(t *testing.T) {
+	rootDir := t.TempDir()
+	td, err := NewTempDir(rootDir)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		assert.NoError(t, td.Cleanup())
+	})
+
+	customErr := errors.New("custom error")
+
+	_, err = td.StageDirectoryAddition(func(path string) error {
+		return customErr
+	})
+	require.ErrorIs(t, err, customErr)
+
+	_, err = td.StageFileAddition(func(path string) error {
+		return customErr
+	})
+	require.ErrorIs(t, err, customErr)
 }

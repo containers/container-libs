@@ -91,6 +91,23 @@ type TempDir struct {
 	counter uint64
 }
 
+type stageAddition struct {
+	source string
+}
+
+// CommitFunc is a function type that can be returned by operations
+// which need to perform the commit operation later.
+type CommitFunc func(destination string) error
+
+// Commit the staged content into its final destination by using os.Rename().
+// That means the dest must be on the same on the same fs as the root directory
+// that was given to NewTempDir() and the dest must not exist yet.
+// Commit must only be called once per instance returned from the
+// StageAddition() call.
+func (s *stageAddition) Commit(destination string) error {
+	return os.Rename(s.source, destination)
+}
+
 // CleanupTempDirFunc is a function type that can be returned by operations
 // which need to perform cleanup actions later.
 type CleanupTempDirFunc func() error
@@ -188,6 +205,56 @@ func NewTempDir(rootDir string) (*TempDir, error) {
 	td.tempDirPath = actualTempDirPath
 	td.counter = 0
 	return td, nil
+}
+
+// StageDirectoryAddition creates a new temp directory which is then passed as argument to the
+// given callback function. The function should be used to populate the directory with
+// content.
+// On success StageDirectoryAddition returns a type with the Commit() function, that function then
+// must be used to move the content from the temp directory into its final location.
+//
+// The caller MUST ensure .Cleanup() is called after Commit().
+// If the TempDir has been cleaned up, this method will return an error.
+func (td *TempDir) StageDirectoryAddition(callback func(path string) error) (*stageAddition, error) {
+	if td.tempDirLock == nil {
+		return nil, fmt.Errorf("temp dir instance not initialized or already cleaned up")
+	}
+	fileName := fmt.Sprintf("%d-", td.counter) + "addition"
+	tmpAddPath := filepath.Join(td.tempDirPath, fileName)
+	if err := os.Mkdir(tmpAddPath, 0o700); err != nil {
+		return nil, fmt.Errorf("creating temp directory for addition failed: %w", err)
+	}
+	td.counter++
+	if err := callback(tmpAddPath); err != nil {
+		return nil, err
+	}
+	return &stageAddition{source: tmpAddPath}, nil
+}
+
+// StageFileAddition creates a new temp file which is then passed as argument to the
+// given callback function. The function should be used to populate the file with
+// content.
+// On success StageFileAddition returns a type with the Commit() function, that function then
+// must be used to move the content from the temp directory into its final location.
+//
+// The caller MUST ensure .Cleanup() is called after Commit().
+// If the TempDir has been cleaned up, this method will return an error.
+func (td *TempDir) StageFileAddition(callback func(path string) error) (*stageAddition, error) {
+	if td.tempDirLock == nil {
+		return nil, fmt.Errorf("temp dir instance not initialized or already cleaned up")
+	}
+	fileName := fmt.Sprintf("%d-", td.counter) + "addition"
+	tmpAddPath := filepath.Join(td.tempDirPath, fileName)
+	f, err := os.Create(tmpAddPath)
+	if err != nil {
+		return nil, fmt.Errorf("creating temp file for addition failed: %w", err)
+	}
+	f.Close()
+	td.counter++
+	if err := callback(tmpAddPath); err != nil {
+		return nil, err
+	}
+	return &stageAddition{source: tmpAddPath}, nil
 }
 
 // StageDeletion moves the specified file into the instance's temporary directory.
