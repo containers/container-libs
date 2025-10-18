@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: 'Checkout Self'
         uses: actions/checkout@v5
-        # This checks out the code from the PR branch itself
+        # Because we use pull_request_target, this checks out the code from the default branch, NOT the PR branch
 
       - name: 'Setup Go'
         uses: actions/setup-go@v6
