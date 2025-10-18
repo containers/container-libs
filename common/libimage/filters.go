@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"go.podman.io/common/pkg/digestutils"
 	filtersPkg "go.podman.io/common/pkg/filters"
 	"go.podman.io/common/pkg/timetype"
 	"go.podman.io/image/v5/docker/reference"
@@ -481,7 +482,7 @@ func filterID(value string) filterFunc {
 
 // filterDigest creates a digest filter for matching the specified value.
 func filterDigest(value string) (filterFunc, error) {
-	if !strings.HasPrefix(value, "sha256:") {
+	if !digestutils.HasDigestPrefix(value) {
 		return nil, fmt.Errorf("invalid value %q for digest filter", value)
 	}
 	return func(img *Image, _ *layerTree) (bool, error) {
