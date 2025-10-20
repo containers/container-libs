@@ -2454,7 +2454,7 @@ func (r *layerStore) applyDiffWithOptions(to string, layerOptions *LayerOptions,
 		}
 		defer compressor.Close()                                        // This must happen before tsdata is consumed.
 		if err := compressor.SetConcurrency(1024*1024, 1); err != nil { // 1024*1024 is the hard-coded default; we're not changing that
-			logrus.Infof("setting compression concurrency threads to 1: %v; ignoring", err)
+			logrus.Infof("setting the compression concurrency threads to 1: %v; ignoring", err)
 		}
 		metadata := storage.NewJSONPacker(compressor)
 		uncompressed, err := archive.DecompressStream(defragmented)
