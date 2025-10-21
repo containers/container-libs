@@ -31,6 +31,7 @@ import (
 	"go.podman.io/storage/pkg/ioutils"
 	"go.podman.io/storage/pkg/lockfile"
 	"go.podman.io/storage/pkg/mount"
+	"go.podman.io/storage/pkg/pools"
 	"go.podman.io/storage/pkg/stringid"
 	"go.podman.io/storage/pkg/system"
 	"go.podman.io/storage/pkg/tarlog"
@@ -2398,6 +2399,13 @@ func (r *layerStore) ApplyDiff(to string, diff io.Reader) (size int64, err error
 	return r.applyDiffWithOptions(to, nil, diff)
 }
 
+func createTarSplitFile(r *layerStore, layerID string) (*os.File, error) {
+	if err := os.MkdirAll(filepath.Dir(r.tspath(layerID)), 0o700); err != nil {
+		return nil, err
+	}
+	return os.OpenFile(r.tspath(layerID), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
+}
+
 // Requires startWriting.
 func (r *layerStore) applyDiffWithOptions(to string, layerOptions *LayerOptions, diff io.Reader) (size int64, err error) {
 	if !r.lockfile.IsReadWrite() {
@@ -2442,13 +2450,20 @@ func (r *layerStore) applyDiffWithOptions(to string, layerOptions *LayerOptions,
 	compressedCounter := ioutils.NewWriteCounter(compressedWriter)
 	defragmented = io.TeeReader(defragmented, compressedCounter)
 
-	tsdata := bytes.Buffer{}
+	tarSplitFile, err := createTarSplitFile(r, layer.ID)
+	if err != nil {
+		return -1, err
+	}
+	defer tarSplitFile.Close()
+	tarSplitWriter := pools.BufioWriter32KPool.Get(tarSplitFile)
+	defer pools.BufioWriter32KPool.Put(tarSplitWriter)
+
 	uidLog := make(map[uint32]struct{})
 	gidLog := make(map[uint32]struct{})
 	var uncompressedCounter *ioutils.WriteCounter
 
 	size, err = func() (int64, error) { // A scope for defer
-		compressor, err := pgzip.NewWriterLevel(&tsdata, pgzip.BestSpeed)
+		compressor, err := pgzip.NewWriterLevel(tarSplitWriter, pgzip.BestSpeed)
 		if err != nil {
 			return -1, err
 		}
@@ -2496,12 +2511,13 @@ func (r *layerStore) applyDiffWithOptions(to string, layerOptions *LayerOptions,
 		return -1, err
 	}
 
-	if err := os.MkdirAll(filepath.Dir(r.tspath(layer.ID)), 0o700); err != nil {
-		return -1, err
+	if err := tarSplitWriter.Flush(); err != nil {
+		return -1, fmt.Errorf("failed to flush tar-split writer buffer: %w", err)
 	}
-	if err := ioutils.AtomicWriteFile(r.tspath(layer.ID), tsdata.Bytes(), 0o600); err != nil {
-		return -1, err
+	if err := tarSplitFile.Sync(); err != nil {
+		return -1, fmt.Errorf("sync tar-split file: %w", err)
 	}
+
 	if compressedDigester != nil {
 		compressedDigest = compressedDigester.Digest()
 	}
@@ -2597,10 +2613,17 @@ func (r *layerStore) applyDiffFromStagingDirectory(id string, diffOutput *driver
 	}
 
 	if diffOutput.TarSplit != nil {
-		tsdata := bytes.Buffer{}
-		compressor, err := pgzip.NewWriterLevel(&tsdata, pgzip.BestSpeed)
+		tarSplitFile, err := createTarSplitFile(r, layer.ID)
 		if err != nil {
-			compressor = pgzip.NewWriter(&tsdata)
+			return err
+		}
+		defer tarSplitFile.Close()
+		tarSplitWriter := pools.BufioWriter32KPool.Get(tarSplitFile)
+		defer pools.BufioWriter32KPool.Put(tarSplitWriter)
+
+		compressor, err := pgzip.NewWriterLevel(tarSplitWriter, pgzip.BestSpeed)
+		if err != nil {
+			compressor = pgzip.NewWriter(tarSplitWriter)
 		}
 		if _, err := diffOutput.TarSplit.Seek(0, io.SeekStart); err != nil {
 			return err
@@ -2614,11 +2637,12 @@ func (r *layerStore) applyDiffFromStagingDirectory(id string, diffOutput *driver
 			return err
 		}
 		compressor.Close()
-		if err := os.MkdirAll(filepath.Dir(r.tspath(layer.ID)), 0o700); err != nil {
-			return err
+
+		if err := tarSplitWriter.Flush(); err != nil {
+			return fmt.Errorf("failed to flush tar-split writer buffer: %w", err)
 		}
-		if err := ioutils.AtomicWriteFile(r.tspath(layer.ID), tsdata.Bytes(), 0o600); err != nil {
-			return err
+		if err := tarSplitFile.Sync(); err != nil {
+			return fmt.Errorf("sync tar-split file: %w", err)
 		}
 	}
 	for k, v := range diffOutput.BigData {
