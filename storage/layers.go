@@ -199,8 +199,35 @@ type DiffOptions struct {
 // stagedLayerOptions are the options passed to .create to populate a staged
 // layer
 type stagedLayerOptions struct {
+	// These are used via the zstd:chunked pull paths
 	DiffOutput  *drivers.DriverWithDifferOutput
 	DiffOptions *drivers.ApplyDiffWithDifferOpts
+
+	// stagedLayerExtraction is used by the normal tar layer extraction.
+	stagedLayerExtraction *maybeStagedLayerExtraction
+}
+
+// maybeStagedLayerExtraction is a helper to encapsulate details around extracting
+// a layer potentially before we even take a look if the driver implements the
+// ApplyDiffStaging interface.
+// This should be initialized with layerStore.newMaybeStagedLayerExtraction()
+type maybeStagedLayerExtraction struct {
+	// diff contains the tar archive, can be compressed, must be non nil, but can be at EOF when the content was already staged
+	diff io.Reader
+	// staging interface of the storage driver, set when the driver supports staging and nil otherwise
+	staging drivers.ApplyDiffStaging
+	// result is a placeholder for the applyDiff() result so we can pass that down the stack easily.
+	// If result is not nil the layer was staged successfully, if this is set stagedTarSplit and
+	// stagedLayer must be set as well.
+	result *applyDiffResult
+
+	// stagedTarSplit is the temp file where we staged the tar split file
+	stagedTarSplit *tempdir.StagedAddition
+	// stagedLayer is the temp directory where we staged the extracted layer content
+	stagedLayer *tempdir.StagedAddition
+
+	// cleanupFuncs contains the set of tempdir cleanup function that get executed in cleanup()
+	cleanupFuncs []tempdir.CleanupTempDirFunc
 }
 
 type applyDiffResult struct {
@@ -304,7 +331,7 @@ type rwLayerStore interface {
 	// underlying drivers do not themselves distinguish between writeable
 	// and read-only layers.  Returns the new layer structure and the size of the
 	// diff which was applied to its parent to initialize its contents.
-	create(id string, parent *Layer, names []string, mountLabel string, options map[string]string, moreOptions *LayerOptions, writeable bool, diff io.Reader, slo *stagedLayerOptions) (*Layer, int64, error)
+	create(id string, parent *Layer, names []string, mountLabel string, options map[string]string, moreOptions *LayerOptions, writeable bool, slo *stagedLayerOptions) (*Layer, int64, error)
 
 	// updateNames modifies names associated with a layer based on (op, names).
 	updateNames(id string, names []string, op updateNameOperation) error
@@ -370,6 +397,14 @@ type rwLayerStore interface {
 
 	// Dedup deduplicates layers in the store.
 	dedup(drivers.DedupArgs) (drivers.DedupResult, error)
+
+	// newMaybeStagedLayerExtraction initializes a new maybeStagedLayerExtraction. The caller
+	// must call maybeStagedLayerExtraction.cleanup() to remove any temporary files.
+	newMaybeStagedLayerExtraction(diff io.Reader) *maybeStagedLayerExtraction
+
+	// stageWithUnlockedStore stages the layer content without needing the store locked.
+	// If the driver does not support stage addition then this is a NOP and does nothing.
+	stageWithUnlockedStore(m *maybeStagedLayerExtraction, parent string, options *LayerOptions) error
 }
 
 type multipleLockFile struct {
@@ -1395,7 +1430,7 @@ func (r *layerStore) pickStoreLocation(volatile, writeable bool) layerLocations 
 }
 
 // Requires startWriting.
-func (r *layerStore) create(id string, parentLayer *Layer, names []string, mountLabel string, options map[string]string, moreOptions *LayerOptions, writeable bool, diff io.Reader, slo *stagedLayerOptions) (layer *Layer, size int64, err error) {
+func (r *layerStore) create(id string, parentLayer *Layer, names []string, mountLabel string, options map[string]string, moreOptions *LayerOptions, writeable bool, slo *stagedLayerOptions) (layer *Layer, size int64, err error) {
 	if moreOptions == nil {
 		moreOptions = &LayerOptions{}
 	}
@@ -1584,15 +1619,28 @@ func (r *layerStore) create(id string, parentLayer *Layer, names []string, mount
 	}
 
 	size = -1
-	if diff != nil {
-		if size, err = r.applyDiffWithOptions(layer.ID, moreOptions, diff); err != nil {
-			cleanupFailureContext = "applying layer diff"
-			return nil, -1, err
-		}
-	} else if slo != nil {
-		if err := r.applyDiffFromStagingDirectory(layer.ID, slo.DiffOutput, slo.DiffOptions); err != nil {
-			cleanupFailureContext = "applying staged directory diff"
-			return nil, -1, err
+	if slo != nil {
+		if slo.stagedLayerExtraction != nil {
+			if slo.stagedLayerExtraction.result != nil {
+				// The layer is staged, just commit it and update the metadata.
+				if err := slo.stagedLayerExtraction.commitLayer(r, layer.ID); err != nil {
+					cleanupFailureContext = "committing staged layer diff"
+					return nil, -1, err
+				}
+				applyDiffResultToLayer(r, layer, moreOptions, slo.stagedLayerExtraction.result)
+			} else {
+				// The diff was not staged, apply it now here instead.
+				if size, err = r.applyDiffWithOptions(layer.ID, moreOptions, slo.stagedLayerExtraction.diff); err != nil {
+					cleanupFailureContext = "applying layer diff"
+					return nil, -1, err
+				}
+			}
+		} else {
+			// staging logic for the chunked pull path
+			if err := r.applyDiffFromStagingDirectory(layer.ID, slo.DiffOutput, slo.DiffOptions); err != nil {
+				cleanupFailureContext = "applying staged directory diff"
+				return nil, -1, err
+			}
 		}
 	} else {
 		// applyDiffWithOptions() would have updated r.bycompressedsum
@@ -2419,6 +2467,79 @@ func createTarSplitFile(r *layerStore, layerID string) (*os.File, error) {
 		return nil, err
 	}
 	return os.OpenFile(r.tspath(layerID), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
+}
+
+// newMaybeStagedLayerExtraction initializes a new maybeStagedLayerExtraction. The caller
+// must call maybeStagedLayerExtraction.cleanup() to remove any temporary files.
+func (r *layerStore) newMaybeStagedLayerExtraction(diff io.Reader) *maybeStagedLayerExtraction {
+	m := &maybeStagedLayerExtraction{
+		diff: diff,
+	}
+	if d, ok := r.driver.(drivers.ApplyDiffStaging); ok {
+		m.staging = d
+	}
+	return m
+}
+
+func (sl *maybeStagedLayerExtraction) cleanup() error {
+	return tempdir.CleanupTemporaryDirectories(sl.cleanupFuncs...)
+}
+
+// stageWithUnlockedStore stages the layer content without needing the store locked.
+// If the driver does not support stage addition then this is a NOP and does nothing.
+// This should be done without holding the storage lock, if a parent is given the caller
+// must check for existence beforehand while holding a lock.
+func (r *layerStore) stageWithUnlockedStore(sl *maybeStagedLayerExtraction, parent string, layerOptions *LayerOptions) error {
+	if sl.staging == nil {
+		return nil
+	}
+	td, err := tempdir.NewTempDir(filepath.Join(r.layerdir, tempDirPath))
+	if err != nil {
+		return err
+	}
+	sl.cleanupFuncs = append(sl.cleanupFuncs, td.Cleanup)
+
+	stageTarSplit, err := td.StageAddition()
+	if err != nil {
+		return err
+	}
+	sl.stagedTarSplit = stageTarSplit
+
+	f, err := os.OpenFile(stageTarSplit.Path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	result, err := applyDiff(layerOptions, sl.diff, f, func(payload io.Reader) (int64, error) {
+		cleanup, stageLayer, size, err := sl.staging.StartStagingDiffToApply(parent, drivers.ApplyDiffOpts{
+			Diff:     payload,
+			Mappings: idtools.NewIDMappingsFromMaps(layerOptions.UIDMap, layerOptions.GIDMap),
+			// FIXME: What to do here? We have no lock and assigned label yet.
+			// Overlayfs should not need it anyway so this seems fine for now.
+			MountLabel: "",
+		})
+		sl.cleanupFuncs = append(sl.cleanupFuncs, cleanup)
+		sl.stagedLayer = stageLayer
+		return size, err
+	})
+	if err != nil {
+		return err
+	}
+
+	sl.result = result
+	return nil
+}
+
+// commitLayer() commits the content that was staged in stageWithUnlockedStore()
+//
+// Requires startWriting.
+func (sl *maybeStagedLayerExtraction) commitLayer(r *layerStore, layerID string) error {
+	err := sl.stagedTarSplit.Commit(r.tspath(layerID))
+	if err != nil {
+		return err
+	}
+	return sl.staging.CommitStagedLayer(layerID, sl.stagedLayer)
 }
 
 // applyDiff can be called without holding any store locks so if the supplied
