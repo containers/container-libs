@@ -203,6 +203,21 @@ type stagedLayerOptions struct {
 	DiffOptions *drivers.ApplyDiffWithDifferOpts
 }
 
+type applyDiffResult struct {
+	compressedDigest   digest.Digest
+	compressedSize     int64
+	compressionType    archive.Compression
+	uncompressedDigest digest.Digest
+	uncompressedSize   int64
+	// size of the data, including the full size of sparse files, and excluding all metadata
+	// It is neither compressedSize nor uncompressedSize.
+	// The use case for this seems unclear, it gets returned in PutLayer() but in the Podman
+	// stack at least that value is never used so maybe we can look into removing this.
+	size int64
+	uids []uint32
+	gids []uint32
+}
+
 // roLayerStore wraps a graph driver, adding the ability to refer to layers by
 // name, and keeping track of parent-child relationships, along with a list of
 // all known layers.
@@ -2406,37 +2421,29 @@ func createTarSplitFile(r *layerStore, layerID string) (*os.File, error) {
 	return os.OpenFile(r.tspath(layerID), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
 }
 
-// Requires startWriting.
-func (r *layerStore) applyDiffWithOptions(to string, layerOptions *LayerOptions, diff io.Reader) (size int64, err error) {
-	if !r.lockfile.IsReadWrite() {
-		return -1, fmt.Errorf("not allowed to modify layer contents at %q: %w", r.layerdir, ErrStoreIsReadOnly)
-	}
-
-	layer, ok := r.lookup(to)
-	if !ok {
-		return -1, ErrLayerUnknown
-	}
-
+// applyDiff can be called without holding any store locks so if the supplied
+// applyDriverFunc requires locking the caller must ensure proper locking.
+func applyDiff(layerOptions *LayerOptions, diff io.Reader, tarSplitFile *os.File, applyDriverFunc func(io.Reader) (int64, error)) (*applyDiffResult, error) {
 	header := make([]byte, 10240)
 	n, err := diff.Read(header)
 	if err != nil && err != io.EOF {
-		return -1, err
+		return nil, err
 	}
 	compression := archive.DetectCompression(header[:n])
 	defragmented := io.MultiReader(bytes.NewReader(header[:n]), diff)
 
-	// Decide if we need to compute digests
-	var compressedDigest, uncompressedDigest digest.Digest       // = ""
+	result := applyDiffResult{}
+
 	var compressedDigester, uncompressedDigester digest.Digester // = nil
 	if layerOptions != nil && layerOptions.OriginalDigest != "" &&
 		layerOptions.OriginalDigest.Algorithm() == digest.Canonical {
-		compressedDigest = layerOptions.OriginalDigest
+		result.compressedDigest = layerOptions.OriginalDigest
 	} else {
 		compressedDigester = digest.Canonical.Digester()
 	}
 	if layerOptions != nil && layerOptions.UncompressedDigest != "" &&
 		layerOptions.UncompressedDigest.Algorithm() == digest.Canonical {
-		uncompressedDigest = layerOptions.UncompressedDigest
+		result.uncompressedDigest = layerOptions.UncompressedDigest
 	} else if compression != archive.Uncompressed {
 		uncompressedDigester = digest.Canonical.Digester()
 	}
@@ -2450,11 +2457,6 @@ func (r *layerStore) applyDiffWithOptions(to string, layerOptions *LayerOptions,
 	compressedCounter := ioutils.NewWriteCounter(compressedWriter)
 	defragmented = io.TeeReader(defragmented, compressedCounter)
 
-	tarSplitFile, err := createTarSplitFile(r, layer.ID)
-	if err != nil {
-		return -1, err
-	}
-	defer tarSplitFile.Close()
 	tarSplitWriter := pools.BufioWriter32KPool.Get(tarSplitFile)
 	defer pools.BufioWriter32KPool.Put(tarSplitWriter)
 
@@ -2462,7 +2464,7 @@ func (r *layerStore) applyDiffWithOptions(to string, layerOptions *LayerOptions,
 	gidLog := make(map[uint32]struct{})
 	var uncompressedCounter *ioutils.WriteCounter
 
-	size, err = func() (int64, error) { // A scope for defer
+	size, err := func() (int64, error) { // A scope for defer
 		compressor, err := pgzip.NewWriterLevel(tarSplitWriter, pgzip.BestSpeed)
 		if err != nil {
 			return -1, err
@@ -2496,63 +2498,101 @@ func (r *layerStore) applyDiffWithOptions(to string, layerOptions *LayerOptions,
 		if err != nil {
 			return -1, err
 		}
+
+		return applyDriverFunc(payload)
+	}()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tarSplitWriter.Flush(); err != nil {
+		return nil, fmt.Errorf("failed to flush tar-split writer buffer: %w", err)
+	}
+
+	if compressedDigester != nil {
+		result.compressedDigest = compressedDigester.Digest()
+	}
+	if uncompressedDigester != nil {
+		result.uncompressedDigest = uncompressedDigester.Digest()
+	}
+	if result.uncompressedDigest == "" && compression == archive.Uncompressed {
+		result.uncompressedDigest = result.compressedDigest
+	}
+
+	if layerOptions != nil && layerOptions.OriginalDigest != "" && layerOptions.OriginalSize != nil {
+		result.compressedSize = *layerOptions.OriginalSize
+	} else {
+		result.compressedSize = compressedCounter.Count
+	}
+	result.uncompressedSize = uncompressedCounter.Count
+	result.compressionType = compression
+
+	result.uids = make([]uint32, 0, len(uidLog))
+	for uid := range uidLog {
+		result.uids = append(result.uids, uid)
+	}
+	slices.Sort(result.uids)
+	result.gids = make([]uint32, 0, len(gidLog))
+	for gid := range gidLog {
+		result.gids = append(result.gids, gid)
+	}
+	slices.Sort(result.gids)
+
+	result.size = size
+
+	return &result, err
+}
+
+// Requires startWriting.
+func (r *layerStore) applyDiffWithOptions(to string, layerOptions *LayerOptions, diff io.Reader) (int64, error) {
+	if !r.lockfile.IsReadWrite() {
+		return -1, fmt.Errorf("not allowed to modify layer contents at %q: %w", r.layerdir, ErrStoreIsReadOnly)
+	}
+
+	layer, ok := r.lookup(to)
+	if !ok {
+		return -1, ErrLayerUnknown
+	}
+
+	tarSplitFile, err := createTarSplitFile(r, layer.ID)
+	if err != nil {
+		return -1, err
+	}
+	defer tarSplitFile.Close()
+
+	result, err := applyDiff(layerOptions, diff, tarSplitFile, func(payload io.Reader) (int64, error) {
 		options := drivers.ApplyDiffOpts{
 			Diff:       payload,
 			Mappings:   r.layerMappings(layer),
 			MountLabel: layer.MountLabel,
 		}
-		size, err := r.driver.ApplyDiff(layer.ID, layer.Parent, options)
-		if err != nil {
-			return -1, err
-		}
-		return size, err
-	}()
+		return r.driver.ApplyDiff(layer.ID, layer.Parent, options)
+	})
 	if err != nil {
 		return -1, err
 	}
 
-	if err := tarSplitWriter.Flush(); err != nil {
-		return -1, fmt.Errorf("failed to flush tar-split writer buffer: %w", err)
-	}
 	if err := tarSplitFile.Sync(); err != nil {
 		return -1, fmt.Errorf("sync tar-split file: %w", err)
 	}
 
-	if compressedDigester != nil {
-		compressedDigest = compressedDigester.Digest()
-	}
-	if uncompressedDigester != nil {
-		uncompressedDigest = uncompressedDigester.Digest()
-	}
-	if uncompressedDigest == "" && compression == archive.Uncompressed {
-		uncompressedDigest = compressedDigest
-	}
-
-	updateDigestMap(&r.bycompressedsum, layer.CompressedDigest, compressedDigest, layer.ID)
-	layer.CompressedDigest = compressedDigest
-	if layerOptions != nil && layerOptions.OriginalDigest != "" && layerOptions.OriginalSize != nil {
-		layer.CompressedSize = *layerOptions.OriginalSize
-	} else {
-		layer.CompressedSize = compressedCounter.Count
-	}
-	updateDigestMap(&r.byuncompressedsum, layer.UncompressedDigest, uncompressedDigest, layer.ID)
-	layer.UncompressedDigest = uncompressedDigest
-	layer.UncompressedSize = uncompressedCounter.Count
-	layer.CompressionType = compression
-	layer.UIDs = make([]uint32, 0, len(uidLog))
-	for uid := range uidLog {
-		layer.UIDs = append(layer.UIDs, uid)
-	}
-	slices.Sort(layer.UIDs)
-	layer.GIDs = make([]uint32, 0, len(gidLog))
-	for gid := range gidLog {
-		layer.GIDs = append(layer.GIDs, gid)
-	}
-	slices.Sort(layer.GIDs)
+	applyDiffResultToLayer(r, layer, layerOptions, result)
 
 	err = r.saveFor(layer)
 
-	return size, err
+	return result.size, err
+}
+
+func applyDiffResultToLayer(r *layerStore, layer *Layer, layerOptions *LayerOptions, result *applyDiffResult) {
+	updateDigestMap(&r.bycompressedsum, layer.CompressedDigest, result.compressedDigest, layer.ID)
+	layer.CompressedDigest = result.compressedDigest
+	layer.CompressedSize = result.compressedSize
+	updateDigestMap(&r.byuncompressedsum, layer.UncompressedDigest, result.uncompressedDigest, layer.ID)
+	layer.UncompressedDigest = result.uncompressedDigest
+	layer.UncompressedSize = result.uncompressedSize
+	layer.CompressionType = result.compressionType
+	layer.UIDs = result.uids
+	layer.GIDs = result.gids
 }
 
 // Requires (startReading or?) startWriting.
