@@ -480,7 +480,7 @@ var _ = Describe("Config Local", func() {
 		// Given
 		config, err := newLocked(&Options{}, &paths{})
 		gomega.Expect(err).ToNot(gomega.HaveOccurred())
-		gomega.Expect(config.Machine.Image).To(gomega.Equal(""))
+		gomega.Expect(config.Machine.Image).To(gomega.Equal("docker://quay.io/podman/machine-os"))
 		// When
 		config2, err := newLocked(&Options{}, &paths{etc: "testdata/containers_default.conf"})
 		// Then
