@@ -2,7 +2,7 @@
 [codespell]
 
 # Comma-separated list of files to skip.
-skip = ./.git,go.work.sum,go.sum,./image/signature/fixtures,./image/signature/simplesigning/testdata,./storage/tests/tools/vendor,./storage/AUTHORS
+skip = ./.git,go.work.sum,go.sum,./image/signature/fixtures,./image/signature/simplesigning/testdata,./storage/tests/tools/vendor,./storage/AUTHORS,./vendor
 
 # Comma separated list of words to be ignored. Words must be lowercased.
 ignore-words-list = clos,creat,ro,hastable,shouldnot,mountns,passt,te,bu,afile,flate,prevend,Plack,worl

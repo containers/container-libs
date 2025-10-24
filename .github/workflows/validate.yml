@@ -70,6 +70,8 @@ jobs:
     # only run this on PRs
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
+    env:
+      GIT_CHECK_EXCLUDE: "./vendor"
     steps:
     - uses: actions/checkout@v5
       with:
@@ -83,11 +85,12 @@ jobs:
         # See comment on lint task
         cache-dependency-path: "**/go.sum"
     - name: run git-validation
+
       # We validate all commits as we only fetched the number of commits in the PR above,
       # by default git-validation has some special github action handling but that seems broken.
       run: make .install.gitvalidation && git-validation -no-github
 
-  go-tidy:
+  go-vendor:
     runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v5
@@ -96,7 +99,7 @@ jobs:
         go-version: 1.25.x
         # See comment on lint task
         cache-dependency-path: "**/go.sum"
-    - name: tidy
-      run: make tidy
+    - name: vendor
+      run: make vendor
     - name: check if tree is clean
       run: hack/tree_status.sh

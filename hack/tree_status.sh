@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-SUGGESTION="${SUGGESTION:-run \"make tidy\" and commit all changes.}"
+SUGGESTION="${SUGGESTION:-run \"make vendor\" and commit all changes.}"
 
 STATUS=$(git status --porcelain)
 if [[ -z $STATUS ]]

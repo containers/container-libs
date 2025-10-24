@@ -48,7 +48,7 @@ $ make vendor
 
 If you are working in the [container-libs](https://github.com/containers/container-libs) monorepo use:
 ```
-make tidy
+make vendor
 ```
 This command syncs the dependency versions across all modules in the repo.
 

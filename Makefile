@@ -41,7 +41,7 @@ install.tools: .install.gitvalidation .install.golangci-lint .install.md2man
 
 .PHONY: git-validation
 git-validation: .install.gitvalidation
-	git-validation -q -run DCO,short-subject,dangling-whitespace -range "$(EPOCH_TEST_COMMIT)..HEAD"
+	GIT_CHECK_EXCLUDE="./vendor" git-validation -q -run DCO,short-subject,dangling-whitespace -range "$(EPOCH_TEST_COMMIT)..HEAD"
 
 .PHONY: lint
 lint: .install.golangci-lint
@@ -49,12 +49,14 @@ lint: .install.golangci-lint
 	@$(MAKE) -C image lint
 	@$(MAKE) -C storage lint
 
-.PHONY: tidy-in-container
-tidy-in-container:
-	podman run --privileged --rm --env HOME=/root -v `pwd`:/src -w /src golang make tidy
+.PHONY: vendor-in-container
+vendor-in-container:
+	podman run --privileged --rm --env HOME=/root -v `pwd`:/src -w /src golang make vendor
 
-.PHONY: tidy
-tidy:
+.PHONY: vendor
+vendor:
 	@$(MAKE) -C common tidy
 	@$(MAKE) -C image tidy
 	@$(MAKE) -C storage tidy
+	$(GO) work vendor
+	$(GO) work sync

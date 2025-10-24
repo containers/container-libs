@@ -79,10 +79,10 @@ storage_linux_testing: &linux_testing
         fingerprint_script: cat **/go.sum
         folder: $GOPATH/pkg/mod
         # Note the cache is populated the first time it is used with the given deps.
-        # But because each task might not download all he same deps force make tidy
+        # But because each task might not download all he same deps force make vendor
         # which downloads all deps for all modules. This is only run once when the
         # cache is created so it should not slow things down much.
-        populate_script: make tidy
+        populate_script: make vendor
 
     # Separate scripts for separate outputs, makes debugging easier.
     setup_script: '${CIRRUS_WORKING_DIR}/${SCRIPT_BASE}/setup.sh |& ${_TIMESTAMP}'
