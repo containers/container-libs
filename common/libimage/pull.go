@@ -15,6 +15,7 @@ import (
 	ociSpec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
 	"go.podman.io/common/pkg/config"
+	"go.podman.io/common/pkg/digestutils"
 	registryTransport "go.podman.io/image/v5/docker"
 	dockerArchiveTransport "go.podman.io/image/v5/docker/archive"
 	dockerDaemonTransport "go.podman.io/image/v5/docker/daemon"
@@ -26,6 +27,7 @@ import (
 	"go.podman.io/image/v5/transports/alltransports"
 	"go.podman.io/image/v5/types"
 	"go.podman.io/storage"
+	supportedDigests "go.podman.io/storage/pkg/supported-digests"
 )
 
 // PullOptions allows for customizing image pulls.
@@ -101,7 +103,7 @@ func (r *Runtime) Pull(ctx context.Context, name string, pullPolicy config.PullP
 
 		// If the image clearly refers to a local one, we can look it up directly.
 		// In fact, we need to since they are not parseable.
-		if strings.HasPrefix(name, "sha256:") || (len(name) == 64 && !strings.ContainsAny(name, "/.:@")) {
+		if digestutils.IsDigestReference(name) {
 			if pullPolicy == config.PullPolicyAlways {
 				return nil, fmt.Errorf("pull policy is always but image has been referred to by ID (%s)", name)
 			}
@@ -261,7 +263,16 @@ func (r *Runtime) copyFromDefault(ctx context.Context, ref types.ImageReference,
 			if err != nil {
 				return nil, nil, err
 			}
-			imageName = "sha256:" + storageName[1:]
+			// Extract the algorithm from the getImageID result
+			// getImageID returns something like "@sha256:abc123" or "@sha512:def456"
+			// We need to preserve the algorithm that was actually used
+			if algorithm, hash := digestutils.ExtractAlgorithmFromDigest(storageName); algorithm != "" {
+				imageName = algorithm + ":" + hash
+			} else {
+				// Fallback to configured algorithm
+				digestAlgorithm := supportedDigests.TmpDigestForNewObjects()
+				imageName = digestAlgorithm.String() + ":" + storageName[1:]
+			}
 		} else { // If the OCI-reference includes an image reference, use it
 			storageName = refName
 			imageName = storageName
@@ -280,7 +291,16 @@ func (r *Runtime) copyFromDefault(ctx context.Context, ref types.ImageReference,
 			if err != nil {
 				return nil, nil, err
 			}
-			imageName = "sha256:" + storageName[1:]
+			// Extract the algorithm from the getImageID result
+			// getImageID returns something like "@sha256:abc123" or "@sha512:def456"
+			// We need to preserve the algorithm that was actually used
+			if algorithm, hash := digestutils.ExtractAlgorithmFromDigest(storageName); algorithm != "" {
+				imageName = algorithm + ":" + hash
+			} else {
+				// Fallback to configured algorithm
+				digestAlgorithm := supportedDigests.TmpDigestForNewObjects()
+				imageName = digestAlgorithm.String() + ":" + storageName[1:]
+			}
 		default:
 			named, err := NormalizeName(storageName)
 			if err != nil {
@@ -306,7 +326,16 @@ func (r *Runtime) copyFromDefault(ctx context.Context, ref types.ImageReference,
 		if err != nil {
 			return nil, nil, err
 		}
-		imageName = "sha256:" + storageName[1:]
+		// Extract the algorithm from the getImageID result
+		// getImageID returns something like "@sha256:abc123" or "@sha512:def456"
+		// We need to preserve the algorithm that was actually used
+		if algorithm, hash := digestutils.ExtractAlgorithmFromDigest(storageName); algorithm != "" {
+			imageName = algorithm + ":" + hash
+		} else {
+			// Fallback to configured algorithm
+			digestAlgorithm := supportedDigests.TmpDigestForNewObjects()
+			imageName = digestAlgorithm.String() + ":" + storageName[1:]
+		}
 	}
 
 	// Create a storage reference.
@@ -340,8 +369,17 @@ func (r *Runtime) storageReferencesReferencesFromArchiveReader(ctx context.Conte
 		}
 		destNames = append(destNames, destName)
 		// Make sure the image can be loaded after the pull by
-		// replacing the @ with sha256:.
-		imageNames = append(imageNames, "sha256:"+destName[1:])
+		// replacing the @ with the correct algorithm.
+		// Extract the algorithm from the getImageID result
+		// getImageID returns something like "@sha256:abc123" or "@sha512:def456"
+		// We need to preserve the algorithm that was actually used
+		if algorithm, hash := digestutils.ExtractAlgorithmFromDigest(destName); algorithm != "" {
+			imageNames = append(imageNames, algorithm+":"+hash)
+		} else {
+			// Fallback to configured algorithm
+			digestAlgorithm := supportedDigests.TmpDigestForNewObjects()
+			imageNames = append(imageNames, digestAlgorithm.String()+":"+destName[1:])
+		}
 	} else {
 		for i := range destNames {
 			ref, err := NormalizeName(destNames[i])
