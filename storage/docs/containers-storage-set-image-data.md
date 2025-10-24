@@ -1,4 +1,4 @@
-## containers-storage-set-image-data 1 "August 2016"
+# containers-storage-set-image-data 1 "August 2016"
 
 ## NAME
 containers-storage set-image-data - Set lookaside data for an image

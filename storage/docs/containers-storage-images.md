@@ -1,4 +1,4 @@
-## containers-storage-images 1 "August 2016"
+# containers-storage-images 1 "August 2016"
 
 ## NAME
 containers-storage images - List known images

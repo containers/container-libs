@@ -1,4 +1,4 @@
-## containers-storage-mount 1 "August 2016"
+# containers-storage-mount 1 "August 2016"
 
 ## NAME
 containers-storage mount - Mount a layer or a container's layer for manipulation

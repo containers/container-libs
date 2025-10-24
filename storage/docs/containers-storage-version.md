@@ -1,4 +1,4 @@
-## containers-storage-version 1 "August 2016"
+# containers-storage-version 1 "August 2016"
 
 ## NAME
 containers-storage version - Output version information about the storage library

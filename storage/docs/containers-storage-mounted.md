@@ -1,4 +1,4 @@
-## containers-storage-mounted 1 "November 2018"
+# containers-storage-mounted 1 "November 2018"
 
 ## NAME
 containers-storage mounted - Check if a file system is mounted

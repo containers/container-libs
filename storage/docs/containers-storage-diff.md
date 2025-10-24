@@ -1,4 +1,4 @@
-## containers-storage-diff 1 "August 2016"
+# containers-storage-diff 1 "August 2016"
 
 ## NAME
 containers-storage diff - Generate a layer diff

@@ -1,4 +1,4 @@
-## containers-storage-changes 1 "August 2016"
+# containers-storage-changes 1 "August 2016"
 
 ## NAME
 containers-storage changes - Produce a list of changes in a layer

@@ -1,4 +1,4 @@
-## containers-storage-check 1 "September 2022"
+# containers-storage-check 1 "September 2022"
 
 ## NAME
 containers-storage check - Check for and remove damaged layers/images/containers

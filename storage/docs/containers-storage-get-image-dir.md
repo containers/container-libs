@@ -1,4 +1,4 @@
-## containers-storage-get-image-dir 1 "January 2024"
+# containers-storage-get-image-dir 1 "January 2024"
 
 ## NAME
 containers-storage get-image-dir - Find lookaside directory for an image

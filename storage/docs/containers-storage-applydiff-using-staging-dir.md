@@ -1,4 +1,4 @@
-## containers-storage-applydiff-using-staging-dir 1 "September 2023"
+# containers-storage-applydiff-using-staging-dir 1 "September 2023"
 
 ## NAME
 containers-storage applydiff-using-staging-dir - Apply a layer diff to a layer using a staging directory

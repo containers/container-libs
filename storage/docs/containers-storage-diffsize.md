@@ -1,4 +1,4 @@
-## containers-storage-diffsize 1 "August 2016"
+# containers-storage-diffsize 1 "August 2016"
 
 ## NAME
 containers-storage diffsize - Compute the size of a layer diff

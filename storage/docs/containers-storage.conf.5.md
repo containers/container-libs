@@ -1,9 +1,7 @@
-% containers-storage.conf(5) Container Storage Configuration File
-% Dan Walsh
-% May 2017
+# containers-storage.conf 5 "May 2017"
 
-# NAME
-storage.conf - Syntax of Container Storage configuration file
+## NAME
+containers-storage.conf - Syntax of Container Storage configuration file
 
 ## DESCRIPTION
 The STORAGE configuration file specifies all of the available container storage options for tools using shared container storage, but in a TOML format that can be more easily modified and versioned.

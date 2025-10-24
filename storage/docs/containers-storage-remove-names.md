@@ -1,4 +1,4 @@
-## containers-storage-remove-names 1 "January 2023"
+# containers-storage-remove-names 1 "January 2023"
 
 ## NAME
 containers-storage remove-names - Remove names from a layer/image/container

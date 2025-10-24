@@ -1,4 +1,4 @@
-## containers-storage-get-image-run-dir 1 "January 2024"
+# containers-storage-get-image-run-dir 1 "January 2024"
 
 ## NAME
 containers-storage get-image-run-dir - Find runtime lookaside directory for an image

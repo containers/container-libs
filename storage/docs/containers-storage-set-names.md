@@ -1,4 +1,4 @@
-## containers-storage-set-names 1 "August 2016"
+# containers-storage-set-names 1 "August 2016"
 
 ## NAME
 containers-storage set-names - Set names for a layer/image/container

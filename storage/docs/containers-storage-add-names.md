@@ -1,4 +1,4 @@
-## containers-storage-add-names 1 "August 2016"
+# containers-storage-add-names 1 "August 2016"
 
 ## NAME
 containers-storage add-names - Add names to a layer/image/container

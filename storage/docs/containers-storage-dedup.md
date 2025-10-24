@@ -1,4 +1,4 @@
-## containers-storage-dedup 1 "November 2024"
+# containers-storage-dedup 1 "November 2024"
 
 ## NAME
 containers-storage dedup - Deduplicate similar files in the images

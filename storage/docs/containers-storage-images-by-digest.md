@@ -1,4 +1,4 @@
-## containers-storage-images-by-digest 1 "February 2019"
+# containers-storage-images-by-digest 1 "February 2019"
 
 ## NAME
 containers-storage images-by-digest - List known images by digest

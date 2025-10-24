@@ -1,4 +1,4 @@
-## containers-storage-create-layer 1 "August 2016"
+# containers-storage-create-layer 1 "August 2016"
 
 ## NAME
 containers-storage create-layer - Create a layer
