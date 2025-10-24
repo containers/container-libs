@@ -17,6 +17,7 @@ import (
 	"go.podman.io/image/v5/pkg/compression"
 	compressiontypes "go.podman.io/image/v5/pkg/compression/types"
 	"go.podman.io/image/v5/types"
+	supportedDigests "go.podman.io/storage/pkg/supported-digests"
 )
 
 func TestUpdatedBlobInfoFromReuse(t *testing.T) {
@@ -110,12 +111,23 @@ func goDiffIDComputationGoroutineWithTimeout(layerStream io.ReadCloser, decompre
 }
 
 func TestDiffIDComputationGoroutine(t *testing.T) {
+	// Test with SHA256 (default)
 	stream, err := os.Open("fixtures/Hello.uncompressed")
 	require.NoError(t, err)
 	res := goDiffIDComputationGoroutineWithTimeout(stream, nil)
 	require.NotNil(t, res)
 	assert.NoError(t, res.err)
 	assert.Equal(t, "sha256:185f8db32271fe25f561a6fc938b2e264306ec304eda518007d1764826381969", res.digest.String())
+
+	// Test with SHA512 using the parametrized function
+	stream2, err := os.Open("fixtures/Hello.uncompressed")
+	require.NoError(t, err)
+	defer stream2.Close()
+
+	// Use the parametrized function directly instead of overriding global state
+	digest, err := computeDiffIDWithAlgorithm(stream2, nil, digest.SHA512)
+	require.NoError(t, err)
+	assert.Equal(t, "sha512:3615f80c9d293ed7402687f94b22d58e529b8cc7916f8fac7fddf7fbd5af4cf777d3d795a7a00a16bf7e7f3fb9561ee9baae480da9fe7a18769e71886b03f315", digest.String())
 
 	// Error reading input
 	reader, writer := io.Pipe()
@@ -130,32 +142,59 @@ func TestComputeDiffID(t *testing.T) {
 	for _, c := range []struct {
 		filename     string
 		decompressor compressiontypes.DecompressorFunc
+		algorithm    digest.Algorithm
 		result       digest.Digest
 	}{
-		{"fixtures/Hello.uncompressed", nil, "sha256:185f8db32271fe25f561a6fc938b2e264306ec304eda518007d1764826381969"},
-		{"fixtures/Hello.gz", nil, "sha256:0bd4409dcd76476a263b8f3221b4ce04eb4686dec40bfdcc2e86a7403de13609"},
-		{"fixtures/Hello.gz", compression.GzipDecompressor, "sha256:185f8db32271fe25f561a6fc938b2e264306ec304eda518007d1764826381969"},
-		{"fixtures/Hello.zst", nil, "sha256:361a8e0372ad438a0316eb39a290318364c10b60d0a7e55b40aa3eafafc55238"},
-		{"fixtures/Hello.zst", compression.ZstdDecompressor, "sha256:185f8db32271fe25f561a6fc938b2e264306ec304eda518007d1764826381969"},
+		// SHA256 test cases (default)
+		{"fixtures/Hello.uncompressed", nil, digest.SHA256, "sha256:185f8db32271fe25f561a6fc938b2e264306ec304eda518007d1764826381969"},
+		{"fixtures/Hello.gz", nil, digest.SHA256, "sha256:0bd4409dcd76476a263b8f3221b4ce04eb4686dec40bfdcc2e86a7403de13609"},
+		{"fixtures/Hello.gz", compression.GzipDecompressor, digest.SHA256, "sha256:185f8db32271fe25f561a6fc938b2e264306ec304eda518007d1764826381969"},
+		{"fixtures/Hello.zst", nil, digest.SHA256, "sha256:361a8e0372ad438a0316eb39a290318364c10b60d0a7e55b40aa3eafafc55238"},
+		{"fixtures/Hello.zst", compression.ZstdDecompressor, digest.SHA256, "sha256:185f8db32271fe25f561a6fc938b2e264306ec304eda518007d1764826381969"},
+		// SHA512 test cases
+		{"fixtures/Hello.uncompressed", nil, digest.SHA512, "sha512:3615f80c9d293ed7402687f94b22d58e529b8cc7916f8fac7fddf7fbd5af4cf777d3d795a7a00a16bf7e7f3fb9561ee9baae480da9fe7a18769e71886b03f315"},
+		{"fixtures/Hello.gz", nil, digest.SHA512, "sha512:8ee9be48dfc6274f65199847cd18ff4711f00329c5063b17cd128ba45ea1b9cea2479db0266cc1f4a3902874fdd7306f9c8a615347c0603b893fc75184fcb627"},
+		{"fixtures/Hello.gz", compression.GzipDecompressor, digest.SHA512, "sha512:3615f80c9d293ed7402687f94b22d58e529b8cc7916f8fac7fddf7fbd5af4cf777d3d795a7a00a16bf7e7f3fb9561ee9baae480da9fe7a18769e71886b03f315"},
+		{"fixtures/Hello.zst", nil, digest.SHA512, "sha512:e4ddd61689ce9d1cdd49e11dc8dc89ca064bdb09e85b9df56658560b8207647a78b95d04c3f5f2fb31abf13e1822f0d19307df18a3fdf88f58ef24a50e71a1ae"},
+		{"fixtures/Hello.zst", compression.ZstdDecompressor, digest.SHA512, "sha512:3615f80c9d293ed7402687f94b22d58e529b8cc7916f8fac7fddf7fbd5af4cf777d3d795a7a00a16bf7e7f3fb9561ee9baae480da9fe7a18769e71886b03f315"},
 	} {
 		stream, err := os.Open(c.filename)
 		require.NoError(t, err, c.filename)
 		defer stream.Close()
 
+		// Save original algorithm and set the desired one
+		originalAlgorithm := supportedDigests.TmpDigestForNewObjects()
+		err = supportedDigests.TmpSetDigestForNewObjects(c.algorithm)
+		require.NoError(t, err)
+
+		// Test the digest computation directly without ImageDestination
 		diffID, err := computeDiffID(stream, c.decompressor)
 		require.NoError(t, err, c.filename)
 		assert.Equal(t, c.result, diffID)
+
+		// Restore the original algorithm
+		err = supportedDigests.TmpSetDigestForNewObjects(originalAlgorithm)
+		require.NoError(t, err)
 	}
 
 	// Error initializing decompression
-	_, err := computeDiffID(bytes.NewReader([]byte{}), compression.GzipDecompressor)
+	originalAlgorithm := supportedDigests.TmpDigestForNewObjects()
+	err := supportedDigests.TmpSetDigestForNewObjects(digest.SHA256)
+	require.NoError(t, err)
+	_, err = computeDiffID(bytes.NewReader([]byte{}), compression.GzipDecompressor)
 	assert.Error(t, err)
+	err = supportedDigests.TmpSetDigestForNewObjects(originalAlgorithm)
+	require.NoError(t, err)
 
 	// Error reading input
 	reader, writer := io.Pipe()
 	defer reader.Close()
 	err = writer.CloseWithError(errors.New("Expected error reading input in computeDiffID"))
 	require.NoError(t, err)
+	err = supportedDigests.TmpSetDigestForNewObjects(digest.SHA256)
+	require.NoError(t, err)
 	_, err = computeDiffID(reader, nil)
 	assert.Error(t, err)
+	err = supportedDigests.TmpSetDigestForNewObjects(originalAlgorithm)
+	require.NoError(t, err)
 }

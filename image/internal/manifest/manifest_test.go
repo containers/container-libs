@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.podman.io/image/v5/pkg/compression"
+	supportedDigests "go.podman.io/storage/pkg/supported-digests"
 )
 
 const (
@@ -87,6 +88,9 @@ func TestMatchesDigest(t *testing.T) {
 		{"v2s1.manifest.json", TestDockerV2S2ManifestDigest, false},
 		// Unrecognized algorithm
 		{"v2s2.manifest.json", digest.Digest("md5:2872f31c5c1f62a694fbd20c1e85257c"), false},
+		// SHA512 test cases (these should fail because we're using SHA256 by default)
+		{"v2s2.manifest.json", digest.SHA512.FromBytes([]byte("test")), false},
+		{"v2s1.manifest.json", digest.SHA512.FromBytes([]byte("test")), false},
 		// Mangled format
 		{"v2s2.manifest.json", digest.Digest(TestDockerV2S2ManifestDigest.String() + "abc"), false},
 		{"v2s2.manifest.json", digest.Digest(TestDockerV2S2ManifestDigest.String()[:20]), false},
@@ -110,6 +114,74 @@ func TestMatchesDigest(t *testing.T) {
 	res, err = MatchesDigest([]byte{}, digest.Digest(digestSha256EmptyTar))
 	assert.True(t, res)
 	assert.NoError(t, err)
+}
+
+func TestMatchesDigestWithSHA512(t *testing.T) {
+	// Save original algorithm and restore it after the test
+	originalAlgorithm := supportedDigests.TmpDigestForNewObjects()
+	defer func() {
+		err := supportedDigests.TmpSetDigestForNewObjects(originalAlgorithm)
+		require.NoError(t, err)
+	}()
+
+	// Set SHA512 algorithm
+	err := supportedDigests.TmpSetDigestForNewObjects(digest.SHA512)
+	require.NoError(t, err)
+
+	cases := []struct {
+		path           string
+		expectedDigest digest.Digest
+		result         bool
+	}{
+		// Success cases with SHA512
+		{"v2s2.manifest.json", digest.SHA512.FromBytes([]byte("test")), false}, // Wrong data
+		{"v2s1.manifest.json", digest.SHA512.FromBytes([]byte("test")), false}, // Wrong data
+		// Empty manifest
+		{"", digest.SHA512.FromBytes([]byte{}), true},
+		// Wrong algorithm (SHA256 when SHA512 is configured)
+		{"v2s2.manifest.json", TestDockerV2S2ManifestDigest, false},
+		{"v2s1.manifest.json", TestDockerV2S1ManifestDigest, false},
+		// Mangled format
+		{"v2s2.manifest.json", digest.Digest("sha512:invalid"), false},
+		{"v2s2.manifest.json", digest.Digest(""), false},
+	}
+
+	for _, c := range cases {
+		var manifest []byte
+		var err error
+
+		if c.path == "" {
+			// Empty manifest case
+			manifest = []byte{}
+		} else {
+			manifest, err = os.ReadFile(filepath.Join("testdata", c.path))
+			require.NoError(t, err)
+		}
+
+		// For success cases, compute the correct SHA512 digest
+		if c.result {
+			c.expectedDigest = digest.SHA512.FromBytes(manifest)
+		}
+
+		res, err := MatchesDigest(manifest, c.expectedDigest)
+		require.NoError(t, err)
+		assert.Equal(t, c.result, res, "path=%s, expectedDigest=%s", c.path, c.expectedDigest)
+	}
+
+	// Test with actual manifest files and their correct SHA512 digests
+	manifestFiles := []string{"v2s2.manifest.json", "v2s1.manifest.json"}
+	for _, file := range manifestFiles {
+		manifest, err := os.ReadFile(filepath.Join("testdata", file))
+		require.NoError(t, err)
+
+		// Use the Digest function to get the correct digest (which handles signature stripping)
+		expectedDigest, err := Digest(manifest)
+		require.NoError(t, err)
+
+		res, err := MatchesDigest(manifest, expectedDigest)
+		require.NoError(t, err)
+		assert.True(t, res, "MatchesDigest should work with SHA512 for %s", file)
+	}
 }
 
 func TestNormalizedMIMEType(t *testing.T) {
