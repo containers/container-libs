@@ -27,26 +27,6 @@ var _ = Describe("Config Local", func() {
 		file.Close()
 		defer os.Remove(tmpfile)
 		defConf.Network.NetworkConfigDir = tmpfile
-		defConf.Network.CNIPluginDirs.Set([]string{})
-
-		// When
-		err = defConf.Network.Validate()
-
-		// Then
-		gomega.Expect(err).ToNot(gomega.HaveOccurred())
-	})
-
-	It("should not fail on invalid CNIPluginDirs", func() {
-		defConf, err := defaultConfig()
-		gomega.Expect(err).ToNot(gomega.HaveOccurred())
-		gomega.Expect(defConf).NotTo(gomega.BeNil())
-
-		t := GinkgoT()
-		validDirPath := t.TempDir()
-
-		// Given
-		defConf.Network.NetworkConfigDir = validDirPath
-		defConf.Network.CNIPluginDirs.Set([]string{invalidPath})
 
 		// When
 		err = defConf.Network.Validate()
@@ -65,7 +45,6 @@ var _ = Describe("Config Local", func() {
 
 		// Given
 		defConf.Network.NetworkConfigDir = validDirPath
-		defConf.Network.CNIPluginDirs.Set([]string{validDirPath})
 
 		net, _ := types.ParseCIDR("10.0.0.0/24")
 		defConf.Network.DefaultSubnetPools = []SubnetPool{
