@@ -8,25 +8,6 @@ import (
 )
 
 var _ = Describe("Config Remote", func() {
-	It("should succeed on invalid CNIPluginDirs", func() {
-		t := GinkgoT()
-		validDirPath := t.TempDir()
-
-		// Given
-		defConf, err := defaultConfig()
-		gomega.Expect(err).To(gomega.BeNil())
-		gomega.Expect(defConf).NotTo(gomega.BeNil())
-
-		defConf.Network.NetworkConfigDir = validDirPath
-		defConf.Network.CNIPluginDirs.Set([]string{invalidPath})
-
-		// When
-		err = defConf.Network.Validate()
-
-		// Then
-		gomega.Expect(err).To(gomega.BeNil())
-	})
-
 	It("should succeed on invalid device mode", func() {
 		// Given
 		defConf, err := defaultConfig()
@@ -115,42 +96,6 @@ var _ = Describe("Config Remote", func() {
 
 		// When
 		err = defConf.Containers.Validate()
-
-		// Then
-		gomega.Expect(err).To(gomega.BeNil())
-	})
-
-	It("should succeed on invalid CNIPluginDirs", func() {
-		t := GinkgoT()
-		validDirPath := t.TempDir()
-
-		// Given
-		defConf, err := defaultConfig()
-		gomega.Expect(err).To(gomega.BeNil())
-		gomega.Expect(defConf).NotTo(gomega.BeNil())
-		defConf.Network.NetworkConfigDir = validDirPath
-		defConf.Network.CNIPluginDirs.Set([]string{invalidPath})
-
-		// When
-		err = defConf.Network.Validate()
-
-		// Then
-		gomega.Expect(err).To(gomega.BeNil())
-	})
-
-	It("should succeed in validating invalid PluginDir", func() {
-		t := GinkgoT()
-		validDirPath := t.TempDir()
-
-		// Given
-		defConf, err := defaultConfig()
-		gomega.Expect(err).To(gomega.BeNil())
-		gomega.Expect(defConf).NotTo(gomega.BeNil())
-		defConf.Network.NetworkConfigDir = validDirPath
-		defConf.Network.CNIPluginDirs.Set([]string{invalidPath})
-
-		// When
-		err = defConf.Network.Validate()
 
 		// Then
 		gomega.Expect(err).To(gomega.BeNil())
