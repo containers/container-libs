@@ -15,7 +15,6 @@ import (
 	"go.podman.io/common/internal/attributedstring"
 	nettypes "go.podman.io/common/libnetwork/types"
 	"go.podman.io/common/pkg/apparmor"
-	"go.podman.io/common/pkg/cgroupv2"
 	"go.podman.io/storage/pkg/fileutils"
 	"go.podman.io/storage/pkg/homedir"
 	"go.podman.io/storage/pkg/unshare"
@@ -118,14 +117,6 @@ var (
 		"CAP_SYS_CHROOT",
 	}
 
-	// Search these locations in which CNIPlugins can be installed.
-	DefaultCNIPluginDirs = []string{
-		"/usr/local/libexec/cni",
-		"/usr/libexec/cni",
-		"/usr/local/lib/cni",
-		"/usr/lib/cni",
-		"/opt/cni/bin",
-	}
 	DefaultNetavarkPluginDirs = []string{
 		"/usr/local/libexec/netavark",
 		"/usr/libexec/netavark",
@@ -230,17 +221,12 @@ func defaultConfig() (*Config, error) {
 		}
 	}
 
-	cgroupNS := "host"
-	if cgroup2, _ := cgroupv2.Enabled(); cgroup2 {
-		cgroupNS = "private"
-	}
-
 	return &Config{
 		Containers: ContainersConfig{
 			Annotations:         attributedstring.Slice{},
 			ApparmorProfile:     DefaultApparmorProfile,
 			BaseHostsFile:       "",
-			CgroupNS:            cgroupNS,
+			CgroupNS:            "private",
 			Cgroups:             getDefaultCgroupsMode(),
 			DNSOptions:          attributedstring.Slice{},
 			DNSSearches:         attributedstring.Slice{},
@@ -277,7 +263,6 @@ func defaultConfig() (*Config, error) {
 			DefaultSubnetPools:        DefaultSubnetPools,
 			DefaultRootlessNetworkCmd: "pasta",
 			DNSBindPort:               0,
-			CNIPluginDirs:             attributedstring.NewSlice(DefaultCNIPluginDirs),
 			NetavarkPluginDirs:        attributedstring.NewSlice(DefaultNetavarkPluginDirs),
 		},
 		Engine:   *defaultEngineConfig,
@@ -652,12 +637,7 @@ func (c *Config) PidsLimit() int64 {
 		if c.Engine.CgroupManager != SystemdCgroupsManager {
 			return 0
 		}
-		cgroup2, _ := cgroupv2.Enabled()
-		if !cgroup2 {
-			return 0
-		}
 	}
-
 	return c.Containers.PidsLimit
 }
 
