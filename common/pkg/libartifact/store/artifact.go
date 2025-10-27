@@ -1,4 +1,4 @@
-package libartifact
+package store
 
 import (
 	"encoding/json"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/opencontainers/go-digest"
 	"go.podman.io/common/pkg/libartifact/types"
+	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/manifest"
 )
 
@@ -36,7 +37,7 @@ func (a *Artifact) GetName() (string, error) {
 	return "", types.ErrArtifactUnamed
 }
 
-// SetName is a accessor for setting the artifact name
+// SetName is an accessor for setting the artifact name
 // Note: long term this may not be needed, and we would
 // be comfortable with simply using the exported field
 // called Name.
@@ -55,16 +56,16 @@ func (a *Artifact) GetDigest() (*digest.Digest, error) {
 
 type ArtifactList []*Artifact
 
-// GetByNameOrDigest returns an artifact, if present, by a given name
+// getByNameOrDigest returns an artifact, if present, by a given name
 // Returns an error if not found.
-func (al ArtifactList) GetByNameOrDigest(nameOrDigest string) (*Artifact, bool, error) {
+func (al ArtifactList) getByNameOrDigest(nameOrDigest string) (*Artifact, bool, error) {
 	// This is the hot route through
 	for _, artifact := range al {
 		if artifact.Name == nameOrDigest {
 			return artifact, false, nil
 		}
 	}
-	// Before giving up, check by digest
+	// Before giving up, check by full or partial ID
 	for _, artifact := range al {
 		artifactDigest, err := artifact.GetDigest()
 		if err != nil {
@@ -75,5 +76,30 @@ func (al ArtifactList) GetByNameOrDigest(nameOrDigest string) (*Artifact, bool, 
 			return artifact, true, nil
 		}
 	}
+	named, err := reference.ParseNamed(nameOrDigest)
+	if err != nil {
+		return nil, false, fmt.Errorf("invalid artifact: %q", nameOrDigest)
+	}
+
+	// And finally, check for things with a name and digest
+	// i.e. quay.io/podman/machine-os:sha256:7e952f1deece2717022d7cc066dd21d1468236560d23a79c80448d49b2048e99
+	if d, isDigested := named.(reference.Digested); isDigested {
+		for _, a := range al {
+			storedArtifactNamed, err := reference.ParseNamed(a.Name)
+			if err != nil {
+				return nil, false, err
+			}
+			if storedArtifactNamed.Name() == named.Name() {
+				artifactDigest, err := a.GetDigest()
+				if err != nil {
+					return nil, false, err
+				}
+				if d.Digest() == *artifactDigest {
+					return a, true, nil
+				}
+			}
+		}
+	}
+	// Nothing was found in the store that matches
 	return nil, false, fmt.Errorf("%s: %w", nameOrDigest, types.ErrArtifactNotExist)
 }
