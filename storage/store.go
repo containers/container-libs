@@ -1452,7 +1452,16 @@ func (s *store) canUseShifting(uidmap, gidmap []idtools.IDMap) bool {
 // On entry:
 // - rlstore must be locked for writing
 // - rlstores MUST NOT be locked
-func (s *store) putLayer(rlstore rwLayerStore, rlstores []roLayerStore, id, parent string, names []string, mountLabel string, writeable bool, lOptions *LayerOptions, slo *stagedLayerOptions) (*Layer, int64, error) {
+func (s *store) putLayer(rlstore rwLayerStore, id string, parentLayer *Layer, names []string, mountLabel string, writeable bool, options *LayerOptions, slo *stagedLayerOptions) (*Layer, int64, error) {
+	return rlstore.create(id, parentLayer, names, mountLabel, nil, options, writeable, slo)
+}
+
+// On entry:
+// - rlstore must be locked for writing
+// - rlstores MUST NOT be locked
+//
+// Returns the new copied LayerOptions with mappings set and the parent Layer.
+func populateLayerOptions(s *store, rlstore rwLayerStore, rlstores []roLayerStore, parent string, lOptions *LayerOptions) (*LayerOptions, *Layer, error) {
 	var parentLayer *Layer
 	var options LayerOptions
 	if lOptions != nil {
@@ -1474,7 +1483,7 @@ func (s *store) putLayer(rlstore rwLayerStore, rlstores []roLayerStore, id, pare
 			lstore := l
 			if lstore != rlstore {
 				if err := lstore.startReading(); err != nil {
-					return nil, -1, err
+					return nil, nil, err
 				}
 				defer lstore.stopReading()
 			}
@@ -1485,21 +1494,21 @@ func (s *store) putLayer(rlstore rwLayerStore, rlstores []roLayerStore, id, pare
 			}
 		}
 		if ilayer == nil {
-			return nil, -1, ErrLayerUnknown
+			return nil, nil, ErrLayerUnknown
 		}
 		parentLayer = ilayer
 
 		if err := s.containerStore.startWriting(); err != nil {
-			return nil, -1, err
+			return nil, nil, err
 		}
 		defer s.containerStore.stopWriting()
 		containers, err := s.containerStore.Containers()
 		if err != nil {
-			return nil, -1, err
+			return nil, nil, err
 		}
 		for _, container := range containers {
 			if container.LayerID == parent {
-				return nil, -1, ErrParentIsContainer
+				return nil, nil, ErrParentIsContainer
 			}
 		}
 		if !options.HostUIDMapping && len(options.UIDMap) == 0 {
@@ -1526,7 +1535,7 @@ func (s *store) putLayer(rlstore rwLayerStore, rlstores []roLayerStore, id, pare
 			GIDMap:         copySlicePreferringNil(gidMap),
 		}
 	}
-	return rlstore.create(id, parentLayer, names, mountLabel, nil, &options, writeable, slo)
+	return &options, parentLayer, nil
 }
 
 func (s *store) PutLayer(id, parent string, names []string, mountLabel string, writeable bool, lOptions *LayerOptions, diff io.Reader) (*Layer, int64, error) {
@@ -1557,7 +1566,12 @@ func (s *store) PutLayer(id, parent string, names []string, mountLabel string, w
 		return nil, -1, err
 	}
 	defer rlstore.stopWriting()
-	return s.putLayer(rlstore, rlstores, id, parent, names, mountLabel, writeable, lOptions, slo)
+
+	options, parentLayer, err := populateLayerOptions(s, rlstore, rlstores, parent, lOptions)
+	if err != nil {
+		return nil, -1, err
+	}
+	return s.putLayer(rlstore, id, parentLayer, names, mountLabel, writeable, options, slo)
 }
 
 func (s *store) CreateLayer(id, parent string, names []string, mountLabel string, writeable bool, options *LayerOptions) (*Layer, error) {
@@ -3198,7 +3212,11 @@ func (s *store) ApplyStagedLayer(args ApplyStagedLayerOptions) (*Layer, error) {
 		DiffOutput:  args.DiffOutput,
 		DiffOptions: args.DiffOptions,
 	}
-	layer, _, err = s.putLayer(rlstore, rlstores, args.ID, args.ParentLayer, args.Names, args.MountLabel, args.Writeable, args.LayerOptions, &slo)
+	options, parentLayer, err := populateLayerOptions(s, rlstore, rlstores, args.ParentLayer, args.LayerOptions)
+	if err != nil {
+		return nil, err
+	}
+	layer, _, err = s.putLayer(rlstore, args.ID, parentLayer, args.Names, args.MountLabel, args.Writeable, options, &slo)
 	return layer, err
 }
 
