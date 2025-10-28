@@ -142,6 +142,18 @@ var _ = Describe("Config Local", func() {
 		gomega.Expect(config2.Network.PastaOptions.Get()).To(gomega.Equal([]string{"-t", "auto"}))
 	})
 
+	It("parse default_host_ips", func() {
+		// Given
+		config, err := newLocked(&Options{}, testConfigPath(""))
+		gomega.Expect(err).ToNot(gomega.HaveOccurred())
+		gomega.Expect(config.Network.DefaultHostIPs.Get()).To(gomega.BeEmpty())
+		// When
+		config2, err := newLocked(&Options{}, testConfigPath("testdata/containers_default.conf"))
+		// Then
+		gomega.Expect(err).ToNot(gomega.HaveOccurred())
+		gomega.Expect(config2.Network.DefaultHostIPs.Get()).To(gomega.Equal([]string{"127.0.0.1", "::1"}))
+	})
+
 	It("parse default_rootless_network_cmd", func() {
 		// Given
 		config, err := newLocked(&Options{}, testConfigPath(""))
