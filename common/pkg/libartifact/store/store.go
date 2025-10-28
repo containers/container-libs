@@ -37,9 +37,19 @@ import (
 
 var ErrEmptyArtifactName = errors.New("artifact name cannot be empty")
 
-type EventCallback func(eventType, name, digest string, attrs map[string]string)
-
 const ManifestSchemaVersion = 2
+
+type EventStatus string
+
+const (
+	EventStatusAdd     EventStatus = "add"
+	EventStatusExtract EventStatus = "extract"
+	EventStatusPull    EventStatus = "pull"
+	EventStatusPush    EventStatus = "push"
+	EventStatusRemove  EventStatus = "remove"
+)
+
+type EventCallback func(status EventStatus, name, digest string)
 
 type ArtifactStore struct {
 	SystemContext *types.SystemContext
@@ -51,10 +61,6 @@ type ArtifactStore struct {
 // NewArtifactStore is a constructor for artifact stores.  Most artifact dealings depend on this. Store path is
 // the filesystem location.
 func NewArtifactStore(storePath string, sc *types.SystemContext, eventCallback EventCallback) (*ArtifactStore, error) {
-	return NewArtifactStoreWithEventCallback(storePath, sc, nil)
-}
-
-func NewArtifactStoreWithEventCallback(storePath string, sc *types.SystemContext, eventCallback EventCallback) (*ArtifactStore, error) {
 	if storePath == "" {
 		return nil, errors.New("store path cannot be empty")
 	}
@@ -125,7 +131,7 @@ func (as ArtifactStore) Remove(ctx context.Context, name string) (*digest.Digest
 		return artifactDigest, err
 	}
 	if as.eventCallback != nil {
-		as.eventCallback("remove", name, artifactDigest.String(), nil)
+		as.eventCallback(EventStatusRemove, name, artifactDigest.String())
 	}
 	return artifactDigest, nil
 }
@@ -186,7 +192,7 @@ func (as ArtifactStore) Pull(ctx context.Context, name string, opts libimage.Cop
 	}
 	artifactDigest := digest.FromBytes(artifactBytes)
 	if as.eventCallback != nil {
-		as.eventCallback("pull", name, artifactDigest.String(), nil)
+		as.eventCallback(EventStatusPull, name, artifactDigest.String())
 	}
 	return artifactDigest, nil
 }
@@ -223,7 +229,7 @@ func (as ArtifactStore) Push(ctx context.Context, src, dest string, opts libimag
 	}
 	artifactDigest := digest.FromBytes(artifactBytes)
 	if as.eventCallback != nil {
-		as.eventCallback("push", src, artifactDigest.String(), nil)
+		as.eventCallback(EventStatusPush, src, artifactDigest.String())
 	}
 	return artifactDigest, nil
 }
@@ -422,9 +428,7 @@ func (as ArtifactStore) Add(ctx context.Context, dest string, artifactBlobs []li
 		}
 	}
 	if as.eventCallback != nil {
-		as.eventCallback("add", dest, artifactManifestDigest.String(), map[string]string{
-			"files": fmt.Sprintf("%d", len(artifactBlobs)),
-		})
+		as.eventCallback(EventStatusAdd, dest, artifactManifestDigest.String())
 	}
 	return &artifactManifestDigest, nil
 }
@@ -587,8 +591,7 @@ func (as ArtifactStore) Extract(ctx context.Context, nameOrDigest string, target
 	}
 
 	if as.eventCallback != nil {
-		attrs := map[string]string{"target": target}
-		as.eventCallback("extract", arty.Name, options.Digest, attrs)
+		as.eventCallback(EventStatusExtract, arty.Name, options.Digest)
 	}
 
 	return nil
@@ -675,8 +678,7 @@ func (as ArtifactStore) ExtractTarStream(ctx context.Context, w io.Writer, nameO
 	}
 
 	if as.eventCallback != nil {
-		attrs := map[string]string{"format": "tar-stream"}
-		as.eventCallback("extract", arty.Name, options.Digest, attrs)
+		as.eventCallback(EventStatusExtract, arty.Name, options.Digest)
 	}
 
 	return nil
