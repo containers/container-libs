@@ -1452,7 +1452,26 @@ func (s *store) canUseShifting(uidmap, gidmap []idtools.IDMap) bool {
 // On entry:
 // - rlstore must be locked for writing
 // - rlstores MUST NOT be locked
-func (s *store) putLayer(rlstore rwLayerStore, rlstores []roLayerStore, id, parent string, names []string, mountLabel string, writeable bool, lOptions *LayerOptions, slo *stagedLayerOptions) (*Layer, int64, error) {
+func (s *store) putLayer(rlstore rwLayerStore, id string, parentLayer *Layer, names []string, mountLabel string, writeable bool, options *LayerOptions, slo *stagedLayerOptions) (*Layer, int64, error) {
+	return rlstore.create(id, parentLayer, names, mountLabel, nil, options, writeable, slo)
+}
+
+// On entry:
+// - rlstore must be locked for reading or writing
+// - rlstores MUST NOT be locked
+//
+// Returns the new copied LayerOptions with mappings set, the parent Layer and
+// an extra unlock function to unlock any potentially read locked rlstores by this function.
+// The unlock function is always set and thus must always be called.
+func populateLayerOptions(s *store, rlstore roLayerStore, rlstores []roLayerStore, parent string, lOptions *LayerOptions) (*LayerOptions, *Layer, func(), error) {
+	// function we return to the caller so the caller gets the right stores locked and can unlock at the proper time themselves
+	var lockedLayerStores []roLayerStore
+	unlock := func() {
+		for _, i := range lockedLayerStores {
+			i.stopReading()
+		}
+	}
+
 	var parentLayer *Layer
 	var options LayerOptions
 	if lOptions != nil {
@@ -1474,9 +1493,9 @@ func (s *store) putLayer(rlstore rwLayerStore, rlstores []roLayerStore, id, pare
 			lstore := l
 			if lstore != rlstore {
 				if err := lstore.startReading(); err != nil {
-					return nil, -1, err
+					return nil, nil, unlock, err
 				}
-				defer lstore.stopReading()
+				lockedLayerStores = append(lockedLayerStores, lstore)
 			}
 			if l, err := lstore.Get(parent); err == nil && l != nil {
 				ilayer = l
@@ -1485,21 +1504,21 @@ func (s *store) putLayer(rlstore rwLayerStore, rlstores []roLayerStore, id, pare
 			}
 		}
 		if ilayer == nil {
-			return nil, -1, ErrLayerUnknown
+			return nil, nil, unlock, ErrLayerUnknown
 		}
 		parentLayer = ilayer
 
 		if err := s.containerStore.startWriting(); err != nil {
-			return nil, -1, err
+			return nil, nil, unlock, err
 		}
 		defer s.containerStore.stopWriting()
 		containers, err := s.containerStore.Containers()
 		if err != nil {
-			return nil, -1, err
+			return nil, nil, unlock, err
 		}
 		for _, container := range containers {
 			if container.LayerID == parent {
-				return nil, -1, ErrParentIsContainer
+				return nil, nil, unlock, ErrParentIsContainer
 			}
 		}
 		if !options.HostUIDMapping && len(options.UIDMap) == 0 {
@@ -1526,7 +1545,7 @@ func (s *store) putLayer(rlstore rwLayerStore, rlstores []roLayerStore, id, pare
 			GIDMap:         copySlicePreferringNil(gidMap),
 		}
 	}
-	return rlstore.create(id, parentLayer, names, mountLabel, nil, &options, writeable, slo)
+	return &options, parentLayer, unlock, nil
 }
 
 func (s *store) PutLayer(id, parent string, names []string, mountLabel string, writeable bool, lOptions *LayerOptions, diff io.Reader) (*Layer, int64, error) {
@@ -1557,7 +1576,13 @@ func (s *store) PutLayer(id, parent string, names []string, mountLabel string, w
 		return nil, -1, err
 	}
 	defer rlstore.stopWriting()
-	return s.putLayer(rlstore, rlstores, id, parent, names, mountLabel, writeable, lOptions, slo)
+
+	options, parentLayer, unlockLayerStores, err := populateLayerOptions(s, rlstore, rlstores, parent, lOptions)
+	defer unlockLayerStores()
+	if err != nil {
+		return nil, -1, err
+	}
+	return s.putLayer(rlstore, id, parentLayer, names, mountLabel, writeable, options, slo)
 }
 
 func (s *store) CreateLayer(id, parent string, names []string, mountLabel string, writeable bool, options *LayerOptions) (*Layer, error) {
@@ -3198,7 +3223,12 @@ func (s *store) ApplyStagedLayer(args ApplyStagedLayerOptions) (*Layer, error) {
 		DiffOutput:  args.DiffOutput,
 		DiffOptions: args.DiffOptions,
 	}
-	layer, _, err = s.putLayer(rlstore, rlstores, args.ID, args.ParentLayer, args.Names, args.MountLabel, args.Writeable, args.LayerOptions, &slo)
+	options, parentLayer, unlockLayerStores, err := populateLayerOptions(s, rlstore, rlstores, args.ParentLayer, args.LayerOptions)
+	defer unlockLayerStores()
+	if err != nil {
+		return nil, err
+	}
+	layer, _, err = s.putLayer(rlstore, args.ID, parentLayer, args.Names, args.MountLabel, args.Writeable, options, &slo)
 	return layer, err
 }
 
