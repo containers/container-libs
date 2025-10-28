@@ -29,10 +29,8 @@ const (
 
 // NetworkBackend returns the network backend name and interface
 // It returns netavark backend depending on what is set in the config.
-// If the backend is set to "" we will automatically assign the backend on the following conditions:
-//  1. read ${graphroot}/defaultNetworkBackend
-//  2. find netavark binary
-//  3. check containers, images and CNI networks and if there are some we have an existing install and should continue to use CNI
+// If the backend is set to "" we will automatically assign the netavark
+// backend.
 //
 // revive does not like the name because the package is already called network
 //
