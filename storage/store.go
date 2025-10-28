@@ -1509,13 +1509,6 @@ func (s *store) putLayer(rlstore rwLayerStore, rlstores []roLayerStore, id, pare
 			gidMap = ilayer.GIDMap
 		}
 	} else {
-		// FIXME? It’s unclear why we are holding containerStore locked here at all
-		// (and because we are not modifying it, why it is a write lock, not a read lock).
-		if err := s.containerStore.startWriting(); err != nil {
-			return nil, -1, err
-		}
-		defer s.containerStore.stopWriting()
-
 		if !options.HostUIDMapping && len(options.UIDMap) == 0 {
 			uidMap = s.uidMap
 		}
