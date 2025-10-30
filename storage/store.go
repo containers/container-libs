@@ -1459,6 +1459,30 @@ func (s *store) putLayer(rlstore rwLayerStore, id string, parentLayer *Layer, na
 // On entry:
 // - rlstore must be locked for writing
 // - rlstores MUST NOT be locked
+func getParentLayer(rlstore rwLayerStore, rlstores []roLayerStore, parent string) (*Layer, error) {
+	var ilayer *Layer
+	for _, l := range append([]roLayerStore{rlstore}, rlstores...) {
+		lstore := l
+		if lstore != rlstore {
+			if err := lstore.startReading(); err != nil {
+				return nil, err
+			}
+			defer lstore.stopReading()
+		}
+		if l, err := lstore.Get(parent); err == nil && l != nil {
+			ilayer = l
+			break
+		}
+	}
+	if ilayer == nil {
+		return nil, ErrLayerUnknown
+	}
+	return ilayer, nil
+}
+
+// On entry:
+// - rlstore must be locked for writing
+// - rlstores MUST NOT be locked
 //
 // Returns the new copied LayerOptions with mappings set and the parent Layer.
 func populateLayerOptions(s *store, rlstore rwLayerStore, rlstores []roLayerStore, parent string, lOptions *LayerOptions) (*LayerOptions, *Layer, error) {
@@ -1478,25 +1502,11 @@ func populateLayerOptions(s *store, rlstore rwLayerStore, rlstores []roLayerStor
 	uidMap := options.UIDMap
 	gidMap := options.GIDMap
 	if parent != "" {
-		var ilayer *Layer
-		for _, l := range append([]roLayerStore{rlstore}, rlstores...) {
-			lstore := l
-			if lstore != rlstore {
-				if err := lstore.startReading(); err != nil {
-					return nil, nil, err
-				}
-				defer lstore.stopReading()
-			}
-			if l, err := lstore.Get(parent); err == nil && l != nil {
-				ilayer = l
-				parent = ilayer.ID
-				break
-			}
+		var err error
+		parentLayer, err = getParentLayer(rlstore, rlstores, parent)
+		if err != nil {
+			return nil, nil, err
 		}
-		if ilayer == nil {
-			return nil, nil, ErrLayerUnknown
-		}
-		parentLayer = ilayer
 
 		if err := s.containerStore.startWriting(); err != nil {
 			return nil, nil, err
@@ -1512,10 +1522,10 @@ func populateLayerOptions(s *store, rlstore rwLayerStore, rlstores []roLayerStor
 			}
 		}
 		if !options.HostUIDMapping && len(options.UIDMap) == 0 {
-			uidMap = ilayer.UIDMap
+			uidMap = parentLayer.UIDMap
 		}
 		if !options.HostGIDMapping && len(options.GIDMap) == 0 {
-			gidMap = ilayer.GIDMap
+			gidMap = parentLayer.GIDMap
 		}
 	} else {
 		if !options.HostUIDMapping && len(options.UIDMap) == 0 {
@@ -1544,7 +1554,11 @@ func (s *store) PutLayer(id, parent string, names []string, mountLabel string, w
 		return nil, -1, err
 	}
 
-	var slo *stagedLayerOptions
+	var (
+		slo         *stagedLayerOptions
+		options     *LayerOptions
+		parentLayer *Layer
+	)
 
 	if diff != nil {
 		m := rlstore.newMaybeStagedLayerExtraction(diff)
@@ -1553,10 +1567,32 @@ func (s *store) PutLayer(id, parent string, names []string, mountLabel string, w
 				logrus.Errorf("Error cleaning up temporary directories: %v", err)
 			}
 		}()
-		err = rlstore.stageWithUnlockedStore(m, lOptions)
-		if err != nil {
-			return nil, -1, err
+		// driver can do unlocked staging so do that without holding the layer lock
+		if m.staging != nil {
+			// func so we have a scope for defer, we don't want to hold the lock for stageWithUnlockedStore()
+			layer, err := func() (*Layer, error) {
+				if err := rlstore.startWriting(); err != nil {
+					return nil, err
+				}
+				defer rlstore.stopWriting()
+
+				if layer, err := rlstore.checkIdOrNameConfict(id, names); err != nil {
+					return layer, err
+				}
+
+				options, parentLayer, err = populateLayerOptions(s, rlstore, rlstores, parent, lOptions)
+				return nil, err
+			}()
+			if err != nil {
+				return layer, -1, err
+			}
+
+			err = rlstore.stageWithUnlockedStore(m, options)
+			if err != nil {
+				return nil, -1, err
+			}
 		}
+
 		slo = &stagedLayerOptions{
 			stagedLayerExtraction: m,
 		}
@@ -1567,9 +1603,21 @@ func (s *store) PutLayer(id, parent string, names []string, mountLabel string, w
 	}
 	defer rlstore.stopWriting()
 
-	options, parentLayer, err := populateLayerOptions(s, rlstore, rlstores, parent, lOptions)
-	if err != nil {
-		return nil, -1, err
+	if parentLayer == nil {
+		// options where not populated yet
+		options, parentLayer, err = populateLayerOptions(s, rlstore, rlstores, parent, lOptions)
+		if err != nil {
+			return nil, -1, err
+		}
+	} else {
+		// We used the staged extraction without holding the lock.
+		// Check again that the parent layer is still valid and exists.
+		_, err := getParentLayer(rlstore, rlstores, parentLayer.ID)
+		if err != nil {
+			return nil, -1, err
+		}
+		// FIXME: I guess we should compare the old parentLayer uid/gid mappings with the newly looked up layer here?
+		// Could it happen that a layer with the same id was deleted on recreated with new mapping while we where unlocked?
 	}
 	return s.putLayer(rlstore, id, parentLayer, names, mountLabel, writeable, options, slo)
 }

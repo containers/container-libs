@@ -326,6 +326,11 @@ type rwLayerStore interface {
 	// diff which was applied to its parent to initialize its contents.
 	create(id string, parent *Layer, names []string, mountLabel string, options map[string]string, moreOptions *LayerOptions, writeable bool, slo *stagedLayerOptions) (*Layer, int64, error)
 
+	// checkIdOrNameConfict checks if the id or names are already in use and returns an
+	// error in that case. As Special case if the layer already exists it returns it as
+	// well together with the error.
+	checkIdOrNameConfict(id string, names []string) (*Layer, error)
+
 	// updateNames modifies names associated with a layer based on (op, names).
 	updateNames(id string, names []string, op updateNameOperation) error
 
