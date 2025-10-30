@@ -1422,6 +1422,23 @@ func (r *layerStore) pickStoreLocation(volatile, writeable bool) layerLocations 
 	}
 }
 
+// checkIdOrNameConfict checks if the id or names are already in use and returns an
+// error in that case. As Special case if the layer already exists it returns it as
+// well together with the error.
+//
+// Requires startWriting.
+func (r *layerStore) checkIdOrNameConfict(id string, names []string) (*Layer, error) {
+	if duplicateLayer, idInUse := r.byid[id]; idInUse {
+		return duplicateLayer, ErrDuplicateID
+	}
+	for _, name := range names {
+		if _, nameInUse := r.byname[name]; nameInUse {
+			return nil, ErrDuplicateName
+		}
+	}
+	return nil, nil
+}
+
 // Requires startWriting.
 func (r *layerStore) create(id string, parentLayer *Layer, names []string, mountLabel string, options map[string]string, moreOptions *LayerOptions, writeable bool, slo *stagedLayerOptions) (layer *Layer, size int64, err error) {
 	if moreOptions == nil {
@@ -1444,14 +1461,8 @@ func (r *layerStore) create(id string, parentLayer *Layer, names []string, mount
 			_, idInUse = r.byid[id]
 		}
 	}
-	if duplicateLayer, idInUse := r.byid[id]; idInUse {
-		return duplicateLayer, -1, ErrDuplicateID
-	}
-	names = dedupeStrings(names)
-	for _, name := range names {
-		if _, nameInUse := r.byname[name]; nameInUse {
-			return nil, -1, ErrDuplicateName
-		}
+	if layer, err := r.checkIdOrNameConfict(id, names); err != nil {
+		return layer, -1, err
 	}
 	parent := ""
 	if parentLayer != nil {
