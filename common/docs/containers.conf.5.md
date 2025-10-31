@@ -992,7 +992,7 @@ Number of CPU's a machine is created with.
 
 The size of the disk in GB created when init-ing a podman-machine VM
 
-**image**=""
+**image**="docker://quay.io/podman/machine-os"
 
 Image used when creating a new VM using `podman machine init`.
 Can be specified as a registry with a bootable OCI artifact, download URL, or a local path.
