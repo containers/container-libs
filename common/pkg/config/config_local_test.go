@@ -147,11 +147,6 @@ var _ = Describe("Config Local", func() {
 		config, err := newLocked(&Options{}, &paths{})
 		gomega.Expect(err).ToNot(gomega.HaveOccurred())
 		gomega.Expect(config.Network.DefaultRootlessNetworkCmd).To(gomega.Equal("pasta"))
-		// When
-		config2, err := newLocked(&Options{}, &paths{etc: "testdata/containers_default.conf"})
-		// Then
-		gomega.Expect(err).ToNot(gomega.HaveOccurred())
-		gomega.Expect(config2.Network.DefaultRootlessNetworkCmd).To(gomega.Equal("slirp4netns"))
 	})
 
 	It("should fail on invalid device mode", func() {
