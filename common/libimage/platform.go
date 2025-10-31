@@ -25,6 +25,7 @@ const (
 
 // NormalizePlatform normalizes (according to the OCI spec) the specified os,
 // arch and variant. If left empty, the individual item will be normalized.
+//
 // Deprecated: new code should call libimage/platform.Normalize() instead.
 func NormalizePlatform(rawOS, rawArch, rawVariant string) (os, arch, variant string) {
 	return platform.Normalize(rawOS, rawArch, rawVariant)

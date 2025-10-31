@@ -87,3 +87,7 @@ linters:
           - contextcheck
         path: libimage
         text: LookupImage
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
