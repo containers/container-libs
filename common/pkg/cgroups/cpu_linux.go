@@ -40,14 +40,14 @@ func (c *linuxCPUHandler) Stat(ctr *CgroupControl, m *cgroups.Stats) error {
 		if err != nil {
 			return err
 		}
-		cpu.CpuUsage.UsageInKernelmode *= 1000
+		cpu.CpuUsage.TotalUsage *= 1000
 	}
 	if val, found := values["system_usec"]; found {
 		cpu.CpuUsage.UsageInKernelmode, err = strconv.ParseUint(cleanString(val[0]), 10, 64)
 		if err != nil {
 			return err
 		}
-		cpu.CpuUsage.TotalUsage *= 1000
+		cpu.CpuUsage.UsageInKernelmode *= 1000
 	}
 	m.CpuStats = cpu
 	return nil
