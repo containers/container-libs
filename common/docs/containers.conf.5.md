@@ -525,6 +525,15 @@ run on the machine.
 A list of default pasta options that should be used running pasta.
 It accepts the pasta cli options, see pasta(1) for the full list of options.
 
+**default_host_ip**=""
+
+The default host IP address to bind published container ports to when no host IP
+is explicitly specified (e.g., `-p 8000:8000`). If empty, the default behavior is to
+bind to all network interfaces (`0.0.0.0`). For instance, setting this to `127.0.0.1` restricts
+published ports to localhost only, improving security on desktop installations.
+Note that explicitly specifying a host IP in the `-p` flag (e.g., `-p 192.168.1.10:8000:8000`)
+will always override this default.
+
 ## ENGINE TABLE
 The `engine` table contains configuration options used to set up container engines such as Podman and Buildah.
 
