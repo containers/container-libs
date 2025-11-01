@@ -1,4 +1,4 @@
-## containers-storage-shutdown 1 "October 2016"
+# containers-storage-shutdown 1 "October 2016"
 
 ## NAME
 containers-storage shutdown - Shut down layer storage

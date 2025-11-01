@@ -1,4 +1,4 @@
-## containers-storage-delete-layer 1 "August 2016"
+# containers-storage-delete-layer 1 "August 2016"
 
 ## NAME
 containers-storage delete-layer - Delete a layer

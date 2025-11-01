@@ -1,4 +1,4 @@
-## containers-storage-delete-container 1 "August 2016"
+# containers-storage-delete-container 1 "August 2016"
 
 ## NAME
 containers-storage delete-container - Delete a container

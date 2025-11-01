@@ -1,4 +1,4 @@
-## containers-storage-metadata 1 "August 2016"
+# containers-storage-metadata 1 "August 2016"
 
 ## NAME
 containers-storage metadata - Retrieve metadata for a layer, image, or container

@@ -1,4 +1,4 @@
-## containers-storage-copy 1 "April 2018"
+# containers-storage-copy 1 "April 2018"
 
 ## NAME
 containers-storage copy - Copy content into a layer

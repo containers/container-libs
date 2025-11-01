@@ -1,4 +1,4 @@
-## containers-storage-get-container-data-digest 1 "August 2017"
+# containers-storage-get-container-data-digest 1 "August 2017"
 
 ## NAME
 containers-storage get-container-data-digest - Retrieve the digest of a lookaside data item

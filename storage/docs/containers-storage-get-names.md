@@ -1,4 +1,4 @@
-## containers-storage-get-names 1 "September 2017"
+# containers-storage-get-names 1 "September 2017"
 
 ## NAME
 containers-storage get-names - Get names of a layer/image/container

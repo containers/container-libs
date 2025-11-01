@@ -1,4 +1,4 @@
-## containers-storage-config 1 "November 2024"
+# containers-storage-config 1 "November 2024"
 
 ## NAME
 containers-storage config - Output the configuration for the storage library

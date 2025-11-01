@@ -1,4 +1,4 @@
-## containers-storage-get-image-data 1 "August 2016"
+# containers-storage-get-image-data 1 "August 2016"
 
 ## NAME
 containers-storage get-image-data - Retrieve lookaside data for an image

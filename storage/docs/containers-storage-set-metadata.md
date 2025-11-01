@@ -1,4 +1,4 @@
-## containers-storage-set-metadata 1 "August 2016"
+# containers-storage-set-metadata 1 "August 2016"
 
 ## NAME
 containers-storage set-metadata - Set metadata for a layer, image, or container

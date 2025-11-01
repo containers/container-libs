@@ -1,4 +1,4 @@
-## containers-storage-delete-image 1 "August 2016"
+# containers-storage-delete-image 1 "August 2016"
 
 ## NAME
 containers-storage delete-image - Delete an image

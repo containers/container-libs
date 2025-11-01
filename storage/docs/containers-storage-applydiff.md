@@ -1,4 +1,4 @@
-## containers-storage-apply-diff 1 "August 2016"
+# containers-storage-apply-diff 1 "August 2016"
 
 ## NAME
 containers-storage apply-diff - Apply a layer diff to a layer

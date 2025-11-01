@@ -1,4 +1,4 @@
-## containers-storage-get-container-data-size 1 "August 2017"
+# containers-storage-get-container-data-size 1 "August 2017"
 
 ## NAME
 containers-storage get-container-data-size - Retrieve the size of a lookaside data item

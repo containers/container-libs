@@ -1,4 +1,4 @@
-## containers-storage-delete 1 "August 2016"
+# containers-storage-delete 1 "August 2016"
 
 ## NAME
 containers-storage delete - Force deletion of a layer, image, or container

@@ -1,4 +1,4 @@
-## containers-storage-image 1 "August 2016"
+# containers-storage-image 1 "August 2016"
 
 ## NAME
 containers-storage image - Examine a single image

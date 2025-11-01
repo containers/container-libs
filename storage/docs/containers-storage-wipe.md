@@ -1,4 +1,4 @@
-## containers-storage-wipe 1 "August 2016"
+# containers-storage-wipe 1 "August 2016"
 
 ## NAME
 containers-storage wipe - Delete all containers, images, and layers
