@@ -47,7 +47,6 @@ type CreateOpts struct {
 	MountLabel string
 	StorageOpt map[string]string
 	*idtools.IDMappings
-	ignoreChownErrors bool
 }
 
 // MountOpts contains optional arguments for Driver.Get() methods.
