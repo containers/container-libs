@@ -2698,7 +2698,7 @@ func (r *layerStore) applyDiffWithOptions(to string, layerOptions *LayerOptions,
 			Mappings:   r.layerMappings(layer),
 			MountLabel: layer.MountLabel,
 		}
-		return r.driver.ApplyDiff(layer.ID, layer.Parent, options)
+		return r.driver.ApplyDiff(layer.ID, options)
 	})
 	if err != nil {
 		return -1, err

@@ -2459,7 +2459,7 @@ func (d *Driver) CommitStagedLayer(id string, sa *tempdir.StagedAddition) error 
 }
 
 // ApplyDiff applies the new layer into a root
-func (d *Driver) ApplyDiff(id, parent string, options graphdriver.ApplyDiffOpts) (size int64, err error) {
+func (d *Driver) ApplyDiff(id string, options graphdriver.ApplyDiffOpts) (size int64, err error) {
 	applyDir, err := d.getDiffPath(id)
 	if err != nil {
 		return 0, err
