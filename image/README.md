@@ -1,4 +1,4 @@
-[![Go Reference](https://pkg.go.dev/badge/github.com/containers/image/v5.svg)](https://pkg.go.dev/github.com/containers/image/v5) [![Build Status](https://api.cirrus-ci.com/github/containers/image.svg)](https://cirrus-ci.com/github/containers/image)
+[![Go Reference](https://pkg.go.dev/badge/go.poman.io/image/v5.svg)](https://pkg.go.dev/go.podman.io/image/v5)
 =
 
 `image` is a set of Go libraries aimed at working in various way with
