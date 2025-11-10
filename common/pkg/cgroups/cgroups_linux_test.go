@@ -89,7 +89,7 @@ func TestResources(t *testing.T) {
 	}
 
 	// test CPU Quota adjustment.
-	u, _, b, _, _, _ := resourcesToProps(&resources, true)
+	u, _, b, _, _, _ := resourcesToProps(&resources)
 
 	val, ok := u["CPUQuotaPerSecUSec"]
 	if !ok {
