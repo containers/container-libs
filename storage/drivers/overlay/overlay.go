@@ -995,6 +995,49 @@ func (d *Driver) Create(id, parent string, opts *graphdriver.CreateOpts) (retErr
 	return d.create(id, parent, opts, true)
 }
 
+// getLayerPermissions returns the base permissions to use for the layer directories.
+// The first return value is the idPair to create the possible parent directories with.
+// The second return value is the mode how it should be stored on disk.
+// The third return value is the mode the layer expects to have which may be stored
+// in an xattr when using forceMask, without forceMask both values are the same.
+func (d *Driver) getLayerPermissions(parent string, uidMaps, gidMaps []idtools.IDMap) (idtools.IDPair, idtools.Stat, idtools.Stat, error) {
+	rootUID, rootGID, err := idtools.GetRootUIDGID(uidMaps, gidMaps)
+	if err != nil {
+		return idtools.IDPair{}, idtools.Stat{}, idtools.Stat{}, err
+	}
+
+	idPair := idtools.IDPair{
+		UID: rootUID,
+		GID: rootGID,
+	}
+
+	st := idtools.Stat{IDs: idPair, Mode: defaultPerms}
+
+	if parent != "" {
+		parentBase := d.dir(parent)
+		parentDiff := filepath.Join(parentBase, "diff")
+		if xSt, err := idtools.GetContainersOverrideXattr(parentDiff); err == nil {
+			st = xSt
+		} else {
+			systemSt, err := system.Stat(parentDiff)
+			if err != nil {
+				return idtools.IDPair{}, idtools.Stat{}, idtools.Stat{}, err
+			}
+			st.IDs.UID = int(systemSt.UID())
+			st.IDs.GID = int(systemSt.GID())
+			st.Mode = os.FileMode(systemSt.Mode())
+		}
+	}
+
+	forcedSt := st
+	if d.options.forceMask != nil {
+		forcedSt.IDs = idPair
+		forcedSt.Mode = *d.options.forceMask
+	}
+
+	return idPair, forcedSt, st, nil
+}
+
 func (d *Driver) create(id, parent string, opts *graphdriver.CreateOpts, readOnly bool) (retErr error) {
 	dir, homedir, _ := d.dir2(id, readOnly)
 
@@ -1013,36 +1056,13 @@ func (d *Driver) create(id, parent string, opts *graphdriver.CreateOpts, readOnl
 		return err
 	}
 
-	rootUID, rootGID, err := idtools.GetRootUIDGID(uidMaps, gidMaps)
+	idPair, forcedSt, st, err := d.getLayerPermissions(parent, uidMaps, gidMaps)
 	if err != nil {
 		return err
 	}
 
-	idPair := idtools.IDPair{
-		UID: rootUID,
-		GID: rootGID,
-	}
-
 	if err := idtools.MkdirAllAndChownNew(path.Dir(dir), 0o755, idPair); err != nil {
 		return err
-	}
-
-	st := idtools.Stat{IDs: idPair, Mode: defaultPerms}
-
-	if parent != "" {
-		parentBase := d.dir(parent)
-		parentDiff := filepath.Join(parentBase, "diff")
-		if xSt, err := idtools.GetContainersOverrideXattr(parentDiff); err == nil {
-			st = xSt
-		} else {
-			systemSt, err := system.Stat(parentDiff)
-			if err != nil {
-				return err
-			}
-			st.IDs.UID = int(systemSt.UID())
-			st.IDs.GID = int(systemSt.GID())
-			st.Mode = os.FileMode(systemSt.Mode())
-		}
 	}
 
 	if err := fileutils.Lexists(dir); err == nil {
@@ -1086,12 +1106,6 @@ func (d *Driver) create(id, parent string, opts *graphdriver.CreateOpts, readOnl
 		if err := d.quotaCtl.SetQuota(dir, quota); err != nil {
 			return err
 		}
-	}
-
-	forcedSt := st
-	if d.options.forceMask != nil {
-		forcedSt.IDs = idPair
-		forcedSt.Mode = *d.options.forceMask
 	}
 
 	diff := path.Join(dir, "diff")
