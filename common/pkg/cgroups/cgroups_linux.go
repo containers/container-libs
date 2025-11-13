@@ -445,46 +445,6 @@ func cleanString(s string) string {
 	return strings.Trim(s, "\n")
 }
 
-func cpusetCopyFromParent(path string, cgroupv2 bool) error {
-	for _, file := range []string{"cpuset.cpus", "cpuset.mems"} {
-		if _, err := cpusetCopyFileFromParent(path, file, cgroupv2); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func cpusetCopyFileFromParent(dir, file string, cgroupv2 bool) ([]byte, error) {
-	if dir == cgroupRoot {
-		return nil, fmt.Errorf("could not find parent to initialize cpuset %s", file)
-	}
-	path := filepath.Join(dir, file)
-	parentPath := path
-	if cgroupv2 {
-		parentPath += ".effective"
-	}
-	data, err := os.ReadFile(parentPath)
-	if err != nil {
-		// if the file doesn't exist, it is likely that the cpuset controller
-		// is not enabled in the kernel.
-		if os.IsNotExist(err) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	if strings.Trim(string(data), "\n") != "" {
-		return data, nil
-	}
-	data, err = cpusetCopyFileFromParent(filepath.Dir(dir), file, cgroupv2)
-	if err != nil {
-		return nil, err
-	}
-	if err := os.WriteFile(path, data, 0o644); err != nil {
-		return nil, fmt.Errorf("write %s: %w", path, err)
-	}
-	return data, nil
-}
-
 // SystemCPUUsage returns the system usage for all the cgroups.
 func SystemCPUUsage() (uint64, error) {
 	_, err := IsCgroup2UnifiedMode()
