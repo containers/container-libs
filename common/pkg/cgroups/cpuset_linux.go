@@ -27,12 +27,6 @@ func (c *linuxCpusetHandler) Apply(ctr *CgroupControl, res *cgroups.Resources) e
 	return man.Set(res)
 }
 
-// Create the cgroup.
-func (c *linuxCpusetHandler) Create(ctr *CgroupControl) (bool, error) {
-	path := filepath.Join(cgroupRoot, ctr.config.Path)
-	return true, cpusetCopyFromParent(path, true)
-}
-
 // Stat fills a metrics structure with usage stats for the controller.
 func (c *linuxCpusetHandler) Stat(_ *CgroupControl, _ *cgroups.Stats) error {
 	return nil
