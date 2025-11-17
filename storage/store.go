@@ -1452,8 +1452,8 @@ func (s *store) canUseShifting(uidmap, gidmap []idtools.IDMap) bool {
 // On entry:
 // - rlstore must be locked for writing
 // - rlstores MUST NOT be locked
-func (s *store) putLayer(rlstore rwLayerStore, id string, parentLayer *Layer, names []string, mountLabel string, writeable bool, options *LayerOptions, slo *stagedLayerOptions) (*Layer, int64, error) {
-	return rlstore.create(id, parentLayer, names, mountLabel, nil, options, writeable, slo)
+func (s *store) putLayer(rlstore rwLayerStore, id string, parentLayer *Layer, names []string, mountLabel string, writeable bool, options *LayerOptions, lc *layerCreationContents) (*Layer, int64, error) {
+	return rlstore.create(id, parentLayer, names, mountLabel, nil, options, writeable, lc)
 }
 
 // On entry:
@@ -1564,7 +1564,7 @@ func (s *store) PutLayer(id, parent string, names []string, mountLabel string, w
 	}
 
 	var (
-		slo         *stagedLayerOptions
+		lc          *layerCreationContents
 		options     *LayerOptions
 		parentLayer *Layer
 	)
@@ -1608,7 +1608,7 @@ func (s *store) PutLayer(id, parent string, names []string, mountLabel string, w
 			}
 		}
 
-		slo = &stagedLayerOptions{
+		lc = &layerCreationContents{
 			stagedLayerExtraction: m,
 		}
 	}
@@ -1642,7 +1642,7 @@ func (s *store) PutLayer(id, parent string, names []string, mountLabel string, w
 			return nil, -1, fmt.Errorf("error during staged layer apply, parent layer %q changed id mappings while the content was extracted, must retry layer creation", parent)
 		}
 	}
-	return s.putLayer(rlstore, id, parentLayer, names, mountLabel, writeable, options, slo)
+	return s.putLayer(rlstore, id, parentLayer, names, mountLabel, writeable, options, lc)
 }
 
 func (s *store) CreateLayer(id, parent string, names []string, mountLabel string, writeable bool, options *LayerOptions) (*Layer, error) {
@@ -3279,7 +3279,7 @@ func (s *store) ApplyStagedLayer(args ApplyStagedLayerOptions) (*Layer, error) {
 
 	// if the layer doesn't exist yet, try to create it.
 
-	slo := stagedLayerOptions{
+	lc := layerCreationContents{
 		DiffOutput:  args.DiffOutput,
 		DiffOptions: args.DiffOptions,
 	}
@@ -3288,7 +3288,7 @@ func (s *store) ApplyStagedLayer(args ApplyStagedLayerOptions) (*Layer, error) {
 	if err != nil {
 		return nil, err
 	}
-	layer, _, err = s.putLayer(rlstore, args.ID, parentLayer, args.Names, args.MountLabel, args.Writeable, options, &slo)
+	layer, _, err = s.putLayer(rlstore, args.ID, parentLayer, args.Names, args.MountLabel, args.Writeable, options, &lc)
 	return layer, err
 }
 

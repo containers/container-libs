@@ -196,9 +196,9 @@ type DiffOptions struct {
 	Compression *archive.Compression
 }
 
-// stagedLayerOptions are the options passed to .create to populate a staged
+// layerCreationContents are the options passed to .create to populate a staged
 // layer
-type stagedLayerOptions struct {
+type layerCreationContents struct {
 	// These are used via the zstd:chunked pull paths
 	DiffOutput  *drivers.DriverWithDifferOutput
 	DiffOptions *drivers.ApplyDiffWithDifferOpts
@@ -331,7 +331,7 @@ type rwLayerStore interface {
 	// underlying drivers do not themselves distinguish between writeable
 	// and read-only layers.  Returns the new layer structure and the size of the
 	// diff which was applied to its parent to initialize its contents.
-	create(id string, parent *Layer, names []string, mountLabel string, options map[string]string, moreOptions *LayerOptions, writeable bool, slo *stagedLayerOptions) (*Layer, int64, error)
+	create(id string, parent *Layer, names []string, mountLabel string, options map[string]string, moreOptions *LayerOptions, writeable bool, lc *layerCreationContents) (*Layer, int64, error)
 
 	// checkIdOrNameConfict checks if the id or names are already in use and returns an
 	// error in that case. As Special case if the layer already exists it returns it as
@@ -1447,7 +1447,7 @@ func (r *layerStore) checkIdOrNameConfict(id string, names []string) (*Layer, er
 }
 
 // Requires startWriting.
-func (r *layerStore) create(id string, parentLayer *Layer, names []string, mountLabel string, options map[string]string, moreOptions *LayerOptions, writeable bool, slo *stagedLayerOptions) (layer *Layer, size int64, err error) {
+func (r *layerStore) create(id string, parentLayer *Layer, names []string, mountLabel string, options map[string]string, moreOptions *LayerOptions, writeable bool, lc *layerCreationContents) (layer *Layer, size int64, err error) {
 	if moreOptions == nil {
 		moreOptions = &LayerOptions{}
 	}
@@ -1630,31 +1630,31 @@ func (r *layerStore) create(id string, parentLayer *Layer, names []string, mount
 	}
 
 	size = -1
-	if slo != nil {
-		if slo.stagedLayerExtraction != nil {
-			if slo.stagedLayerExtraction.result != nil {
+	if lc != nil {
+		if lc.stagedLayerExtraction != nil {
+			if lc.stagedLayerExtraction.result != nil {
 				// The layer is staged, just commit it and update the metadata.
-				if err := slo.stagedLayerExtraction.commitLayer(r, layer.ID); err != nil {
+				if err := lc.stagedLayerExtraction.commitLayer(r, layer.ID); err != nil {
 					cleanupFailureContext = "committing staged layer diff"
 					return nil, -1, err
 				}
-				applyDiffResultToLayer(r, layer, moreOptions, slo.stagedLayerExtraction.result)
+				applyDiffResultToLayer(r, layer, moreOptions, lc.stagedLayerExtraction.result)
 			} else {
 				// The diff was not staged, apply it now here instead.
-				if size, err = r.applyDiffWithOptions(layer.ID, moreOptions, slo.stagedLayerExtraction.diff); err != nil {
+				if size, err = r.applyDiffWithOptions(layer.ID, moreOptions, lc.stagedLayerExtraction.diff); err != nil {
 					cleanupFailureContext = "applying layer diff"
 					return nil, -1, err
 				}
 			}
 		} else {
 			// staging logic for the chunked pull path
-			if err := r.applyDiffFromStagingDirectory(layer.ID, slo.DiffOutput, slo.DiffOptions); err != nil {
+			if err := r.applyDiffFromStagingDirectory(layer.ID, lc.DiffOutput, lc.DiffOptions); err != nil {
 				cleanupFailureContext = "applying staged directory diff"
 				return nil, -1, err
 			}
 		}
 	} else {
-		// applyDiffWithOptions() would have updated r.bycompressedsum
+		// The layer creation content above would have updated r.bycompressedsum
 		// and r.byuncompressedsum for us, but if we used a template
 		// layer, we didn't call it, so add the new layer as candidates
 		// for searches for layers by checksum
