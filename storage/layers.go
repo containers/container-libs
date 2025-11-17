@@ -2526,8 +2526,7 @@ func (r *layerStore) stageWithUnlockedStore(sl *maybeStagedLayerExtraction, pare
 		cleanup, stageLayer, size, err := sl.staging.StartStagingDiffToApply(parent, drivers.ApplyDiffOpts{
 			Diff:     payload,
 			Mappings: idtools.NewIDMappingsFromMaps(layerOptions.UIDMap, layerOptions.GIDMap),
-			// FIXME: What to do here? We have no lock and assigned label yet.
-			// Overlayfs should not need it anyway so this seems fine for now.
+			// MountLabel is not supported for the unlocked extraction, see the comment in (*store).PutLayer()
 			MountLabel: "",
 		})
 		sl.cleanupFuncs = append(sl.cleanupFuncs, cleanup)

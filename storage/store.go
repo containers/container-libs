@@ -1577,7 +1577,12 @@ func (s *store) PutLayer(id, parent string, names []string, mountLabel string, w
 			}
 		}()
 		// driver can do unlocked staging so do that without holding the layer lock
-		if m.staging != nil {
+		// Special case we only support it when no mount label is used. c/image doesn't set it for layers
+		// and the overlay driver doesn't use it for extract today so it would be safe even when set but
+		// that is not exactly obvious and if someone would implement the ApplyDiffStaging interface for
+		// another driver that may be no longer true. So for now simply fall back to the locked extract path
+		// to ensure we don't cause any weird issues here.
+		if m.staging != nil && mountLabel == "" {
 			// func so we have a scope for defer, we don't want to hold the lock for stageWithUnlockedStore()
 			layer, err := func() (*Layer, error) {
 				if err := rlstore.startReading(); err != nil {
