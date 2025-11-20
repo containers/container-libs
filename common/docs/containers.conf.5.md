@@ -1031,7 +1031,7 @@ is interpreted as the default provider for the current host OS.
 | -------- | --------------------------------------- | -------- |
 | Linux    | "" (qemu)                               | None     |
 | Windows  | "" ("wsl": Windows Subsystem for Linux) | "hyperv" (Windows Server Virtualization) |
-| Mac      | "" ("applehv": Apple Hypervisor)        | "libkrun" (Launch machine via libkrun platform, optimized for sharing GPU with the machine) |
+| Mac      | "" ("libkrun": Launch machine via libkrun platform, optimized for sharing GPU with the machine) | "applehv" (Apple Hypervisor) |
 
 
 **rosetta**="true"
