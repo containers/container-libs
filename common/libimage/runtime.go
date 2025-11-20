@@ -16,6 +16,7 @@ import (
 	"go.podman.io/common/libimage/define"
 	"go.podman.io/common/libimage/platform"
 	"go.podman.io/common/pkg/config"
+	"go.podman.io/common/pkg/digestutils"
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/pkg/shortnames"
 	storageTransport "go.podman.io/image/v5/storage"
@@ -273,9 +274,9 @@ func (r *Runtime) LookupImage(name string, options *LookupImageOptions) (*Image,
 
 	byDigest := false
 	originalName := name
-	if strings.HasPrefix(name, "sha256:") {
+	if trimmed, found := digestutils.TrimDigestPrefix(name); found {
 		byDigest = true
-		name = strings.TrimPrefix(name, "sha256:")
+		name = trimmed
 	}
 	byFullID := reference.IsFullIdentifier(name)
 

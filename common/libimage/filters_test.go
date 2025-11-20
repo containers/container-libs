@@ -169,6 +169,9 @@ func TestFilterDigest(t *testing.T) {
 	}{
 		{string(busybox.Digest()[:10]), 1, busybox.ID()},
 		{string(alpine.Digest()[:10]), 1, alpine.ID()},
+		// Test SHA512 digest prefix matching
+		{"sha512:1234567890abcdef", 0, ""}, // Non-existent SHA512 digest
+		{"sha256:1234567890abcdef", 0, ""}, // Non-existent SHA256 digest
 	} {
 		listOptions := &ListImagesOptions{
 			Filters: []string{"digest=" + test.filter},
@@ -176,10 +179,23 @@ func TestFilterDigest(t *testing.T) {
 		listedImages, err := runtime.ListImages(ctx, listOptions)
 		require.NoError(t, err, "%v", test)
 		require.Len(t, listedImages, test.matches, "%s -> %v", test.filter, listedImages)
-		require.Equal(t, listedImages[0].ID(), test.id)
+		if test.matches > 0 {
+			require.Equal(t, listedImages[0].ID(), test.id)
+		}
 	}
 	_, err = runtime.ListImages(ctx, &ListImagesOptions{
 		Filters: []string{"digest=this-is-not-a-digest"},
+	})
+	assert.Error(t, err)
+
+	// Test invalid digest algorithms
+	_, err = runtime.ListImages(ctx, &ListImagesOptions{
+		Filters: []string{"digest=md5:1234567890abcdef"},
+	})
+	assert.Error(t, err)
+
+	_, err = runtime.ListImages(ctx, &ListImagesOptions{
+		Filters: []string{"digest=sha384:1234567890abcdef"},
 	})
 	assert.Error(t, err)
 }
