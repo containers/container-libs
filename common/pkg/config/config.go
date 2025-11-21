@@ -49,7 +49,7 @@ type Config struct {
 	Engine EngineConfig `toml:"engine"`
 	// Machine specifies configurations of podman machine VMs
 	Machine MachineConfig `toml:"machine"`
-	// Network section defines the configuration of CNI Plugins
+	// Network section defines the network configuration
 	Network NetworkConfig `toml:"network"`
 	// Secret section defines configurations for the secret management
 	Secrets SecretConfig `toml:"secrets"`
@@ -404,13 +404,6 @@ type EngineConfig struct {
 	// containers and pods will be visible. The default namespace is "".
 	Namespace string `toml:"namespace,omitempty"`
 
-	// NetworkCmdPath is the path to the slirp4netns binary.
-	NetworkCmdPath string `toml:"network_cmd_path,omitempty"`
-
-	// NetworkCmdOptions is the default options to pass to the slirp4netns binary.
-	// For example "allow_host_loopback=true"
-	NetworkCmdOptions attributedstring.Slice `toml:"network_cmd_options,omitempty"`
-
 	// NoPivotRoot sets whether to set no-pivot-root in the OCI runtime.
 	NoPivotRoot bool `toml:"no_pivot_root,omitempty"`
 
@@ -595,9 +588,6 @@ type NetworkConfig struct {
 	// networking.
 	NetworkBackend string `toml:"network_backend,omitempty"`
 
-	// CNIPluginDirs is where CNI plugin binaries are stored.
-	CNIPluginDirs attributedstring.Slice `toml:"cni_plugin_dirs,omitempty"`
-
 	// NetavarkPluginDirs is a list of directories which contain netavark plugins.
 	NetavarkPluginDirs attributedstring.Slice `toml:"netavark_plugin_dirs,omitempty"`
 
@@ -622,7 +612,7 @@ type NetworkConfig struct {
 	DefaultSubnetPools []SubnetPool `toml:"default_subnet_pools,omitempty"`
 
 	// DefaultRootlessNetworkCmd is used to set the default rootless network
-	// program, either "slirp4nents" (default) or "pasta".
+	// program, currently only "pasta".
 	DefaultRootlessNetworkCmd string `toml:"default_rootless_network_cmd,omitempty"`
 
 	// NetworkConfigDir is where network configuration files are stored.

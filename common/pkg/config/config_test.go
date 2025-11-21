@@ -289,11 +289,6 @@ image_copy_tmp_dir="storage"`
 				},
 			}
 
-			pluginDirs := []string{
-				"/usr/libexec/cni",
-				"/tmp",
-			}
-
 			envs := []string{
 				"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
 			}
@@ -322,13 +317,11 @@ image_copy_tmp_dir="storage"`
 			gomega.Expect(defaultConfig.Containers.Env.Get()).To(gomega.BeEquivalentTo(envs))
 			gomega.Expect(defaultConfig.Containers.Mounts.Get()).To(gomega.BeEquivalentTo(mounts))
 			gomega.Expect(defaultConfig.Containers.PidsLimit).To(gomega.BeEquivalentTo(2048))
-			gomega.Expect(defaultConfig.Network.CNIPluginDirs.Get()).To(gomega.Equal(pluginDirs))
 			gomega.Expect(defaultConfig.Network.NetavarkPluginDirs.Get()).To(gomega.Equal([]string{"/usr/netavark"}))
 			gomega.Expect(defaultConfig.Engine.NumLocks).To(gomega.BeEquivalentTo(2048))
 			gomega.Expect(defaultConfig.Engine.OCIRuntimes).To(gomega.Equal(OCIRuntimeMap))
 			gomega.Expect(defaultConfig.Engine.PlatformToOCIRuntime).To(gomega.Equal(PlatformToOCIRuntimeMap))
 			gomega.Expect(defaultConfig.Containers.HTTPProxy).To(gomega.BeFalse())
-			gomega.Expect(defaultConfig.Engine.NetworkCmdOptions.Get()).To(gomega.BeEmpty())
 			gomega.Expect(defaultConfig.Engine.HelperBinariesDir.Get()).To(gomega.Equal(helperDirs))
 			gomega.Expect(defaultConfig.Engine.ServiceTimeout).To(gomega.BeEquivalentTo(300))
 			gomega.Expect(defaultConfig.Engine.InfraImage).To(gomega.BeEquivalentTo("registry.k8s.io/pause:3.4.1"))
@@ -453,7 +446,6 @@ image_copy_tmp_dir="storage"`
 			gomega.Expect(config.Containers.PidsLimit).To(gomega.BeEquivalentTo(2048))
 			gomega.Expect(config.Containers.Env.Get()).To(gomega.BeEquivalentTo(envs))
 			gomega.Expect(config.Containers.UserNS).To(gomega.BeEquivalentTo(""))
-			gomega.Expect(config.Network.CNIPluginDirs.Get()).To(gomega.Equal(DefaultCNIPluginDirs))
 			gomega.Expect(config.Network.NetavarkPluginDirs.Get()).To(gomega.Equal(DefaultNetavarkPluginDirs))
 			gomega.Expect(config.Engine.NumLocks).To(gomega.BeEquivalentTo(2048))
 			gomega.Expect(config.Engine.OCIRuntimes["runc"]).To(gomega.Equal(OCIRuntimeMap["runc"]))
