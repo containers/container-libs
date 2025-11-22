@@ -17,6 +17,9 @@ import (
 
 const driverName = "overlay"
 
+// check that Driver correctly implements the ApplyDiffTemporary interface
+var _ graphdriver.ApplyDiffStaging = &Driver{}
+
 func init() {
 	// Do not sure chroot to speed run time and allow archive
 	// errors or hangs to be debugged directly from the test process.
