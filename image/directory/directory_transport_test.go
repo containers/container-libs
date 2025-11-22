@@ -209,14 +209,21 @@ func TestReferenceManifestPath(t *testing.T) {
 }
 
 func TestReferenceLayerPath(t *testing.T) {
-	const hex = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+	const hex256 = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+	const hex512 = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 
 	ref, tmpDir := refToTempDir(t)
 	dirRef, ok := ref.(dirReference)
 	require.True(t, ok)
-	res, err := dirRef.layerPath("sha256:" + hex)
+
+	res, err := dirRef.layerPath("sha256:" + hex256)
 	require.NoError(t, err)
-	assert.Equal(t, tmpDir+"/"+hex, res)
+	assert.Equal(t, tmpDir+"/"+hex256, res)
+
+	res, err = dirRef.layerPath("sha512:" + hex512)
+	require.NoError(t, err)
+	assert.Equal(t, tmpDir+"/sha512-"+hex512, res)
+
 	_, err = dirRef.layerPath(digest.Digest("sha256:../hello"))
 	assert.Error(t, err)
 }
