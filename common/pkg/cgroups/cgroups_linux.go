@@ -64,8 +64,8 @@ var handlers = map[string]statFunc{
 	Blkio:  blkioStat,
 }
 
-// getAvailableControllers get the available controllers.
-func getAvailableControllers() ([]string, error) {
+// AvailableControllers get string:bool map of all the available controllers.
+func AvailableControllers() ([]string, error) {
 	controllers := []string{}
 	controllersFile := filepath.Join(cgroupRoot, "cgroup.controllers")
 
@@ -87,11 +87,6 @@ func getAvailableControllers() ([]string, error) {
 		controllers = append(controllers, controllerName)
 	}
 	return controllers, nil
-}
-
-// AvailableControllers get string:bool map of all the available controllers.
-func AvailableControllers(exclude map[string]statFunc) ([]string, error) {
-	return getAvailableControllers()
 }
 
 func getCgroupPathForCurrentProcess() (string, error) {
