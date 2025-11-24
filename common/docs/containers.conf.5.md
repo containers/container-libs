@@ -418,33 +418,17 @@ Specified as "directory-on-host:directory-in-container:options".
 Example:  "/db:/var/lib/db:ro".
 
 ## NETWORK TABLE
-The `network` table contains settings pertaining to the management of CNI
+The `network` table contains settings pertaining to the management of netavark
 plugins.
 
 **network_backend**=""
 
 Network backend determines what network driver will be used to set up and tear down container networks.
-Valid values are "cni" and "netavark".
-The default value is empty which means that it will automatically choose CNI or netavark. If there are
-already containers/images or CNI networks preset it will choose CNI.
+Valid value is "netavark".
+The default value is empty which means that it will automatically choose netavark.
 
 Before changing this value all containers must be stopped otherwise it is likely that
 firewall rules and network interfaces might leak on the host. A reboot will fix this.
-
-**cni_plugin_dirs**=[]
-
-List of paths to directories where CNI plugin binaries are located.
-
-The default list is:
-```
-cni_plugin_dirs = [
-  "/usr/local/libexec/cni",
-  "/usr/libexec/cni",
-  "/usr/local/lib/cni",
-  "/usr/lib/cni",
-  "/opt/cni/bin",
-]
-```
 
 **netavark_plugin_dirs**=[]
 
@@ -495,14 +479,12 @@ default_subnet_pools = [
 
 **default_rootless_network_cmd**="pasta"
 
-Configure which rootless network program to use by default. Valid options are
-`slirp4netns` and `pasta` (default).
+Configure which rootless network program to use by default. Only current valid option is
+`pasta` (default).
 
-**network_config_dir**="/etc/cni/net.d/"
+**network_config_dir**="/etc/containers/networks/"
 
 Path to the directory where network configuration files are located.
-For the CNI backend the default is __/etc/cni/net.d__ as root
-and __$HOME/.config/cni/net.d__ as rootless.
 For the netavark backend "/etc/containers/networks" is used as root
 and "$graphroot/networks" as rootless.
 
@@ -678,7 +660,6 @@ The following binaries are searched in these directories:
  - catatonit
  - netavark
  - pasta
- - slirp4netns
 
 Podman machine uses it for these binaries:
  - gvproxy
@@ -778,28 +759,6 @@ only containers and pods that were created in the same namespace, and will
 create new containers and pods in that namespace. The default namespace is "",
 which corresponds to no namespace. When no namespace is set, all containers
 and pods are visible.
-
-**network_cmd_path**=""
-
-Path to the slirp4netns binary.
-
-**network_cmd_options**=[]
-
-Default options to pass to the slirp4netns binary.
-
-Valid options values are:
-
-  - **allow_host_loopback=true|false**: Allow the slirp4netns to reach the host loopback IP (`10.0.2.2`). Default is false.
-  - **mtu=MTU**: Specify the MTU to use for this network. (Default is `65520`).
-  - **cidr=CIDR**: Specify ip range to use for this network. (Default is `10.0.2.0/24`).
-  - **enable_ipv6=true|false**: Enable IPv6. Default is true. (Required for `outbound_addr6`).
-  - **outbound_addr=INTERFACE**: Specify the outbound interface slirp should bind to (ipv4 traffic only).
-  - **outbound_addr=IPv4**: Specify the outbound ipv4 address slirp should bind to.
-  - **outbound_addr6=INTERFACE**: Specify the outbound interface slirp should bind to (ipv6 traffic only).
-  - **outbound_addr6=IPv6**: Specify the outbound ipv6 address slirp should bind to.
-  - **port_handler=rootlesskit**: Use rootlesskit for port forwarding. Default.
-  Note: Rootlesskit changes the source IP address of incoming packets to a IP address in the container network namespace, usually `10.0.2.100`. If your application requires the real source IP address, e.g. web server logs, use the slirp4netns port handler. The rootlesskit port handler is also used for rootless containers when connected to user-defined networks.
-  - **port_handler=slirp4netns**: Use the slirp4netns port forwarding, it is slower than rootlesskit but preserves the correct source IP address. This port handler cannot be used for user-defined networks.
 
 **no_pivot_root**=false
 

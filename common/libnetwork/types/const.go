@@ -52,7 +52,6 @@ const (
 type NetworkBackend string
 
 const (
-	CNI      NetworkBackend = "cni"
 	Netavark NetworkBackend = "netavark"
 )
 
