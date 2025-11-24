@@ -8,15 +8,8 @@ import (
 	"github.com/opencontainers/cgroups"
 )
 
-type linuxPidHandler struct {
-}
-
-func getPidsHandler() *linuxPidHandler {
-	return &linuxPidHandler{}
-}
-
-// Stat fills a metrics structure with usage stats for the controller.
-func (c *linuxPidHandler) Stat(ctr *CgroupControl, m *cgroups.Stats) error {
+// pidsStat fills a metrics structure with usage stats for the pids controller.
+func pidsStat(ctr *CgroupControl, m *cgroups.Stats) error {
 	if ctr.config.Path == "" {
 		// nothing we can do to retrieve the pids.current path
 		return nil

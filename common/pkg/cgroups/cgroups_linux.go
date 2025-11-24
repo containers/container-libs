@@ -42,9 +42,8 @@ type CgroupControl struct {
 	systemd bool
 }
 
-type controllerHandler interface {
-	Stat(*CgroupControl, *cgroups.Stats) error
-}
+// statFunc is a function that gathers statistics for a cgroup controller.
+type statFunc func(*CgroupControl, *cgroups.Stats) error
 
 const (
 	cgroupRoot = "/sys/fs/cgroup"
@@ -58,15 +57,11 @@ const (
 	Blkio = "blkio"
 )
 
-var handlers map[string]controllerHandler
-
-func init() {
-	handlers = map[string]controllerHandler{
-		CPU:    getCPUHandler(),
-		Memory: getMemoryHandler(),
-		Pids:   getPidsHandler(),
-		Blkio:  getBlkioHandler(),
-	}
+var handlers = map[string]statFunc{
+	CPU:    cpuStat,
+	Memory: memoryStat,
+	Pids:   pidsStat,
+	Blkio:  blkioStat,
 }
 
 // getAvailableControllers get the available controllers.
@@ -95,7 +90,7 @@ func getAvailableControllers() ([]string, error) {
 }
 
 // AvailableControllers get string:bool map of all the available controllers.
-func AvailableControllers(exclude map[string]controllerHandler) ([]string, error) {
+func AvailableControllers(exclude map[string]statFunc) ([]string, error) {
 	return getAvailableControllers()
 }
 
@@ -312,8 +307,8 @@ func (c *CgroupControl) Update(resources *cgroups.Resources) error {
 func (c *CgroupControl) Stat() (*cgroups.Stats, error) {
 	m := cgroups.Stats{}
 	found := false
-	for _, h := range handlers {
-		if err := h.Stat(c, &m); err != nil {
+	for _, statFunc := range handlers {
+		if err := statFunc(c, &m); err != nil {
 			if !errors.Is(err, os.ErrNotExist) {
 				return nil, err
 			}

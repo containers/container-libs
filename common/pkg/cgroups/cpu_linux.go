@@ -8,15 +8,8 @@ import (
 	"github.com/opencontainers/cgroups"
 )
 
-type linuxCPUHandler struct {
-}
-
-func getCPUHandler() *linuxCPUHandler {
-	return &linuxCPUHandler{}
-}
-
-// Stat fills a metrics structure with usage stats for the controller.
-func (c *linuxCPUHandler) Stat(ctr *CgroupControl, m *cgroups.Stats) error {
+// cpuStat fills a metrics structure with usage stats for the cpu controller.
+func cpuStat(ctr *CgroupControl, m *cgroups.Stats) error {
 	cpu := cgroups.CpuStats{}
 	values, err := readCgroup2MapFile(ctr, "cpu.stat")
 	if err != nil {

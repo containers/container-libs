@@ -8,15 +8,8 @@ import (
 	"github.com/opencontainers/cgroups"
 )
 
-type linuxMemHandler struct {
-}
-
-func getMemoryHandler() *linuxMemHandler {
-	return &linuxMemHandler{}
-}
-
-// Stat fills a metrics structure with usage stats for the controller.
-func (c *linuxMemHandler) Stat(ctr *CgroupControl, m *cgroups.Stats) error {
+// memoryStat fills a metrics structure with usage stats for the memory controller.
+func memoryStat(ctr *CgroupControl, m *cgroups.Stats) error {
 	var err error
 	memUsage := cgroups.MemoryStats{}
 

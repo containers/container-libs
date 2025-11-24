@@ -9,15 +9,8 @@ import (
 	"github.com/opencontainers/cgroups"
 )
 
-type linuxBlkioHandler struct {
-}
-
-func getBlkioHandler() *linuxBlkioHandler {
-	return &linuxBlkioHandler{}
-}
-
-// Stat fills a metrics structure with usage stats for the controller.
-func (c *linuxBlkioHandler) Stat(ctr *CgroupControl, m *cgroups.Stats) error {
+// blkioStat fills a metrics structure with usage stats for the blkio controller.
+func blkioStat(ctr *CgroupControl, m *cgroups.Stats) error {
 	var ioServiceBytesRecursive []cgroups.BlkioStatEntry
 
 	// more details on the io.stat file format:X https://facebookmicrosites.github.io/cgroup2/docs/io-controller.html
