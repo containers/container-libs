@@ -6,11 +6,9 @@ import (
 	"strconv"
 
 	"github.com/opencontainers/cgroups"
-	"github.com/opencontainers/cgroups/fs"
 )
 
 type linuxCPUHandler struct {
-	CPU fs.CpuGroup
 }
 
 func getCPUHandler() *linuxCPUHandler {

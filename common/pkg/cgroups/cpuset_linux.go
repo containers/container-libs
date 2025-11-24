@@ -4,11 +4,9 @@ package cgroups
 
 import (
 	"github.com/opencontainers/cgroups"
-	"github.com/opencontainers/cgroups/fs"
 )
 
 type linuxCpusetHandler struct {
-	CPUSet fs.CpusetGroup
 }
 
 func getCpusetHandler() *linuxCpusetHandler {

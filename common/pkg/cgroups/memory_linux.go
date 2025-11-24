@@ -6,11 +6,9 @@ import (
 	"path/filepath"
 
 	"github.com/opencontainers/cgroups"
-	"github.com/opencontainers/cgroups/fs"
 )
 
 type linuxMemHandler struct {
-	Mem fs.MemoryGroup
 }
 
 func getMemoryHandler() *linuxMemHandler {

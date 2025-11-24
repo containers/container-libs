@@ -7,11 +7,9 @@ import (
 	"strings"
 
 	"github.com/opencontainers/cgroups"
-	"github.com/opencontainers/cgroups/fs"
 )
 
 type linuxBlkioHandler struct {
-	Blkio fs.BlkioGroup
 }
 
 func getBlkioHandler() *linuxBlkioHandler {
