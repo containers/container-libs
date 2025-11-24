@@ -50,10 +50,6 @@ const (
 	cgroupRoot = "/sys/fs/cgroup"
 	// CPU is the cpu controller.
 	CPU = "cpu"
-	// CPUAcct is the cpuacct controller.
-	CPUAcct = "cpuacct"
-	// CPUset is the cpuset controller.
-	CPUset = "cpuset"
 	// Memory is the memory controller.
 	Memory = "memory"
 	// Pids is the pids controller.
@@ -67,7 +63,6 @@ var handlers map[string]controllerHandler
 func init() {
 	handlers = map[string]controllerHandler{
 		CPU:    getCPUHandler(),
-		CPUset: getCpusetHandler(),
 		Memory: getMemoryHandler(),
 		Pids:   getPidsHandler(),
 		Blkio:  getBlkioHandler(),
