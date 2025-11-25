@@ -298,6 +298,12 @@ func (c *CgroupControl) Update(resources *cgroups.Resources) error {
 	return man.Set(resources)
 }
 
+// AddPid moves the specified pid to the cgroup.
+func (c *CgroupControl) AddPid(pid int) error {
+	path := filepath.Join(cgroupRoot, c.config.Path)
+	return fs2.CreateCgroupPath(path, c.config)
+}
+
 // Stat returns usage statistics for the cgroup.
 func (c *CgroupControl) Stat() (*cgroups.Stats, error) {
 	m := cgroups.Stats{}
