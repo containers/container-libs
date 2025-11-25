@@ -26,7 +26,7 @@ type dirImageSource struct {
 
 // newImageSource returns an ImageSource reading from an existing directory.
 // The caller must call .Close() on the returned ImageSource.
-func newImageSource(ref dirReference) private.ImageSource {
+func newImageSource(ref dirReference) (private.ImageSource, error) {
 	s := &dirImageSource{
 		PropertyMethodsInitialize: impl.PropertyMethods(impl.Properties{
 			HasThreadSafeGetBlob: false,
@@ -36,7 +36,7 @@ func newImageSource(ref dirReference) private.ImageSource {
 		ref: ref,
 	}
 	s.Compat = impl.AddCompat(s)
-	return s
+	return s, nil
 }
 
 // Reference returns the reference used to set up this source, _as specified by the user_
