@@ -172,7 +172,9 @@ func TestReferenceNewImageNoValidManifest(t *testing.T) {
 }
 
 func TestReferenceNewImageSource(t *testing.T) {
-	ref, _ := refToTempDir(t)
+	ref, tmpDir := refToTempDir(t)
+	err := os.WriteFile(filepath.Join(tmpDir, "version"), []byte("Directory Transport Version: 1.1\n"), 0o644)
+	require.NoError(t, err)
 	src, err := ref.NewImageSource(context.Background(), nil)
 	assert.NoError(t, err)
 	defer src.Close()
