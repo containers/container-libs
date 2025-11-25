@@ -45,3 +45,13 @@ func (f ForbiddenImageSource) GetSignatures(context.Context, *digest.Digest) ([]
 func (f ForbiddenImageSource) LayerInfosForCopy(context.Context, *digest.Digest) ([]types.BlobInfo, error) {
 	panic("Unexpected call to a mock function")
 }
+
+// GetDeltaManifest is a mock that panics.
+func (f ForbiddenImageSource) GetDeltaManifest(context.Context, *digest.Digest) ([]byte, string, error) {
+	panic("Unexpected call to a mock function")
+}
+
+// GetDeltaIndex is a mock that panics.
+func (f ForbiddenImageSource) GetDeltaIndex(context.Context) (types.ImageReference, error) {
+	panic("Unexpected call to a mock function")
+}
