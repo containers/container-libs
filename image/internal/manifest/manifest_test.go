@@ -73,6 +73,65 @@ func TestDigest(t *testing.T) {
 	assert.Equal(t, digest.Digest(digestSha256EmptyTar), actualDigest)
 }
 
+func TestDigestWithAlgorithm(t *testing.T) {
+	sha256Cases := []struct {
+		path           string
+		expectedDigest digest.Digest
+	}{
+		{"v2s2.manifest.json", TestDockerV2S2ManifestDigest},
+		{"v2s1.manifest.json", TestDockerV2S1ManifestDigest},
+		{"v2s1-unsigned.manifest.json", TestDockerV2S1UnsignedManifestDigest},
+	}
+	for _, c := range sha256Cases {
+		manifest, err := os.ReadFile(filepath.Join("testdata", c.path))
+		require.NoError(t, err)
+		actualDigest, err := DigestWithAlgorithm(manifest, digest.SHA256)
+		require.NoError(t, err)
+		assert.Equal(t, c.expectedDigest, actualDigest, c.path)
+		defaultDigest, err := Digest(manifest)
+		require.NoError(t, err)
+		assert.Equal(t, defaultDigest, actualDigest, c.path)
+	}
+
+	// Test with SHA512
+	for _, c := range sha256Cases {
+		manifest, err := os.ReadFile(filepath.Join("testdata", c.path))
+		require.NoError(t, err)
+		actualDigest, err := DigestWithAlgorithm(manifest, digest.SHA512)
+		require.NoError(t, err)
+		assert.Equal(t, digest.SHA512, actualDigest.Algorithm())
+		sha256Digest, err := DigestWithAlgorithm(manifest, digest.SHA256)
+		require.NoError(t, err)
+		assert.NotEqual(t, sha256Digest, actualDigest, c.path)
+	}
+
+	// Test that v2s1 signed manifest signature stripping works with different algorithms
+	manifest, err := os.ReadFile("testdata/v2s1.manifest.json")
+	require.NoError(t, err)
+	unsignedManifest, err := os.ReadFile("testdata/v2s1-unsigned.manifest.json")
+	require.NoError(t, err)
+
+	// Both signed and unsigned should produce the same digest for each algorithm
+	for _, algo := range []digest.Algorithm{digest.SHA256, digest.SHA512} {
+		signedDigest, err := DigestWithAlgorithm(manifest, algo)
+		require.NoError(t, err)
+		unsignedDigest, err := DigestWithAlgorithm(unsignedManifest, algo)
+		require.NoError(t, err)
+		assert.Equal(t, unsignedDigest, signedDigest, "algorithm: %s", algo)
+	}
+
+	manifest, err = os.ReadFile("testdata/v2s1-invalid-signatures.manifest.json")
+	require.NoError(t, err)
+	_, err = DigestWithAlgorithm(manifest, digest.SHA256)
+	assert.Error(t, err)
+	_, err = DigestWithAlgorithm(manifest, digest.SHA512)
+	assert.Error(t, err)
+
+	actualDigest, err := DigestWithAlgorithm([]byte{}, digest.SHA256)
+	require.NoError(t, err)
+	assert.Equal(t, digest.Digest(digestSha256EmptyTar), actualDigest)
+}
+
 func TestMatchesDigest(t *testing.T) {
 	cases := []struct {
 		path           string
