@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/opencontainers/go-digest"
@@ -201,8 +202,78 @@ func TestGetPutSignatures(t *testing.T) {
 	assert.Equal(t, signatures, sigs)
 }
 
+func TestVersionAssignment(t *testing.T) {
+	t.Run("SHA256 gets version 1.1", func(t *testing.T) {
+		ref, tmpDir := refToTempDir(t)
+		cache := memory.New()
+
+		dest, err := ref.NewImageDestination(context.Background(), nil)
+		require.NoError(t, err)
+		defer dest.Close()
+
+		blob := []byte("test-blob-sha256")
+		_, err = dest.PutBlob(context.Background(), bytes.NewReader(blob), types.BlobInfo{Digest: "", Size: int64(len(blob))}, cache, false)
+		require.NoError(t, err)
+
+		err = dest.Commit(context.Background(), nil)
+		require.NoError(t, err)
+
+		versionBytes, err := os.ReadFile(filepath.Join(tmpDir, "version"))
+		require.NoError(t, err)
+		assert.Equal(t, "Directory Transport Version: 1.1\n", string(versionBytes))
+	})
+
+	t.Run("Non-SHA256 gets version 1.2", func(t *testing.T) {
+		ref, tmpDir := refToTempDir(t)
+		cache := memory.New()
+
+		dest, err := ref.NewImageDestination(context.Background(), nil)
+		require.NoError(t, err)
+		defer dest.Close()
+
+		blob := []byte("test-blob-sha512")
+		sha512Digest := digest.SHA512.FromBytes(blob)
+		_, err = dest.PutBlob(context.Background(), bytes.NewReader(blob), types.BlobInfo{Digest: sha512Digest, Size: int64(len(blob))}, cache, false)
+		require.NoError(t, err)
+
+		err = dest.Commit(context.Background(), nil)
+		require.NoError(t, err)
+
+		versionBytes, err := os.ReadFile(filepath.Join(tmpDir, "version"))
+		require.NoError(t, err)
+		assert.Equal(t, "Directory Transport Version: 1.2\n", string(versionBytes))
+	})
+
+	t.Run("Mixed digests get version 1.2", func(t *testing.T) {
+		ref, tmpDir := refToTempDir(t)
+		cache := memory.New()
+
+		dest, err := ref.NewImageDestination(context.Background(), nil)
+		require.NoError(t, err)
+		defer dest.Close()
+
+		blob1 := []byte("test-blob-sha256")
+		_, err = dest.PutBlob(context.Background(), bytes.NewReader(blob1), types.BlobInfo{Digest: "", Size: int64(len(blob1))}, cache, false)
+		require.NoError(t, err)
+
+		blob2 := []byte("test-blob-sha512")
+		sha512Digest := digest.SHA512.FromBytes(blob2)
+		_, err = dest.PutBlob(context.Background(), bytes.NewReader(blob2), types.BlobInfo{Digest: sha512Digest, Size: int64(len(blob2))}, cache, false)
+		require.NoError(t, err)
+
+		err = dest.Commit(context.Background(), nil)
+		require.NoError(t, err)
+
+		versionBytes, err := os.ReadFile(filepath.Join(tmpDir, "version"))
+		require.NoError(t, err)
+		assert.Equal(t, "Directory Transport Version: 1.2\n", string(versionBytes))
+	})
+}
+
 func TestSourceReference(t *testing.T) {
 	ref, tmpDir := refToTempDir(t)
+	err := os.WriteFile(filepath.Join(tmpDir, "version"), []byte("Directory Transport Version: 1.1\n"), 0o644)
+	require.NoError(t, err)
 
 	src, err := ref.NewImageSource(context.Background(), nil)
 	require.NoError(t, err)
