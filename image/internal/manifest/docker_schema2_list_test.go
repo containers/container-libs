@@ -47,7 +47,7 @@ func TestSchema2ListEditInstances(t *testing.T) {
 		UpdateMediaType: "something",
 		ListOperation:   ListOpUpdate,
 	})
-	err = list.EditInstances(editInstances)
+	err = list.EditInstances(editInstances, false)
 	require.NoError(t, err)
 
 	expectedDigests[0] = editInstances[0].UpdateDigest
@@ -82,7 +82,7 @@ func TestSchema2ListEditInstances(t *testing.T) {
 		AddPlatform:   &imgspecv1.Platform{Architecture: "amd64", OS: "linux", OSFeatures: []string{"sse4"}},
 		ListOperation: ListOpAdd,
 	})
-	err = list.EditInstances(editInstances)
+	err = list.EditInstances(editInstances, false)
 	require.NoError(t, err)
 
 	// Verify new elements are added to the end of old list

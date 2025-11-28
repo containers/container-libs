@@ -68,7 +68,7 @@ func TestOCI1EditInstances(t *testing.T) {
 		UpdateMediaType: "something",
 		ListOperation:   ListOpUpdate,
 	})
-	err = list.EditInstances(editInstances)
+	err = list.EditInstances(editInstances, false)
 	require.NoError(t, err)
 
 	expectedDigests[0] = editInstances[0].UpdateDigest
@@ -135,7 +135,7 @@ func TestOCI1EditInstances(t *testing.T) {
 		AddPlatform:   &imgspecv1.Platform{Architecture: "amd64", OS: "linux", OSFeatures: []string{"sse4"}},
 		ListOperation: ListOpAdd,
 	})
-	err = list.EditInstances(editInstances)
+	err = list.EditInstances(editInstances, false)
 	require.NoError(t, err)
 
 	// Zstd should be kept on lowest priority as compared to the default gzip ones and order of prior elements must be preserved.
@@ -162,7 +162,7 @@ func TestOCI1EditInstances(t *testing.T) {
 		UpdateAnnotations:       map[string]string{},
 		ListOperation:           ListOpUpdate,
 	})
-	err = list.EditInstances(editInstances)
+	err = list.EditInstances(editInstances, false)
 	require.NoError(t, err)
 	// Digest `ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff` should be re-ordered on update.
 	assert.Equal(t, list.Instances(), []digest.Digest{digest.Digest("sha256:e692418e4cbaf90ca69d05a66403747baa33ee08806650b51fab815ad7fc331f"), digest.Digest("sha256:5b0bcabd1ed22e9fb1310cf6c2dec7cdef19f0ad69efa1f392e94a4333501270"), digest.Digest("sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), digest.Digest("sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"), digest.Digest("sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"), digest.Digest("sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"), digest.Digest("sha256:hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh")})
@@ -187,12 +187,47 @@ func TestOCI1EditInstances(t *testing.T) {
 		UpdateAffectAnnotations: true,
 		UpdateAnnotations:       map[string]string{},
 	}}
-	err = list.EditInstances(editInstances)
+	err = list.EditInstances(editInstances, false)
 	require.NoError(t, err)
 	// Verify that the artifactType wasn't lost.
 	instance, err = list.Instance(digest.Digest("sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"))
 	require.NoError(t, err)
 	assert.Equal(t, "application/x-tar", instance.ReadOnly.ArtifactType)
+
+	// Updating the zstd annotation for an existing instance works
+	for _, cannotModifyManifest := range []bool{false, true} {
+		list, err = ListFromBlob(validManifest, GuessMIMEType(validManifest))
+		require.NoError(t, err)
+		originalInstance, err := list.Instance(list.Instances()[0])
+		require.NoError(t, err)
+		editInstances = []ListEdit{{
+			ListOperation:               ListOpUpdate,
+			UpdateOldDigest:             originalInstance.Digest,
+			UpdateDigest:                originalInstance.Digest,
+			UpdateSize:                  originalInstance.Size,
+			UpdateMediaType:             originalInstance.MediaType,
+			UpdateAffectAnnotations:     false,
+			UpdateAnnotations:           nil,
+			UpdateCompressionAlgorithms: []compression.Algorithm{compression.Zstd},
+		}}
+		err = list.EditInstances(editInstances, cannotModifyManifest)
+		require.NoError(t, err)
+		instance, err = list.Instance(list.Instances()[0])
+		require.NoError(t, err)
+
+		if cannotModifyManifest {
+			assert.Equal(t, originalInstance, instance) // No changes
+		} else {
+			assert.Equal(t, "true", instance.ReadOnly.Annotations["io.github.containers.compression.zstd"])
+			assert.Equal(t, []string{compressionTypes.ZstdAlgorithmName}, instance.ReadOnly.CompressionAlgorithmNames)
+			// These are the only changes:
+			delete(instance.ReadOnly.Annotations, "io.github.containers.compression.zstd")
+			require.Empty(t, instance.ReadOnly.Annotations)
+			instance.ReadOnly.Annotations = nil
+			instance.ReadOnly.CompressionAlgorithmNames = []string{compressionTypes.GzipAlgorithmName}
+			assert.Equal(t, originalInstance, instance)
+		}
+	}
 }
 
 func TestOCI1IndexChooseInstanceByCompression(t *testing.T) {
