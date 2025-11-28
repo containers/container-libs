@@ -29,3 +29,8 @@ func (ref ForbiddenUnparsedImage) Signatures(context.Context) ([][]byte, error) 
 func (ref ForbiddenUnparsedImage) UntrustedSignatures(ctx context.Context) ([]signature.Signature, error) {
 	panic("unexpected call to a mock function")
 }
+
+// DeltaLayers is a mock that panics.
+func (ref ForbiddenUnparsedImage) DeltaLayers(ctx context.Context) ([]types.BlobInfo, error) {
+	panic("unexpected call to a mock function")
+}
