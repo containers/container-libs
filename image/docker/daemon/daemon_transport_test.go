@@ -75,7 +75,7 @@ func testParseReference(t *testing.T, fn func(string) (types.ImageReference, err
 			daemonRef, ok := ref.(daemonReference)
 			require.True(t, ok, c.input)
 			// If we don't reject the input, the interpretation must be consistent with reference.ParseAnyReference
-			dockerRef, err := reference.ParseAnyReference(c.input)
+			dockerRef, err := reference.ParseAnyReference(c.input) //nolint:staticcheck // "reference.ParseAnyReference is deprecated" — this is explicitly a check of consistency with that function’s behavior.
 			require.NoError(t, err, c.input)
 
 			if c.expectedRef == "" {
