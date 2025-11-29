@@ -1,7 +1,7 @@
 # containers-storage-mount 1 "August 2016"
 
 ## NAME
-containers-storage mount - Mount a layer or a container's layer for manipulation
+containers-storage-mount - Mount a layer or a container's layer for manipulation
 
 ## SYNOPSIS
 **containers-storage** **mount** [*options* [...]] *layerOrContainerNameOrID*
@@ -16,7 +16,8 @@ mountpoint.
 Specify an SELinux context for the mounted layer.
 
 ## EXAMPLE
-**containers-storage mount my-container**
+
+    containers-storage mount my-container
 
 ## SEE ALSO
 containers-storage-mounted(1)

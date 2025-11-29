@@ -3,7 +3,6 @@
 ## NAME
 containers-storage-zstd-chunked - Information about zstd:chunked
 
-
 ## DESCRIPTION
 
 The traditional format for container image layers is [application/vnd.oci.image.layer.v1.tar+gzip](https://github.com/opencontainers/image-spec/blob/main/layer.md#gzip-media-types).

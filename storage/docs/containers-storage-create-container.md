@@ -1,7 +1,7 @@
 # containers-storage-create-container 1 "August 2016"
 
 ## NAME
-containers-storage create-container - Create a container
+containers-storage-create-container - Create a container
 
 ## SYNOPSIS
 **containers-storage** **create-container** [*options*...] *imageNameOrID*
@@ -29,7 +29,8 @@ Sets the metadata for the container to the specified value.
 Sets the metadata for the container to the contents of the specified file.
 
 ## EXAMPLE
-**containers-storage create-container -f manifest.json -n new-container goodimage**
+
+    containers-storage create-container -f manifest.json -n new-container goodimage
 
 ## SEE ALSO
 containers-storage-create-image(1)

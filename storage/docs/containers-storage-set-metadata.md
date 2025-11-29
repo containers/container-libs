@@ -1,7 +1,7 @@
 # containers-storage-set-metadata 1 "August 2016"
 
 ## NAME
-containers-storage set-metadata - Set metadata for a layer, image, or container
+containers-storage-set-metadata - Set metadata for a layer, image, or container
 
 ## SYNOPSIS
 **containers-storage** **set-metadata** [*options* [...]] *layerOrImageOrContainerNameOrID*
@@ -20,7 +20,8 @@ Use the contents of the specified file as the metadata.
 Use the specified value as the metadata.
 
 ## EXAMPLE
-**containers-storage set-metadata -m "compression: gzip" my-layer**
+
+    containers-storage set-metadata -m "compression: gzip" my-layer
 
 ## SEE ALSO
 containers-storage-metadata(1)

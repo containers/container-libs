@@ -1,7 +1,7 @@
 # containers-storage-changes 1 "August 2016"
 
 ## NAME
-containers-storage changes - Produce a list of changes in a layer
+containers-storage-changes - Produce a list of changes in a layer
 
 ## SYNOPSIS
 **containers-storage** **changes** *layerNameOrID* [*referenceLayerNameOrID*]
@@ -13,7 +13,8 @@ obtain a summary of which files have been added, deleted, or modified in the
 layer.
 
 ## EXAMPLE
-**containers-storage changes f3be6c6134d0d980936b4c894f1613b69a62b79588fdeda744d0be3693bde8ec**
+
+    containers-storage changes f3be6c6134d0d980936b4c894f1613b69a62b79588fdeda744d0be3693bde8ec
 
 ## SEE ALSO
 containers-storage-applydiff(1)

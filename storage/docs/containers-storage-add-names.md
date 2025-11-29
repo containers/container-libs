@@ -1,7 +1,7 @@
 # containers-storage-add-names 1 "August 2016"
 
 ## NAME
-containers-storage add-names - Add names to a layer/image/container
+containers-storage-add-names - Add names to a layer/image/container
 
 ## SYNOPSIS
 **containers-storage** **add-names** [*options* [...]] *layerOrImageOrContainerNameOrID*
@@ -19,7 +19,13 @@ is already used by another layer, image, or container, it is removed from that
 other layer, image, or container.
 
 ## EXAMPLE
-**containers-storage add-names -n my-awesome-container -n my-for-realsies-awesome-container f3be6c6134d0d980936b4c894f1613b69a62b79588fdeda744d0be3693bde8ec**
+
+```
+containers-storage add-names \
+ -n my-awesome-container \
+ -n my-for-realsies-awesome-container \
+ f3be6c6134d0d980936b4c894f1613b69a62b79588fdeda744d0be3693bde8ec
+```
 
 ## SEE ALSO
 containers-storage-get-names(1)

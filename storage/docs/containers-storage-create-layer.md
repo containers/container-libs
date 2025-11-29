@@ -1,7 +1,7 @@
 # containers-storage-create-layer 1 "August 2016"
 
 ## NAME
-containers-storage create-layer - Create a layer
+containers-storage-create-layer - Create a layer
 
 ## SYNOPSIS
 **containers-storage** **create-layer** [*options* [...]] [*parentLayerNameOrID*]
@@ -26,7 +26,8 @@ Sets the label which should be assigned as an SELinux context when mounting the
 layer.
 
 ## EXAMPLE
-**containers-storage create-layer -f manifest.json -n new-layer somelayer**
+
+    containers-storage create-layer -f manifest.json -n new-layer somelayer
 
 ## SEE ALSO
 containers-storage-create-container(1)

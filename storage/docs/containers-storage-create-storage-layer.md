@@ -1,7 +1,7 @@
 # containers-storage-create-storage-layer 1 "September 2022"
 
 ## NAME
-containers-storage create-storage-layer - Create a layer in a lower-level storage driver
+containers-storage-create-storage-layer - Create a layer in a lower-level storage driver
 
 ## SYNOPSIS
 **containers-storage** **create-storage-layer** [*options* [...]] [*parentLayerNameOrID*]
@@ -21,7 +21,8 @@ Sets the label which should be assigned as an SELinux context when mounting the
 layer.
 
 ## EXAMPLE
-**containers-storage create-storage-layer somelayer**
+
+    containers-storage create-storage-layer somelayer
 
 ## SEE ALSO
 containers-storage-create-container(1)

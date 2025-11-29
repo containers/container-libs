@@ -1,7 +1,7 @@
 # containers-storage-applydiff-using-staging-dir 1 "September 2023"
 
 ## NAME
-containers-storage applydiff-using-staging-dir - Apply a layer diff to a layer using a staging directory
+containers-storage-applydiff-using-staging-dir - Apply a layer diff to a layer using a staging directory
 
 ## SYNOPSIS
 **containers-storage** **applydiff-using-staging-dir** *layerNameOrID* *source*
@@ -18,7 +18,9 @@ Differently than **apply-diff**, the command **applydiff-using-staging-dir**
 first creates a staging directory and then moves the final result to the destination.
 
 ## EXAMPLE
-**containers-storage applydiff-using-staging-dir 5891b5b522 /path/to/diff**
+```
+containers-storage applydiff-using-staging-dir 5891b5b522 /path/to/diff
+```
 
 ## SEE ALSO
 containers-storage-apply-diff(1)

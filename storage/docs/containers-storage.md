@@ -172,8 +172,10 @@ using the system's default ID mappings for the non-root user.
 **CONTAINERS_STORAGE_CONF** 
 
 If set will use the configuration file path provided in *$CONTAINERS_STORAGE_CONF* instead of the default `/etc/containers/storage.conf`.
+
 ## EXAMPLES
-**containers-storage layers -t**
+
+    containers-storage layers -t
 
 ## BUGS
 This is still a work in progress, so some functionality may not yet be

@@ -1,7 +1,7 @@
 # containers-storage-create-image 1 "August 2016"
 
 ## NAME
-containers-storage create-image - Create an image
+containers-storage-create-image - Create an image
 
 ## SYNOPSIS
 **containers-storage** **create-image** [*options*...] *topLayerNameOrID*
@@ -29,7 +29,8 @@ Sets the metadata for the image to the specified value.
 Sets the metadata for the image to the contents of the specified file.
 
 ## EXAMPLE
-**containers-storage create-image -f manifest.json -n new-image somelayer**
+
+    containers-storage create-image -f manifest.json -n new-image somelayer
 
 ## SEE ALSO
 containers-storage-create-container(1)

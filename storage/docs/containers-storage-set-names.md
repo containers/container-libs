@@ -1,7 +1,7 @@
 # containers-storage-set-names 1 "August 2016"
 
 ## NAME
-containers-storage set-names - Set names for a layer/image/container
+containers-storage-set-names - Set names for a layer/image/container
 
 ## SYNOPSIS
 **containers-storage** **set-names** [**-n** *name* [...]] *layerOrImageOrContainerNameOrID*
@@ -21,7 +21,10 @@ this layer, image, or container, and which are not specified using this option,
 will be removed from the layer, image, or container.
 
 ## EXAMPLE
-**containers-storage set-names -n my-one-and-only-name f3be6c6134d0d980936b4c894f1613b69a62b79588fdeda744d0be3693bde8ec**
+
+    containers-storage set-names \
+     -n my-one-and-only-name \
+     f3be6c6134d0d980936b4c894f1613b69a62b79588fdeda744d0be3693bde8ec
 
 ## SEE ALSO
 containers-storage-add-names(1)

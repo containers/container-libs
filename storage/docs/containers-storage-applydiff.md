@@ -1,7 +1,7 @@
 # containers-storage-apply-diff 1 "August 2016"
 
 ## NAME
-containers-storage apply-diff - Apply a layer diff to a layer
+containers-storage-apply-diff - Apply a layer diff to a layer
 
 ## SYNOPSIS
 **containers-storage** **apply-diff** [*options* [...]] *layerNameOrID* [*referenceLayerNameOrID*]
@@ -24,7 +24,8 @@ Specifies the name of a file from which the diff should be read.  If this
 option is not used, the diff is read from standard input.
 
 ## EXAMPLE
-**containers-storage apply-diff -f 71841c97e320d6cde.tar.gz layer1**
+
+    containers-storage apply-diff -f 71841c97e320d6cde.tar.gz layer1
 
 ## SEE ALSO
 containers-storage-changes(1)

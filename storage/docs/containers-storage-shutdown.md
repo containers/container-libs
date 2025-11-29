@@ -1,7 +1,7 @@
 # containers-storage-shutdown 1 "October 2016"
 
 ## NAME
-containers-storage shutdown - Shut down layer storage
+containers-storage-shutdown - Shut down layer storage
 
 ## SYNOPSIS
 **containers-storage** **shutdown** [*options* [...]]
@@ -17,4 +17,5 @@ driver.  If this option is not specified, if any layers are mounted, shutdown
 will not be attempted.
 
 ## EXAMPLE
-**containers-storage shutdown**
+
+    containers-storage shutdown

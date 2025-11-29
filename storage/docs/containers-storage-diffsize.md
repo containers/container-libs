@@ -1,7 +1,7 @@
 # containers-storage-diffsize 1 "August 2016"
 
 ## NAME
-containers-storage diffsize - Compute the size of a layer diff
+containers-storage-diffsize - Compute the size of a layer diff
 
 ## SYNOPSIS
 **containers-storage** **diffsize** *layerNameOrID*
@@ -11,7 +11,8 @@ Computes the expected size of the layer diff which would be generated for the
 specified layer.
 
 ## EXAMPLE
-**containers-storage diffsize my-base-layer**
+
+    containers-storage diffsize my-base-layer
 
 ## SEE ALSO
 containers-storage-applydiff(1)

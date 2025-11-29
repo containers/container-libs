@@ -1,7 +1,7 @@
 # containers-storage-import-layer 1 "April 2019"
 
 ## NAME
-containers-storage import-layer - Import files to a new layer
+containers-storage-import-layer - Import files to a new layer
 
 ## SYNOPSIS
 **containers-storage** **import-layer** [*options* [...]] [*parentLayerNameOrID*]
@@ -69,7 +69,8 @@ Create UID map for username using the data from /etc/subuid. It cannot be specif
 Create GID map for group-name using the data from /etc/subgid. It cannot be specified simultaneously with *--hostuidmap*.
 
 ## EXAMPLE
-**containers-storage import-layer -f 71841c97e320d6cde.tar.gz -n new-layer somelayer**
+
+    containers-storage import-layer -f 71841c97e320d6cde.tar.gz -n new-layer somelayer
 
 ## SEE ALSO
 containers-storage-create-layer(1)

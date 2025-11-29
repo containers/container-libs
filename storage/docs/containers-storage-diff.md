@@ -1,7 +1,7 @@
 # containers-storage-diff 1 "August 2016"
 
 ## NAME
-containers-storage diff - Generate a layer diff
+containers-storage-diff - Generate a layer diff
 
 ## SYNOPSIS
 **containers-storage** **diff** [*options* [...]] *layerNameOrID*
@@ -29,7 +29,8 @@ Force the diff to be uncompressed.  If the layer was populated by a layer diff,
 and that layer diff was compressed, it will be decompressed for output.
 
 ## EXAMPLE
-**containers-storage diff my-base-layer**
+
+    containers-storage diff my-base-layer
 
 ## SEE ALSO
 containers-storage-applydiff(1)

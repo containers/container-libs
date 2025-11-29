@@ -1,7 +1,7 @@
 # containers-storage-check 1 "September 2022"
 
 ## NAME
-containers-storage check - Check for and remove damaged layers/images/containers
+containers-storage-check - Check for and remove damaged layers/images/containers
 
 ## SYNOPSIS
 **containers-storage** **check** [-q] [-r [-f]]
@@ -28,7 +28,8 @@ currently skips verifying that a layer which was initialized using a diff can
 reproduce that diff if asked to.
 
 ## EXAMPLE
-**containers-storage check -r -f
+
+    containers-storage check -r -f
 
 ## SEE ALSO
 containers-storage(1)

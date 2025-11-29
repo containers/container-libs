@@ -1,7 +1,7 @@
 # containers-storage-delete-image 1 "August 2016"
 
 ## NAME
-containers-storage delete-image - Delete an image
+containers-storage-delete-image - Delete an image
 
 ## SYNOPSIS
 **containers-storage** **delete-image** *imageNameOrID*
@@ -13,7 +13,8 @@ If that image's parent is then not being used by other images, it, too, will be
 removed, and this will be repeated for each parent's parent.
 
 ## EXAMPLE
-**containers-storage delete-image my-base-image**
+
+    containers-storage delete-image my-base-image
 
 ## SEE ALSO
 containers-storage-create-image(1)

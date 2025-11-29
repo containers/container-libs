@@ -1,7 +1,7 @@
 # containers-storage-exists 1 "August 2016"
 
 ## NAME
-containers-storage exists - Check if a layer, image, or container exists
+containers-storage-exists - Check if a layer, image, or container exists
 
 ## SYNOPSIS
 **containers-storage** **exists** [*options* [...]] *layerOrImageOrContainerNameOrID* [...]
@@ -28,4 +28,5 @@ Only succeed if the names or IDs are that of layers.
 Suppress output.
 
 ## EXAMPLE
-**containers-storage exists my-base-layer**
+
+    containers-storage exists my-base-layer

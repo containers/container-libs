@@ -1,7 +1,7 @@
 # containers-storage-get-names 1 "September 2017"
 
 ## NAME
-containers-storage get-names - Get names of a layer/image/container
+containers-storage-get-names - Get names of a layer/image/container
 
 ## SYNOPSIS
 **containers-storage** **get-names** *layerOrImageOrContainerNameOrID*
@@ -14,7 +14,11 @@ command can be used to read the list of names for any of them.
 ## OPTIONS
 
 ## EXAMPLE
-**containers-storage get-names f3be6c6134d0d980936b4c894f1613b69a62b79588fdeda744d0be3693bde8ec**
+
+```
+containers-storage get-names \
+ f3be6c6134d0d980936b4c894f1613b69a62b79588fdeda744d0be3693bde8ec
+```
 
 ## SEE ALSO
 containers-storage-add-names(1)

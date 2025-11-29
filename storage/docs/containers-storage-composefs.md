@@ -15,7 +15,8 @@ use_composefs = "true"
 This value must be a "string bool", it cannot be a native TOML boolean.
 
 However at the current time, composefs requires zstd:chunked images, so first
-you must be sure that zstd:chunked is enabled. For more, see [zstd:chunked](containers-storage-zstd-chunked.md).
+you must be sure that zstd:chunked is enabled.
+For more, see [zstd:chunked](containers-storage-zstd-chunked.md).
 
 Additionally, not many images are in zstd:chunked format. In order to bridge this gap,
 `convert_images = "true"` can be specified which does a dynamic conversion; this adds
@@ -37,10 +38,12 @@ is implemented as an "option" for the `overlay` driver. Some file formats
 remain unchanged and are inherited from the overlay driver, even when
 composefs is in use. The primary differences are enumerated below.
 
-The `diff/` directory for each layer is no longer a plain unpacking of the tarball,
-but becomes an "object hash directory", where each filename is the sha256 of its contents. This `diff/`
-directory is the backing store for a `composefs-data/composefs.blob` created for
-each layer which is the composefs "superblock" containing all the non-regular-file content (i.e. metadata) from the tarball.
+The `diff/` directory for each layer is no longer a plain unpacking of the
+tarball, but becomes an "object hash directory", where each filename is the
+sha256 of its contents. This `diff/` directory is the backing store for a
+`composefs-data/composefs.blob` created for each layer which is the composefs
+"superblock" containing all the non-regular-file content (i.e. metadata) from
+the tarball.
 
 As with `zstd:chunked`, existing layers are scanned for matching objects, and reused
 (via hardlink or reflink as configured) if objects with a matching "full sha256" are
@@ -59,7 +62,7 @@ in the "default overlay" (unpacked) format will be reused as is.
 
 ## BUGS
 
-- https://github.com/containers/storage/issues?q=is%3Aissue+is%3Aopen+label%3Aarea%2Fcomposefs
+https://github.com/containers/storage/issues?q=is%3Aissue+is%3Aopen+label%3Aarea%2Fcomposefs
 
 ## FOOTNOTES
 The Containers Storage project is committed to inclusivity, a core value of open source.

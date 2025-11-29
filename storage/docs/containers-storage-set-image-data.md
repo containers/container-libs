@@ -1,7 +1,7 @@
 # containers-storage-set-image-data 1 "August 2016"
 
 ## NAME
-containers-storage set-image-data - Set lookaside data for an image
+containers-storage-set-image-data - Set lookaside data for an image
 
 ## SYNOPSIS
 **containers-storage** **set-image-data** [*options* [...]] *imageNameOrID* *dataName*
@@ -15,7 +15,8 @@ Sets a piece of named data which is associated with an image.
 Read the data contents from a file instead of stdin.
 
 ## EXAMPLE
-**containers-storage set-image-data -f ./manifest.json my-image manifest**
+
+    containers-storage set-image-data -f ./manifest.json my-image manifest
 
 ## SEE ALSO
 containers-storage-list-image-data(1)

@@ -1,7 +1,7 @@
 # containers-storage-get-image-dir 1 "January 2024"
 
 ## NAME
-containers-storage get-image-dir - Find lookaside directory for an image
+containers-storage-get-image-dir - Find lookaside directory for an image
 
 ## SYNOPSIS
 **containers-storage** **get-image-dir** [*options* [...]] *imageNameOrID*
@@ -11,7 +11,8 @@ Prints the location of a directory which the caller can use to store lookaside
 information which should be cleaned up when the image is deleted.
 
 ## EXAMPLE
-**containers-storage get-image-dir my-image**
+
+    containers-storage get-image-dir my-image
 
 ## SEE ALSO
 containers-storage-get-image-run-dir(1)

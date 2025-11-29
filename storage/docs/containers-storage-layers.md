@@ -1,7 +1,7 @@
 # containers-storage-layers 1 "August 2016"
 
 ## NAME
-containers-storage layers - List known layers
+containers-storage-layers - List known layers
 
 ## SYNOPSIS
 **containers-storage** [*options* [...]] **layers**
@@ -19,5 +19,6 @@ Display results using a tree to show the hierarchy of parent-child
 relationships between layers.
 
 ## EXAMPLE
-**containers-storage layers**
-**containers-storage layers -t**
+
+    containers-storage layers
+    containers-storage layers -t
