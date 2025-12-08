@@ -71,7 +71,8 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
     env:
-      GIT_CHECK_EXCLUDE: "./vendor"
+      # Base commit sha that we use the lint the commit from
+      EPOCH_TEST_COMMIT: "${{ github.event.pull_request.base.sha }}"
     steps:
     - uses: actions/checkout@v6
       with:
@@ -85,10 +86,7 @@ jobs:
         # See comment on lint task
         cache-dependency-path: "**/go.sum"
     - name: run git-validation
-
-      # We validate all commits as we only fetched the number of commits in the PR above,
-      # by default git-validation has some special github action handling but that seems broken.
-      run: make .install.gitvalidation && git-validation -no-github
+      run: make .install.gitvalidation && make git-validation
 
   go-vendor:
     runs-on: ubuntu-24.04
