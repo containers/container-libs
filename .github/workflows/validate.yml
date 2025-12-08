@@ -88,7 +88,11 @@ jobs:
 
       # We validate all commits as we only fetched the number of commits in the PR above,
       # by default git-validation has some special github action handling but that seems broken.
-      run: make .install.gitvalidation && git-validation -no-github
+      run: |
+        echo "BASE_SHA=${{ github.event.pull_request.base.sha }}"
+        echo "HEAD_SHA=${{ github.event.pull_request.head.sha }}"
+        echo HEAD=$(git rev-parse HEAD)
+        make .install.gitvalidation && git-validation -D -range "${{ github.event.pull_request.base.sha }}..HEAD"
 
   go-vendor:
     runs-on: ubuntu-24.04
