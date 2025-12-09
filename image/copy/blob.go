@@ -7,6 +7,7 @@ import (
 	"io"
 
 	"github.com/sirupsen/logrus"
+	"go.podman.io/image/v5/internal/digests"
 	"go.podman.io/image/v5/internal/private"
 	compressiontypes "go.podman.io/image/v5/pkg/compression/types"
 	"go.podman.io/image/v5/types"
@@ -138,7 +139,17 @@ func (ic *imageCopier) copyBlobFromStream(ctx context.Context, srcReader io.Read
 		return types.BlobInfo{}, fmt.Errorf("Internal error writing blob %s, digest verification failed but was ignored", srcInfo.Digest)
 	}
 	if stream.info.Digest != "" && uploadedInfo.Digest != stream.info.Digest {
-		return types.BlobInfo{}, fmt.Errorf("Internal error writing blob %s, blob with digest %s saved with digest %s", srcInfo.Digest, stream.info.Digest, uploadedInfo.Digest)
+		expectedAlgo, err := ic.c.options.digestOptions.Choose(digests.Situation{
+			Preexisting:                 stream.info.Digest,
+			CannotChangeAlgorithmReason: ic.cannotModifyManifestReason,
+		})
+		if err != nil {
+			return types.BlobInfo{}, err
+		}
+		// If we're forcing a different algorithm and the uploaded digest uses that algorithm, it's acceptable
+		if uploadedInfo.Digest.Algorithm() != expectedAlgo {
+			return types.BlobInfo{}, fmt.Errorf("Internal error writing blob %s, blob with digest %s saved with digest %s", srcInfo.Digest, stream.info.Digest, uploadedInfo.Digest)
+		}
 	}
 	if digestingReader.validationSucceeded {
 		if err := compressionStep.recordValidatedDigestData(ic.c, uploadedInfo, srcInfo, encryptionStep, decryptionStep); err != nil {

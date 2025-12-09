@@ -167,6 +167,19 @@ type Options struct {
 	digestOptions digests.Options
 }
 
+// SetForceDigestAlgorithm forces the use of a specific digest algorithm for this copy operation.
+func (o *Options) SetForceDigestAlgorithm(algo digest.Algorithm) error {
+	if !algo.Available() {
+		return fmt.Errorf("digest algorithm %q is not available", algo.String())
+	}
+	digestOpts, err := digests.MustUse(algo)
+	if err != nil {
+		return fmt.Errorf("failed to set force-digest algorithm: %w", err)
+	}
+	o.digestOptions = digestOpts
+	return nil
+}
+
 // OptionCompressionVariant allows to supply information about
 // selected compression algorithm and compression level by the
 // end-user. Refer to EnsureCompressionVariantsExist to know
@@ -214,7 +227,10 @@ func Image(ctx context.Context, policyContext *signature.PolicyContext, destRef,
 	// only to allow gradually building the feature set.
 	// After c/image/copy consistently implements it, provide a public digest options API of some kind.
 	optionsCopy := *options
-	optionsCopy.digestOptions = digests.CanonicalDefault()
+	// Only set default if not already configured
+	if optionsCopy.digestOptions.MustUseSet() == "" {
+		optionsCopy.digestOptions = digests.CanonicalDefault()
+	}
 	options = &optionsCopy
 
 	if err := validateImageListSelection(options.ImageListSelection); err != nil {
