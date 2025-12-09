@@ -17,10 +17,15 @@ type db struct {
 	Secrets map[string]Secret `json:"secrets"`
 	// NameToID maps a secret name to a secret id
 	NameToID map[string]string `json:"nameToID"`
-	// IDToName maps a secret id to a secret name
-	IDToName map[string]string `json:"idToName"`
 	// lastModified is the time when the database was last modified on the file system
 	lastModified time.Time
+}
+
+func newDB() *db {
+	return &db{
+		Secrets:  make(map[string]Secret),
+		NameToID: make(map[string]string),
+	}
 }
 
 // loadDB loads database data into the in-memory cache if it has been modified.
@@ -49,9 +54,6 @@ func (s *SecretsManager) loadDB() error {
 		return err
 	}
 	defer file.Close()
-	if err != nil {
-		return err
-	}
 
 	byteValue, err := io.ReadAll(file)
 	if err != nil {
@@ -83,14 +85,14 @@ func (s *SecretsManager) getNameAndID(nameOrID string) (name, id string, err err
 	}
 	exists := false
 	var foundID, foundName string
-	for id, name := range s.db.IDToName {
+	for id, secret := range s.db.Secrets {
 		if strings.HasPrefix(id, nameOrID) {
 			if exists {
 				return "", "", fmt.Errorf("more than one result secret with prefix %s: %w", nameOrID, errAmbiguous)
 			}
 			exists = true
 			foundID = id
-			foundName = name
+			foundName = secret.Name
 		}
 	}
 
@@ -106,9 +108,9 @@ func (s *SecretsManager) getExactNameAndID(nameOrID string) (name, id string, er
 	if err != nil {
 		return "", "", err
 	}
-	if name, ok := s.db.IDToName[nameOrID]; ok {
+	if secret, ok := s.db.Secrets[nameOrID]; ok {
 		id := nameOrID
-		return name, id, nil
+		return secret.Name, id, nil
 	}
 
 	if id, ok := s.db.NameToID[nameOrID]; ok {
@@ -164,15 +166,21 @@ func (s *SecretsManager) lookupSecret(nameOrID string) (*Secret, error) {
 
 // Store creates a new secret in the secrets database.
 // It deals with only storing metadata, not data payload.
-func (s *SecretsManager) store(entry *Secret) error {
-	err := s.loadDB()
+func (s *SecretsManager) store(entry *Secret) (err error) {
+	err = s.loadDB()
 	if err != nil {
 		return err
 	}
 
+	defer func() {
+		if err != nil {
+			delete(s.db.Secrets, entry.ID)
+			delete(s.db.NameToID, entry.Name)
+		}
+	}()
+
 	s.db.Secrets[entry.ID] = *entry
 	s.db.NameToID[entry.Name] = entry.ID
-	s.db.IDToName[entry.ID] = entry.Name
 
 	marshalled, err := json.MarshalIndent(s.db, "", "  ")
 	if err != nil {
@@ -188,7 +196,7 @@ func (s *SecretsManager) store(entry *Secret) error {
 
 // delete deletes a secret from the secrets database, given a name, ID, or partial ID.
 // It deals with only deleting metadata, not data payload.
-func (s *SecretsManager) delete(nameOrID string) error {
+func (s *SecretsManager) delete(nameOrID string) (err error) {
 	name, id, err := s.getNameAndID(nameOrID)
 	if err != nil {
 		return err
@@ -197,9 +205,17 @@ func (s *SecretsManager) delete(nameOrID string) error {
 	if err != nil {
 		return err
 	}
+
+	defer func(removed Secret) {
+		if err != nil {
+			s.db.Secrets[id] = removed
+			s.db.NameToID[name] = id
+		}
+	}(s.db.Secrets[id])
+
 	delete(s.db.Secrets, id)
 	delete(s.db.NameToID, name)
-	delete(s.db.IDToName, id)
+
 	marshalled, err := json.MarshalIndent(s.db, "", "  ")
 	if err != nil {
 		return err

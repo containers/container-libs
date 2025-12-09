@@ -140,10 +140,7 @@ func NewManager(rootPath string) (*SecretsManager, error) {
 	}
 	manager.lockfile = lock
 	manager.secretsDBPath = filepath.Join(rootPath, secretsFile)
-	manager.db = new(db)
-	manager.db.Secrets = make(map[string]Secret)
-	manager.db.NameToID = make(map[string]string)
-	manager.db.IDToName = make(map[string]string)
+	manager.db = newDB()
 	return manager, nil
 }
 
@@ -228,14 +225,14 @@ func (s *SecretsManager) Store(name string, data []byte, driverType string, opti
 	}
 
 	if options.Replace {
-		err := driver.Delete(secr.ID)
+		err = driver.Delete(secr.ID)
 		if err != nil {
 			if !errors.Is(err, define.ErrNoSuchSecret) {
-				return "", fmt.Errorf("deleting driver secret %s: %w", secr.ID, err)
+				return "", fmt.Errorf("deleting secret data %s: %w", secr.ID, err)
 			}
 		} else {
 			if err := s.delete(secr.ID); err != nil && !errors.Is(err, define.ErrNoSuchSecret) {
-				return "", fmt.Errorf("deleting secret %s: %w", secr.ID, err)
+				return "", fmt.Errorf("deleting secret metadata %s: %w", secr.ID, err)
 			}
 		}
 	}
@@ -247,12 +244,12 @@ func (s *SecretsManager) Store(name string, data []byte, driverType string, opti
 
 	err = driver.Store(secr.ID, data)
 	if err != nil {
-		return "", fmt.Errorf("creating secret %s: %w", name, err)
+		return "", fmt.Errorf("storing secret data %s: %w", name, err)
 	}
 
 	err = s.store(secr)
 	if err != nil {
-		return "", fmt.Errorf("creating secret %s: %w", name, err)
+		return "", fmt.Errorf("storing secret metadata %s: %w", name, err)
 	}
 
 	return secr.ID, nil
@@ -277,12 +274,12 @@ func (s *SecretsManager) Delete(nameOrID string) (string, error) {
 
 	err = driver.Delete(secretID)
 	if err != nil {
-		return "", fmt.Errorf("deleting secret %s: %w", nameOrID, err)
+		return "", fmt.Errorf("deleting secret data %s: %w", nameOrID, err)
 	}
 
 	err = s.delete(secretID)
 	if err != nil {
-		return "", fmt.Errorf("deleting secret %s: %w", nameOrID, err)
+		return "", fmt.Errorf("deleting secret metadata %s: %w", nameOrID, err)
 	}
 	return secretID, nil
 }
