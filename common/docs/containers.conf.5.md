@@ -691,6 +691,8 @@ The default paths on Linux are:
 - `/usr/local/lib/podman`
 - `/usr/libexec/podman`
 - `/usr/lib/podman`
+- `/usr/libexec`
+- `/usr/local/libexec'`
 
 The default paths on macOS are:
 
