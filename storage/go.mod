@@ -5,7 +5,7 @@ go 1.24.0
 module go.podman.io/storage
 
 require (
-	github.com/BurntSushi/toml v1.5.0
+	github.com/BurntSushi/toml v1.6.0
 	github.com/containerd/stargz-snapshotter/estargz v0.18.1
 	github.com/cyphar/filepath-securejoin v0.6.1
 	github.com/docker/go-units v0.5.0
