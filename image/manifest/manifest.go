@@ -90,6 +90,10 @@ type Manifest interface {
 	// the underlying image format is expected to include a configuration blob.
 	Inspect(configGetter func(types.BlobInfo) ([]byte, error)) (*types.ImageInspectInfo, error)
 
+	// UpdateConfigDigest updates the config descriptor's digest in the manifest.
+	// This returns an error if the manifest does not support config digest updates (e.g., schema1 manifests).
+	UpdateConfigDigest(newDigest digest.Digest) error
+
 	// Serialize returns the manifest in a blob format.
 	// NOTE: Serialize() does not in general reproduce the original blob if this object was loaded from one, even if no modifications were made!
 	Serialize() ([]byte, error)

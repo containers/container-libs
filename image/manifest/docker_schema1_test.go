@@ -367,3 +367,12 @@ func TestSchema1ImageID(t *testing.T) {
 	// This is mostly a smoke-test; it’s fine to just update this value if that implementation changes.
 	assert.Equal(t, "9ca4bda0a6b3727a6ffcc43e981cad0f24e2ec79d338f6ba325b4dfd0756fb8f", id)
 }
+
+func TestSchema1UpdateConfigDigestFails(t *testing.T) {
+	m := manifestSchema1FromFixture(t, "schema2-to-schema1-by-docker.json")
+	newDigest := digest.Digest("sha512:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890ab")
+
+	err := m.UpdateConfigDigest(newDigest)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot update config digest for schema1 manifest")
+}
