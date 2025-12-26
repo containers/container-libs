@@ -138,7 +138,10 @@ func (ic *imageCopier) copyBlobFromStream(ctx context.Context, srcReader io.Read
 		return types.BlobInfo{}, fmt.Errorf("Internal error writing blob %s, digest verification failed but was ignored", srcInfo.Digest)
 	}
 	if stream.info.Digest != "" && uploadedInfo.Digest != stream.info.Digest {
-		return types.BlobInfo{}, fmt.Errorf("Internal error writing blob %s, blob with digest %s saved with digest %s", srcInfo.Digest, stream.info.Digest, uploadedInfo.Digest)
+		// If algorithms match, the whole digest values must match
+		if stream.info.Digest.Algorithm() == uploadedInfo.Digest.Algorithm() {
+			return types.BlobInfo{}, fmt.Errorf("Internal error writing blob %s, blob with digest %s saved with digest %s", srcInfo.Digest, stream.info.Digest, uploadedInfo.Digest)
+		}
 	}
 	if digestingReader.validationSucceeded {
 		if err := compressionStep.recordValidatedDigestData(ic.c, uploadedInfo, srcInfo, encryptionStep, decryptionStep); err != nil {
