@@ -783,19 +783,34 @@ func (ic *imageCopier) copyLayer(ctx context.Context, srcInfo types.BlobInfo, to
 			tocDigest = *d
 		}
 
-		reused, reusedBlob, err := ic.c.dest.TryReusingBlobWithOptions(ctx, srcInfo, private.TryReusingBlobOptions{
-			Cache:                   ic.c.blobInfoCache,
-			CanSubstitute:           canSubstitute,
-			EmptyLayer:              emptyLayer,
-			LayerIndex:              &layerIndex,
-			SrcRef:                  srcRef,
-			PossibleManifestFormats: append([]string{ic.manifestConversionPlan.preferredMIMEType}, ic.manifestConversionPlan.otherMIMETypeCandidates...),
-			RequiredCompression:     requiredCompression,
-			OriginalCompression:     srcInfo.CompressionAlgorithm,
-			TOCDigest:               tocDigest,
-		})
-		if err != nil {
-			return types.BlobInfo{}, "", fmt.Errorf("trying to reuse blob %s at destination: %w", srcInfo.Digest, err)
+		// FIXME: Blob reuse disabled when forcing different digest algorithm.
+		canTryReuse := true
+		if forcedAlgo := ic.c.options.digestOptions.MustUseSet(); forcedAlgo != "" {
+			if srcInfo.Digest.Algorithm() != forcedAlgo {
+				logrus.Debugf("Skipping blob reuse for %s: digest algorithm %s doesn't match forced algorithm %s",
+					srcInfo.Digest, srcInfo.Digest.Algorithm(), forcedAlgo)
+				canTryReuse = false
+			}
+		}
+
+		reused := false
+		var reusedBlob private.ReusedBlob
+		if canTryReuse {
+			var err error
+			reused, reusedBlob, err = ic.c.dest.TryReusingBlobWithOptions(ctx, srcInfo, private.TryReusingBlobOptions{
+				Cache:                   ic.c.blobInfoCache,
+				CanSubstitute:           canSubstitute,
+				EmptyLayer:              emptyLayer,
+				LayerIndex:              &layerIndex,
+				SrcRef:                  srcRef,
+				PossibleManifestFormats: append([]string{ic.manifestConversionPlan.preferredMIMEType}, ic.manifestConversionPlan.otherMIMETypeCandidates...),
+				RequiredCompression:     requiredCompression,
+				OriginalCompression:     srcInfo.CompressionAlgorithm,
+				TOCDigest:               tocDigest,
+			})
+			if err != nil {
+				return types.BlobInfo{}, "", fmt.Errorf("trying to reuse blob %s at destination: %w", srcInfo.Digest, err)
+			}
 		}
 		if reused {
 			logrus.Debugf("Skipping blob %s (already present):", srcInfo.Digest)

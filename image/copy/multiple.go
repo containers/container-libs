@@ -208,6 +208,12 @@ func (c *copier) copyMultipleImages(ctx context.Context) (copiedManifest []byte,
 		cannotModifyManifestListReason = "Instructed to preserve digests"
 	}
 
+	// FIXME: Multi-arch not supported yet; would need config digest updates for each instance.
+	// See https://github.com/containers/container-libs/pull/552#discussion_r2611627578
+	if c.options.digestOptions.MustUseSet() != "" {
+		return nil, fmt.Errorf("forcing digest algorithm with multi-arch images is not yet implemented")
+	}
+
 	// Determine if we'll need to convert the manifest list to a different format.
 	forceListMIMEType := c.options.ForceManifestMIMEType
 	switch forceListMIMEType {
