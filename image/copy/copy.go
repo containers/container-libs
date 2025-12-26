@@ -167,6 +167,26 @@ type Options struct {
 	digestOptions digests.Options
 }
 
+// BrokenSetForceDestinationDigestAlgorithm forces the use of a specific digest algorithm when writing to the destination.
+//
+// UNSTABLE API: This API is incomplete and may be changed or removed at any time.
+// It currently only enforces the digest algorithm for a subset of transports and operations.
+// See https://github.com/containers/container-libs/pull/552 for implementation status.
+func (o *Options) BrokenSetForceDestinationDigestAlgorithm(algo digest.Algorithm) error {
+	if o.digestOptions.MustUseSet() != "" {
+		return fmt.Errorf("digest options are already configured")
+	}
+	if !algo.Available() {
+		return fmt.Errorf("digest algorithm %q is not available", algo.String())
+	}
+	digestOpts, err := digests.MustUse(algo)
+	if err != nil {
+		return fmt.Errorf("failed to set force-digest algorithm: %w", err)
+	}
+	o.digestOptions = digestOpts
+	return nil
+}
+
 // OptionCompressionVariant allows to supply information about
 // selected compression algorithm and compression level by the
 // end-user. Refer to EnsureCompressionVariantsExist to know
@@ -210,12 +230,13 @@ func Image(ctx context.Context, policyContext *signature.PolicyContext, destRef,
 	if options == nil {
 		options = &Options{}
 	}
-	// FIXME: Currently, digestsOptions is not implemented at all, and exists in the codebase
-	// only to allow gradually building the feature set.
-	// After c/image/copy consistently implements it, provide a public digest options API of some kind.
-	optionsCopy := *options
-	optionsCopy.digestOptions = digests.CanonicalDefault()
-	options = &optionsCopy
+	// FIXME: digestsOptions exists to gradually build the feature. Provide public API once fully implemented.
+	// Set default only if not configured by BrokenSetForceDestinationDigestAlgorithm
+	if options.digestOptions.MustUseSet() == "" {
+		optionsCopy := *options
+		optionsCopy.digestOptions = digests.CanonicalDefault()
+		options = &optionsCopy
+	}
 
 	if err := validateImageListSelection(options.ImageListSelection); err != nil {
 		return nil, err
