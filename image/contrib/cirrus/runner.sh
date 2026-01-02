@@ -98,7 +98,7 @@ _run_image_tests() {
     trap "ssh $ROOTLESS_USER@localhost $GOSRC/signature/sigstore/rekor/testdata/start-rekor.sh ci remove" RETURN
 
     msg "Executing tests as $ROOTLESS_USER"
-    showrun ssh $ROOTLESS_USER@localhost make -C $GOSRC test "BUILDTAGS='$BUILDTAGS'" "TESTFLAGS=-v" "REKOR_SERVER_URL='http://127.0.0.1:3000'"
+    showrun ssh $ROOTLESS_USER@localhost "GOTOOLCHAIN=go1.25.0 GOSUMDB=sum.golang.org make -C $GOSRC test BUILDTAGS='$BUILDTAGS' TESTFLAGS=-v REKOR_SERVER_URL='http://127.0.0.1:3000'"
 }
 
 req_env_vars GOSRC
