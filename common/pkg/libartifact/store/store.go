@@ -233,8 +233,8 @@ func (as ArtifactStore) Add(ctx context.Context, dest ArtifactReference, artifac
 		return nil, errors.New("append option is not compatible with type option")
 	}
 
-	locked := true
 	as.lock.Lock()
+	locked := true
 	defer func() {
 		if locked {
 			as.lock.Unlock()
@@ -305,10 +305,10 @@ func (as ArtifactStore) Add(ctx context.Context, dest ArtifactReference, artifac
 	}
 	defer imageDest.Close()
 
-	// Unlock around the actual pull of the blobs.
-	// This is ugly as hell, but should be safe.
-	locked = false
+	// Release the lock during blob copying to allow concurrent operations.
+	// We'll reacquire it later and check for conflicts before committing.
 	as.lock.Unlock()
+	locked = false
 
 	// ImageDestination, in general, requires the caller to write a full image; here we may write only the added layers.
 	// This works for the oci/layout transport we hard-code.
@@ -367,8 +367,23 @@ func (as ArtifactStore) Add(ctx context.Context, dest ArtifactReference, artifac
 		artifactManifest.Layers = append(artifactManifest.Layers, newLayer)
 	}
 
+	// Reacquire the lock before committing changes
 	as.lock.Lock()
 	locked = true
+
+	// Reload artifacts to check if another process added the same artifact
+	// while we were copying blobs (without the lock)
+	if !options.Append {
+		updatedArtifacts, err := as.getArtifacts(ctx, nil)
+		if err != nil {
+			return nil, err
+		}
+		// Check if artifact now exists (conflict with concurrent add)
+		_, _, err = updatedArtifacts.GetByNameOrDigest(dest)
+		if err == nil {
+			return nil, fmt.Errorf("%s: %w", dest, libartTypes.ErrArtifactAlreadyExists)
+		}
+	}
 
 	rawData, err := json.Marshal(artifactManifest)
 	if err != nil {
