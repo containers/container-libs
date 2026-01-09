@@ -411,3 +411,21 @@ func TestOCI1CanChangeLayerCompression(t *testing.T) {
 	artifact := manifestOCI1FromFixture(t, "ociv1.artifact.json")
 	assert.False(t, artifact.CanChangeLayerCompression(imgspecv1.MediaTypeImageLayerGzip))
 }
+
+func TestOCI1UpdateConfigDigest(t *testing.T) {
+	m := manifestOCI1FromFixture(t, "ociv1.manifest.json")
+	originalDigest := m.Config.Digest
+
+	// Test updating to sha512
+	newDigest := digest.Digest("sha512:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890ab")
+	err := m.UpdateConfigDigest(newDigest)
+	require.NoError(t, err)
+	assert.Equal(t, newDigest, m.Config.Digest)
+	assert.NotEqual(t, originalDigest, m.Config.Digest)
+
+	// Test updating back to sha256
+	newDigest256 := digest.Digest("sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")
+	err = m.UpdateConfigDigest(newDigest256)
+	require.NoError(t, err)
+	assert.Equal(t, newDigest256, m.Config.Digest)
+}
