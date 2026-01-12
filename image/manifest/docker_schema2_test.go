@@ -288,3 +288,19 @@ func TestSchema2CanChangeLayerCompression(t *testing.T) {
 	// Some projects like to use squashfs and other unspecified formats for layers; don’t touch those.
 	assert.False(t, m.CanChangeLayerCompression("a completely unknown and quite possibly invalid MIME type"))
 }
+
+func TestSchema2UpdateConfigDigest(t *testing.T) {
+	m := manifestSchema2FromFixture(t, "v2s2.manifest.json")
+	originalDigest := m.ConfigDescriptor.Digest
+
+	newDigest := digest.Digest("sha512:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890ab")
+	err := m.UpdateConfigDigest(newDigest)
+	require.NoError(t, err)
+	assert.Equal(t, newDigest, m.ConfigDescriptor.Digest)
+	assert.NotEqual(t, originalDigest, m.ConfigDescriptor.Digest)
+
+	newDigest256 := digest.Digest("sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")
+	err = m.UpdateConfigDigest(newDigest256)
+	require.NoError(t, err)
+	assert.Equal(t, newDigest256, m.ConfigDescriptor.Digest)
+}

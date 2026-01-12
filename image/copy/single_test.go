@@ -159,3 +159,22 @@ func TestComputeDiffID(t *testing.T) {
 	_, err = computeDiffID(reader, nil)
 	assert.Error(t, err)
 }
+
+func TestBrokenSetForceDestinationDigestAlgorithm(t *testing.T) {
+	opts := &Options{}
+
+	// First call should succeed
+	err := opts.BrokenSetForceDestinationDigestAlgorithm(digest.SHA256)
+	require.NoError(t, err)
+
+	// Second call should fail because digest options are already configured
+	err = opts.BrokenSetForceDestinationDigestAlgorithm(digest.SHA512)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "digest options are already configured")
+
+	// Test with unavailable algorithm
+	opts2 := &Options{}
+	err = opts2.BrokenSetForceDestinationDigestAlgorithm("sha999")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "is not available")
+}
