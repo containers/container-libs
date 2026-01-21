@@ -37,15 +37,28 @@ import (
 
 const ManifestSchemaVersion = 2
 
+type EventStatus string
+
+const (
+	EventStatusAdd     EventStatus = "add"
+	EventStatusExtract EventStatus = "extract"
+	EventStatusPull    EventStatus = "pull"
+	EventStatusPush    EventStatus = "push"
+	EventStatusRemove  EventStatus = "remove"
+)
+
+type EventCallback func(status EventStatus, name, digest string)
+
 type ArtifactStore struct {
 	SystemContext *types.SystemContext
 	storePath     string
 	lock          *lockfile.LockFile
+	eventCallback EventCallback
 }
 
 // NewArtifactStore is a constructor for artifact stores.  Most artifact dealings depend on this. Store path is
 // the filesystem location.
-func NewArtifactStore(storePath string, sc *types.SystemContext) (*ArtifactStore, error) {
+func NewArtifactStore(storePath string, sc *types.SystemContext, eventCallback EventCallback) (*ArtifactStore, error) {
 	if storePath == "" {
 		return nil, errors.New("store path cannot be empty")
 	}
@@ -58,6 +71,7 @@ func NewArtifactStore(storePath string, sc *types.SystemContext) (*ArtifactStore
 	artifactStore := &ArtifactStore{
 		storePath:     storePath,
 		SystemContext: sc,
+		eventCallback: eventCallback,
 	}
 
 	// if the storage dir does not exist, we need to create it.
@@ -148,7 +162,13 @@ func (as ArtifactStore) Remove(ctx context.Context, asr ArtifactStoreReference) 
 	if err != nil {
 		return nil, err
 	}
-	return artifactDigest, ir.DeleteImage(ctx, as.SystemContext)
+	if err := ir.DeleteImage(ctx, as.SystemContext); err != nil {
+		return artifactDigest, err
+	}
+	if as.eventCallback != nil {
+		as.eventCallback(EventStatusRemove, name, artifactDigest.String())
+	}
+	return artifactDigest, nil
 }
 
 // Inspect an artifact in a local store.
@@ -192,7 +212,11 @@ func (as ArtifactStore) Pull(ctx context.Context, ref ArtifactReference, opts li
 	if err != nil {
 		return "", err
 	}
-	return digest.FromBytes(artifactBytes), nil
+	artifactDigest := digest.FromBytes(artifactBytes)
+	if as.eventCallback != nil {
+		as.eventCallback(EventStatusPull, name, artifactDigest.String())
+	}
+	return artifactDigest, nil
 }
 
 // Push an artifact to an image registry.
@@ -223,6 +247,9 @@ func (as ArtifactStore) Push(ctx context.Context, src, dest ArtifactReference, o
 		return "", err
 	}
 	artifactDigest := digest.FromBytes(artifactBytes)
+	if as.eventCallback != nil {
+		as.eventCallback(EventStatusPush, src, artifactDigest.String())
+	}
 	return artifactDigest, nil
 }
 
@@ -441,6 +468,9 @@ func (as ArtifactStore) Add(ctx context.Context, dest ArtifactReference, artifac
 			return nil, err
 		}
 	}
+	if as.eventCallback != nil {
+		as.eventCallback(EventStatusAdd, dest, artifactManifestDigest.String())
+	}
 	return &artifactManifestDigest, nil
 }
 
@@ -556,10 +586,10 @@ func (as ArtifactStore) Extract(ctx context.Context, nameOrDigest ArtifactStoreR
 			digest = arty.Manifest.Layers[0].Digest
 		}
 
-		return copyTrustedImageBlobToFile(ctx, imgSrc, digest, target)
-	}
-
-	if len(options.Digest) > 0 || len(options.Title) > 0 {
+		if err := copyTrustedImageBlobToFile(ctx, imgSrc, digest, target); err != nil {
+			return err
+		}
+	} else if len(options.Digest) > 0 || len(options.Title) > 0 {
 		digest, err := findDigest(arty, &options.FilterBlobOptions)
 		if err != nil {
 			return err
@@ -573,20 +603,26 @@ func (as ArtifactStore) Extract(ctx context.Context, nameOrDigest ArtifactStoreR
 			return err
 		}
 
-		return copyTrustedImageBlobToFile(ctx, imgSrc, digest, filepath.Join(target, filename))
+		if err := copyTrustedImageBlobToFile(ctx, imgSrc, digest, filepath.Join(target, filename)); err != nil {
+			return err
+		}
+	} else {
+		for _, l := range arty.Manifest.Layers {
+			title := l.Annotations[specV1.AnnotationTitle]
+			filename, err := generateArtifactBlobName(title, l.Digest)
+			if err != nil {
+				return err
+			}
+
+			err = copyTrustedImageBlobToFile(ctx, imgSrc, l.Digest, filepath.Join(target, filename))
+			if err != nil {
+				return err
+			}
+		}
 	}
 
-	for _, l := range arty.Manifest.Layers {
-		title := l.Annotations[specV1.AnnotationTitle]
-		filename, err := generateArtifactBlobName(title, l.Digest)
-		if err != nil {
-			return err
-		}
-
-		err = copyTrustedImageBlobToFile(ctx, imgSrc, l.Digest, filepath.Join(target, filename))
-		if err != nil {
-			return err
-		}
+	if as.eventCallback != nil {
+		as.eventCallback(EventStatusExtract, arty.Name, options.Digest)
 	}
 
 	return nil
@@ -632,47 +668,50 @@ func (as ArtifactStore) ExtractTarStream(ctx context.Context, w io.Writer, asr A
 		if err != nil {
 			return err
 		}
+	} else {
 
-		return nil
-	}
+		artifactBlobCount := len(arty.Manifest.Layers)
 
-	artifactBlobCount := len(arty.Manifest.Layers)
+		type blob struct {
+			name   string
+			digest digest.Digest
+		}
+		blobs := make([]blob, 0, artifactBlobCount)
 
-	type blob struct {
-		name   string
-		digest digest.Digest
-	}
-	blobs := make([]blob, 0, artifactBlobCount)
+		// Gather blob details and return error on any illegal names
+		for _, l := range arty.Manifest.Layers {
+			title := l.Annotations[specV1.AnnotationTitle]
+			digest := l.Digest
+			var name string
 
-	// Gather blob details and return error on any illegal names
-	for _, l := range arty.Manifest.Layers {
-		title := l.Annotations[specV1.AnnotationTitle]
-		digest := l.Digest
-		var name string
+			if artifactBlobCount != 1 || !options.ExcludeTitle {
+				name, err = generateArtifactBlobName(title, digest)
+				if err != nil {
+					return err
+				}
+			}
 
-		if artifactBlobCount != 1 || !options.ExcludeTitle {
-			name, err = generateArtifactBlobName(title, digest)
+			blobs = append(blobs, blob{
+				name:   name,
+				digest: digest,
+			})
+		}
+
+		// Wrap io.Writer in a tar.Writer
+		tw := tar.NewWriter(w)
+		defer tw.Close()
+
+		// Write each blob to tar.Writer then close
+		for _, b := range blobs {
+			err := copyTrustedImageBlobToTarStream(ctx, imgSrc, b.digest, b.name, tw)
 			if err != nil {
 				return err
 			}
 		}
-
-		blobs = append(blobs, blob{
-			name:   name,
-			digest: digest,
-		})
 	}
 
-	// Wrap io.Writer in a tar.Writer
-	tw := tar.NewWriter(w)
-	defer tw.Close()
-
-	// Write each blob to tar.Writer then close
-	for _, b := range blobs {
-		err := copyTrustedImageBlobToTarStream(ctx, imgSrc, b.digest, b.name, tw)
-		if err != nil {
-			return err
-		}
+	if as.eventCallback != nil {
+		as.eventCallback(EventStatusExtract, arty.Name, options.Digest)
 	}
 
 	return nil
