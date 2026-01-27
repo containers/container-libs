@@ -31,11 +31,11 @@ import (
 	"go.podman.io/image/v5/internal/set"
 	"go.podman.io/image/v5/internal/signature"
 	"go.podman.io/image/v5/internal/streamdigest"
-	"go.podman.io/image/v5/internal/uploadreader"
 	"go.podman.io/image/v5/manifest"
 	"go.podman.io/image/v5/pkg/blobinfocache/none"
 	compressiontypes "go.podman.io/image/v5/pkg/compression/types"
 	"go.podman.io/image/v5/types"
+	"go.podman.io/storage/pkg/terminablereader"
 )
 
 type dockerImageDestination struct {
@@ -183,7 +183,7 @@ func (d *dockerImageDestination) PutBlobWithOptions(ctx context.Context, stream 
 	stream = io.TeeReader(stream, sizeCounter)
 
 	uploadLocation, err = func() (*url.URL, error) { // A scope for defer
-		uploadReader := uploadreader.NewUploadReader(stream)
+		uploadReader := terminablereader.NewTerminableReader(stream)
 		// This error text should never be user-visible, we terminate only after makeRequestToResolvedURL
 		// returns, so there isn’t a way for the error text to be provided to any of our callers.
 		defer uploadReader.Terminate(errors.New("Reading data from an already terminated upload"))
