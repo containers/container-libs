@@ -8,7 +8,16 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
+	"go.podman.io/storage/pkg/configfile"
 )
+
+func testConnectionsPaths() *configfile.File {
+	file := defaultConfigFileOpts()
+	file.RootForImplicitAbsolutePaths = GinkgoT().TempDir()
+	GinkgoT().Setenv("XDG_CONFIG_HOME", filepath.Join(file.RootForImplicitAbsolutePaths, "/home/.config"))
+
+	return file
+}
 
 var _ = Describe("Connections conf", func() {
 	var (
@@ -128,7 +137,7 @@ var _ = Describe("Connections conf", func() {
 		})
 
 		It("GetConnection()", func() {
-			conf, err := newLocked(&Options{}, &paths{})
+			conf, err := newLocked(&Options{}, testConnectionsPaths())
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 
 			con, err := conf.GetConnection("", true)
@@ -187,7 +196,7 @@ var _ = Describe("Connections conf", func() {
 		})
 
 		It("GetAllConnections()", func() {
-			conf, err := newLocked(&Options{}, &paths{})
+			conf, err := newLocked(&Options{}, testConnectionsPaths())
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 
 			cons, err := conf.GetAllConnections()
@@ -215,7 +224,7 @@ var _ = Describe("Connections conf", func() {
 		})
 
 		It("GetFarmConnections()", func() {
-			conf, err := newLocked(&Options{}, &paths{})
+			conf, err := newLocked(&Options{}, testConnectionsPaths())
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 
 			name, cons, err := conf.GetDefaultFarmConnections()
@@ -254,7 +263,7 @@ var _ = Describe("Connections conf", func() {
 		})
 
 		It("GetAllFarms()", func() {
-			conf, err := newLocked(&Options{}, &paths{})
+			conf, err := newLocked(&Options{}, testConnectionsPaths())
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 
 			farms, err := conf.GetAllFarms()
