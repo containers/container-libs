@@ -1,4 +1,4 @@
-package uploadreader
+package terminablereader
 
 import (
 	"bytes"
@@ -10,18 +10,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestUploadReader(t *testing.T) {
+func TestTerminableReader(t *testing.T) {
 	// This is a smoke test in a single goroutine, without really testing the locking.
 
 	data := bytes.Repeat([]byte{0x01}, 65535)
 	// No termination
-	ur := NewUploadReader(bytes.NewReader(data))
+	ur := NewTerminableReader(bytes.NewReader(data))
 	read, err := io.ReadAll(ur)
 	require.NoError(t, err)
 	assert.Equal(t, data, read)
 
 	// Terminated
-	ur = NewUploadReader(bytes.NewReader(data))
+	ur = NewTerminableReader(bytes.NewReader(data))
 	readLen := len(data) / 2
 	read, err = io.ReadAll(io.LimitReader(ur, int64(readLen)))
 	require.NoError(t, err)
