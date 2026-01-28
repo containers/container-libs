@@ -563,6 +563,44 @@ var _ = Describe("Config", func() {
 			Expect(err.Error()).To(ContainSubstring("subnet ip is nil"))
 		})
 
+		It("create network with overlapping subnets", func() {
+			// Config file defines overlapping subnets:
+			// - 10.1.2.0/23 covers 10.1.2.0-10.1.3.255
+			// - 10.1.3.248/30 covers 10.1.3.248-10.1.3.251 (subset of the /23)
+
+			subnet1 := "10.1.2.0/23"
+			n1, _ := types.ParseCIDR(subnet1)
+			subnet2 := "10.1.3.248/30"
+			n2, _ := types.ParseCIDR(subnet2)
+			network := types.Network{
+				Driver: "bridge",
+				Subnets: []types.Subnet{
+					{Subnet: n1},
+					{Subnet: n2},
+				},
+			}
+
+			_, err := libpodNet.NetworkCreate(network, nil)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("overlapping subnets detected: 10.1.2.0/23 and 10.1.3.248/30"))
+		})
+
+		It("create network with duplicate subnets", func() {
+			subnet1 := "10.89.0.0/16"
+			n1, _ := types.ParseCIDR(subnet1)
+			network := types.Network{
+				Driver: "bridge",
+				Subnets: []types.Subnet{
+					{Subnet: n1},
+					{Subnet: n1},
+				},
+			}
+
+			_, err := libpodNet.NetworkCreate(network, nil)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("duplicate subnets detected: 10.89.0.0/16"))
+		})
+
 		It("create network with name", func() {
 			name := "myname"
 			network := types.Network{
