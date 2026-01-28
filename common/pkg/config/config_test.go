@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
-	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	"github.com/onsi/gomega"
@@ -15,14 +14,29 @@ import (
 	"github.com/sirupsen/logrus"
 	"go.podman.io/common/pkg/apparmor"
 	"go.podman.io/common/pkg/capabilities"
+	"go.podman.io/storage/pkg/configfile"
 )
+
+func testConfigPath(path string) *configfile.File {
+	file := defaultConfigFileOpts()
+	t := GinkgoT()
+	// always force empty dirs here to never read the actual system defaults so we have a clean state.
+	file.RootForImplicitAbsolutePaths = t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(file.RootForImplicitAbsolutePaths, "/home/.config"))
+
+	if path != "" {
+		t.Setenv(containersConfEnv, path)
+	}
+
+	return file
+}
 
 var _ = Describe("Config", func() {
 	Describe("ValidateConfig", func() {
 		It("should succeed with default config", func() {
 			// Given
 			// When
-			defaultConfig, err := newLocked(&Options{}, &paths{})
+			defaultConfig, err := newLocked(&Options{}, testConfigPath(""))
 
 			// Then
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
@@ -130,7 +144,7 @@ var _ = Describe("Config", func() {
 		})
 
 		It("Check SELinux settings", func() {
-			defaultConfig, _ := newLocked(&Options{}, &paths{})
+			defaultConfig, _ := newLocked(&Options{}, testConfigPath(""))
 			// EnableLabeling should match whether or not SELinux is enabled on the host
 			gomega.Expect(defaultConfig.Containers.EnableLabeling).To(gomega.Equal(selinux.GetEnabled()))
 			gomega.Expect(defaultConfig.Containers.EnableLabeledUsers).To(gomega.BeFalse())
@@ -140,7 +154,7 @@ var _ = Describe("Config", func() {
 			// Note: Podmansh.Timeout must be preferred over Engine.PodmanshTimeout
 
 			// Given
-			defaultConfig, _ := newLocked(&Options{}, &paths{})
+			defaultConfig, _ := newLocked(&Options{}, testConfigPath(""))
 			// When
 			defaultConfig.Engine.PodmanshTimeout = 30
 			defaultConfig.Podmansh.Timeout = 0
@@ -190,7 +204,7 @@ image_copy_tmp_dir="storage"`
 			// Then
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 
-			config, _ := newLocked(&Options{}, &paths{etc: testFile})
+			config, _ := newLocked(&Options{}, testConfigPath(testFile))
 			path, err := config.ImageCopyTmpDir()
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 			gomega.Expect(path).To(gomega.ContainSubstring("containers/storage/tmp"))
@@ -199,201 +213,6 @@ image_copy_tmp_dir="storage"`
 			path, err = config.ImageCopyTmpDir()
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 			gomega.Expect(path).To(gomega.BeEquivalentTo("/var/tmp/foobar"))
-		})
-	})
-
-	Describe("readConfigFromFile", func() {
-		It("should succeed with default config", func() {
-			// Given
-			// When
-			defaultConfig, _ := defaultConfig()
-			// prior to reading local config, shows hard coded defaults
-			gomega.Expect(defaultConfig.Containers.HTTPProxy).To(gomega.BeTrue())
-			gomega.Expect(defaultConfig.Engine.HealthcheckEvents).To(gomega.BeTrue())
-			gomega.Expect(defaultConfig.Containers.ContainerNameAsHostName).To(gomega.BeFalse())
-
-			err := readConfigFromFile("testdata/containers_default.conf", defaultConfig, false)
-
-			crunWasm := "crun-wasm"
-			PlatformToOCIRuntimeMap := map[string]string{
-				"wasi/wasm":   crunWasm,
-				"wasi/wasm32": crunWasm,
-				"wasi/wasm64": crunWasm,
-			}
-
-			OCIRuntimeMap := map[string][]string{
-				"kata": {
-					"/usr/bin/kata-runtime",
-					"/usr/sbin/kata-runtime",
-					"/usr/local/bin/kata-runtime",
-					"/usr/local/sbin/kata-runtime",
-					"/sbin/kata-runtime",
-					"/bin/kata-runtime",
-					"/usr/bin/kata-qemu",
-					"/usr/bin/kata-fc",
-				},
-				"runc": {
-					"/usr/bin/runc",
-					"/usr/sbin/runc",
-					"/usr/local/bin/runc",
-					"/usr/local/sbin/runc",
-					"/sbin/runc",
-					"/bin/runc",
-					"/usr/lib/cri-o-runc/sbin/runc",
-				},
-				"runj": {
-					"/usr/local/bin/runj",
-				},
-				"crun": {
-					"/usr/bin/crun",
-					"/usr/local/bin/crun",
-				},
-				"crun-vm": {
-					"/usr/bin/crun-vm",
-					"/usr/local/bin/crun-vm",
-					"/usr/local/sbin/crun-vm",
-					"/sbin/crun-vm",
-					"/bin/crun-vm",
-					"/run/current-system/sw/bin/crun-vm",
-				},
-				"crun-wasm": {
-					"/usr/bin/crun-wasm",
-					"/usr/sbin/crun-wasm",
-					"/usr/local/bin/crun-wasm",
-					"/usr/local/sbin/crun-wasm",
-					"/sbin/crun-wasm",
-					"/bin/crun-wasm",
-					"/run/current-system/sw/bin/crun-wasm",
-				},
-				"runsc": {
-					"/usr/bin/runsc",
-					"/usr/sbin/runsc",
-					"/usr/local/bin/runsc",
-					"/usr/local/sbin/runsc",
-					"/bin/runsc",
-					"/sbin/runsc",
-					"/run/current-system/sw/bin/runsc",
-				},
-				"youki": {
-					"/usr/local/bin/youki",
-					"/usr/bin/youki",
-					"/bin/youki",
-					"/run/current-system/sw/bin/youki",
-				},
-				"krun": {
-					"/usr/bin/krun",
-					"/usr/local/bin/krun",
-				},
-				"ocijail": {
-					"/usr/local/bin/ocijail",
-				},
-			}
-
-			pluginDirs := []string{
-				"/usr/libexec/cni",
-				"/tmp",
-			}
-
-			envs := []string{
-				"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-			}
-
-			mounts := []string{
-				"type=glob,source=/tmp/test2*,ro=true",
-				"type=bind,source=/etc/services,destination=/etc/services,ro",
-			}
-
-			volumes := []string{
-				"$HOME:$HOME",
-			}
-
-			newVolumes := []string{
-				os.ExpandEnv("$HOME:$HOME"),
-			}
-
-			helperDirs := []string{
-				"/somepath",
-			}
-
-			// Then
-			gomega.Expect(err).ToNot(gomega.HaveOccurred())
-			gomega.Expect(defaultConfig.Engine.CgroupManager).To(gomega.Equal("systemd"))
-			gomega.Expect(defaultConfig.Containers.ContainerNameAsHostName).To(gomega.BeTrue())
-			gomega.Expect(defaultConfig.Containers.Env.Get()).To(gomega.BeEquivalentTo(envs))
-			gomega.Expect(defaultConfig.Containers.Mounts.Get()).To(gomega.BeEquivalentTo(mounts))
-			gomega.Expect(defaultConfig.Containers.PidsLimit).To(gomega.BeEquivalentTo(2048))
-			gomega.Expect(defaultConfig.Network.CNIPluginDirs.Get()).To(gomega.Equal(pluginDirs))
-			gomega.Expect(defaultConfig.Network.NetavarkPluginDirs.Get()).To(gomega.Equal([]string{"/usr/netavark"}))
-			gomega.Expect(defaultConfig.Engine.NumLocks).To(gomega.BeEquivalentTo(2048))
-			gomega.Expect(defaultConfig.Engine.OCIRuntimes).To(gomega.Equal(OCIRuntimeMap))
-			gomega.Expect(defaultConfig.Engine.PlatformToOCIRuntime).To(gomega.Equal(PlatformToOCIRuntimeMap))
-			gomega.Expect(defaultConfig.Containers.HTTPProxy).To(gomega.BeFalse())
-			gomega.Expect(defaultConfig.Engine.NetworkCmdOptions.Get()).To(gomega.BeEmpty())
-			gomega.Expect(defaultConfig.Engine.HelperBinariesDir.Get()).To(gomega.Equal(helperDirs))
-			gomega.Expect(defaultConfig.Engine.ServiceTimeout).To(gomega.BeEquivalentTo(300))
-			gomega.Expect(defaultConfig.Engine.InfraImage).To(gomega.BeEquivalentTo("registry.k8s.io/pause:3.4.1"))
-			gomega.Expect(defaultConfig.Engine.PodmanshTimeout).To(gomega.BeEquivalentTo(300))
-			gomega.Expect(defaultConfig.Machine.Volumes.Get()).To(gomega.BeEquivalentTo(volumes))
-			gomega.Expect(defaultConfig.Podmansh.Timeout).To(gomega.BeEquivalentTo(42))
-			gomega.Expect(defaultConfig.Podmansh.Shell).To(gomega.Equal("/bin/zsh"))
-			gomega.Expect(defaultConfig.Podmansh.Container).To(gomega.BeEquivalentTo("podmansh-1"))
-			gomega.Expect(defaultConfig.Engine.HealthcheckEvents).To(gomega.BeFalse())
-			newV, err := defaultConfig.MachineVolumes()
-			if newVolumes[0] == ":" {
-				// $HOME is not set
-				gomega.Expect(err).To(gomega.HaveOccurred())
-			} else {
-				gomega.Expect(err).ToNot(gomega.HaveOccurred())
-				gomega.Expect(newV).To(gomega.BeEquivalentTo(newVolumes))
-			}
-			gomega.Expect(defaultConfig.Engine.Retry).To(gomega.BeEquivalentTo(5))
-			gomega.Expect(defaultConfig.Engine.RetryDelay).To(gomega.Equal("10s"))
-		})
-
-		It("test GetDefaultEnvEx", func() {
-			envs := []string{
-				"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-			}
-			httpEnvs := append([]string{"HTTP_PROXY=1.2.3.4"}, envs...)
-			t := GinkgoT()
-			t.Setenv("HTTP_PROXY", "1.2.3.4")
-			t.Setenv("foo", "bar")
-
-			defaultConfig, _ := defaultConfig()
-			gomega.Expect(defaultConfig.GetDefaultEnvEx(false, false)).To(gomega.BeEquivalentTo(envs))
-			gomega.Expect(defaultConfig.GetDefaultEnvEx(false, true)).To(gomega.BeEquivalentTo(httpEnvs))
-			gomega.Expect(strings.Join(defaultConfig.GetDefaultEnvEx(true, true), ",")).To(gomega.ContainSubstring("HTTP_PROXY"))
-			gomega.Expect(strings.Join(defaultConfig.GetDefaultEnvEx(true, true), ",")).To(gomega.ContainSubstring("foo"))
-		})
-
-		It("should succeed with commented out configuration", func() {
-			// Given
-			// When
-			conf := Config{}
-			err := readConfigFromFile("testdata/containers_comment.conf", &conf, false)
-
-			// Then
-			gomega.Expect(err).ToNot(gomega.HaveOccurred())
-		})
-
-		It("should fail when file does not exist", func() {
-			// Given
-			// When
-			conf := Config{}
-			err := readConfigFromFile("/invalid/file", &conf, false)
-
-			// Then
-			gomega.Expect(err).To(gomega.HaveOccurred())
-		})
-
-		It("should fail when toml decode fails", func() {
-			// Given
-			// When
-			conf := Config{}
-			err := readConfigFromFile("config.go", &conf, false)
-
-			// Then
-			gomega.Expect(err).To(gomega.HaveOccurred())
 		})
 	})
 
@@ -446,7 +265,7 @@ image_copy_tmp_dir="storage"`
 			// Given we do
 			GinkgoT().Setenv(containersConfEnv, "/dev/null")
 			// When
-			config, err := newLocked(&Options{}, &paths{})
+			config, err := newLocked(&Options{}, testConfigPath(""))
 			// Then
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 			gomega.Expect(config.Containers.ApparmorProfile).To(gomega.Equal(apparmor.Profile))
@@ -484,7 +303,7 @@ image_copy_tmp_dir="storage"`
 		It("should success with valid user file path", func() {
 			// Given
 			// When
-			config, err := newLocked(&Options{}, &paths{etc: "testdata/containers_default.conf"})
+			config, err := newLocked(&Options{}, testConfigPath("testdata/containers_default.conf"))
 			// Then
 			cgroupConf := []string{
 				"memory.high=1073741824",
@@ -504,7 +323,7 @@ image_copy_tmp_dir="storage"`
 		})
 
 		It("contents of passed-in file should override others", func() {
-			config, err := newLocked(&Options{}, &paths{etc: "testdata/containers_override.conf"})
+			config, err := newLocked(&Options{}, testConfigPath("testdata/containers_override.conf"))
 
 			crunWasm := "crun-wasm"
 			PlatformToOCIRuntimeMap := map[string]string{
@@ -543,7 +362,7 @@ image_copy_tmp_dir="storage"`
 		It("should fail with invalid value", func() {
 			// Given
 			// When
-			config, err := newLocked(&Options{}, &paths{etc: "testdata/containers_invalid.conf"})
+			config, err := newLocked(&Options{}, testConfigPath("testdata/containers_invalid.conf"))
 			// Then
 			gomega.Expect(err).To(gomega.HaveOccurred())
 			gomega.Expect(config).To(gomega.BeNil())
@@ -555,7 +374,7 @@ image_copy_tmp_dir="storage"`
 				Skip(fmt.Sprintf("capabilities not supported on %s", runtime.GOOS))
 			}
 			// When
-			config, err := newLocked(&Options{}, &paths{})
+			config, err := newLocked(&Options{}, testConfigPath(""))
 			// Then
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 			var addcaps, dropcaps []string
@@ -672,56 +491,11 @@ image_copy_tmp_dir="storage"`
 			t.Setenv(containersConfEnv, name)
 		})
 
-		It("test addConfigs", func() {
-			tmpFilePath := func(dir, prefix string) string {
-				file, err := os.CreateTemp(dir, prefix)
-				gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
-				conf := file.Name() + ".conf"
-
-				err = os.Rename(file.Name(), conf)
-				gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
-				return conf
-			}
-			configs := []string{
-				"test1",
-				"test2",
-			}
-			newConfigs, err := addConfigs("/bogus/path", configs)
-			gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
-			gomega.Expect(newConfigs).To(gomega.Equal(configs))
-
-			t := GinkgoT()
-			dir := t.TempDir()
-			file1 := tmpFilePath(dir, "b")
-			file2 := tmpFilePath(dir, "a")
-			file3 := tmpFilePath(dir, "2")
-			file4 := tmpFilePath(dir, "1")
-			// create a file in dir that is not a .conf to make sure
-			// it does not show up in configs
-			f, err := os.CreateTemp(dir, "notconf")
-			gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
-			f.Close()
-			subdir := filepath.Join(dir, "subdir")
-			err = os.Mkdir(subdir, 0o700)
-			gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
-			// create a file in subdir, to make sure it does not
-			// show up in configs
-			f, err = os.CreateTemp(subdir, "")
-			gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
-			f.Close()
-
-			newConfigs, err = addConfigs(dir, configs)
-			gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
-			testConfigs := append(configs, []string{file4, file3, file2, file1}...)
-			gomega.Expect(newConfigs).To(gomega.Equal(testConfigs))
-		})
-
 		It("test config errors", func() {
-			conf := Config{}
 			content := bytes.NewBufferString("")
 			logrus.SetOutput(content)
 			logrus.SetLevel(logrus.DebugLevel)
-			err := readConfigFromFile("testdata/containers_broken.conf", &conf, false)
+			conf, err := newLocked(&Options{}, testConfigPath("testdata/containers_broken.conf"))
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 			gomega.Expect(conf.Containers.NetNS).To(gomega.Equal("bridge"))
 			gomega.Expect(conf.Containers.Umask).To(gomega.Equal("0002"))
@@ -730,10 +504,9 @@ image_copy_tmp_dir="storage"`
 		})
 
 		It("test default config errors", func() {
-			conf := Config{}
 			content := bytes.NewBufferString("")
 			logrus.SetOutput(content)
-			err := readConfigFromFile("containers.conf", &conf, false)
+			_, err := newLocked(&Options{}, testConfigPath("containers.conf"))
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 			gomega.Expect(content.String()).To(gomega.Equal(""))
 			logrus.SetOutput(os.Stderr)
@@ -788,13 +561,13 @@ env=["foo=bar"]`
 	It("CONTAINERS_CONF_OVERRIDE", func() {
 		t := GinkgoT()
 		t.Setenv("CONTAINERS_CONF_OVERRIDE", "testdata/containers_override.conf")
-		config, err := newLocked(&Options{}, &paths{})
+		config, err := newLocked(&Options{}, testConfigPath(""))
 		gomega.Expect(err).ToNot(gomega.HaveOccurred())
 		gomega.Expect(config.Containers.ApparmorProfile).To(gomega.Equal("overridden-default"))
 
 		// Make sure that _OVERRIDE is loaded even when CONTAINERS_CONF is set.
 		t.Setenv(containersConfEnv, "testdata/containers_default.conf")
-		config, err = newLocked(&Options{}, &paths{})
+		config, err = newLocked(&Options{}, testConfigPath(""))
 		gomega.Expect(err).ToNot(gomega.HaveOccurred())
 		gomega.Expect(config.Containers.ApparmorProfile).To(gomega.Equal("overridden-default"))
 		gomega.Expect(config.Containers.BaseHostsFile).To(gomega.Equal("/etc/hosts2"))
