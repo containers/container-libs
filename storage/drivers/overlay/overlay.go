@@ -2062,8 +2062,17 @@ func (d *Driver) Put(id string) error {
 		// rename(2) can be used on an empty directory, as it is the mountpoint after umount, and it retains
 		// its atomic semantic.  In this way the "merged" directory is never removed.
 		if err := unix.Rename(tmpMountpoint, mountpoint); err != nil {
-			logrus.Debugf("Failed to replace mountpoint %s overlay: %s: %v", id, mountpoint, err)
-			return fmt.Errorf("replacing mount point %q: %w", mountpoint, err)
+			if errors.Is(err, syscall.EBUSY) {
+				logrus.Debugf("Rename failed with EBUSY, falling back to remove and recreate for mountpoint %s", mountpoint)
+				_ = os.Remove(tmpMountpoint)
+				_ = os.Remove(mountpoint)
+				if mkErr := idtools.MkdirAs(mountpoint, 0o700, uid, gid); mkErr != nil {
+					return fmt.Errorf("creating mount point %q: %w", mountpoint, mkErr)
+				}
+			} else {
+				logrus.Debugf("Failed to replace mountpoint %s overlay: %s: %v", id, mountpoint, err)
+				return fmt.Errorf("replacing mount point %q: %w", mountpoint, err)
+			}
 		}
 	}
 	return nil
