@@ -259,3 +259,35 @@ func TestZfsOptions(t *testing.T) {
 		t.Fatalf("Expected to find size %q, got %v", s100, doptions)
 	}
 }
+
+func TestSyncOptions(t *testing.T) {
+	var options OptionsConfig
+
+	// Test overlay driver sync mode
+	options.Overlay.Sync = "filesystem"
+	doptions := GetGraphDriverOptions("overlay", options)
+	if !searchOptions(doptions, "overlay.sync=filesystem") {
+		t.Fatalf("Expected to find overlay sync option in %v", doptions)
+	}
+
+	// Test VFS driver
+	options = OptionsConfig{}
+	options.Vfs.Sync = "filesystem"
+	doptions = GetGraphDriverOptions("vfs", options)
+	if !searchOptions(doptions, "vfs.sync=filesystem") {
+		t.Fatalf("Expected to find vfs sync option in %v", doptions)
+	}
+
+	// Test empty configuration (no sync options should be added)
+	options = OptionsConfig{}
+	doptions = GetGraphDriverOptions("overlay", options)
+	if searchOptions(doptions, "sync=") {
+		t.Fatalf("Expected no sync option when not configured, got %v", doptions)
+	}
+
+	options = OptionsConfig{}
+	doptions = GetGraphDriverOptions("vfs", options)
+	if searchOptions(doptions, "sync=") {
+		t.Fatalf("Expected no sync option for vfs when not configured, got %v", doptions)
+	}
+}

@@ -5,8 +5,8 @@ package vfs
 import (
 	"testing"
 
+	graphdriver "go.podman.io/storage/drivers"
 	"go.podman.io/storage/drivers/graphtest"
-
 	"go.podman.io/storage/pkg/reexec"
 )
 
@@ -50,6 +50,23 @@ func TestVfsEcho(t *testing.T) {
 
 func TestVfsListLayers(t *testing.T) {
 	graphtest.DriverTestListLayers(t, "vfs")
+}
+
+func TestVfsSyncModeParsing(t *testing.T) {
+	_, err := graphdriver.ParseSyncMode("invalid")
+	if err == nil {
+		t.Error("Expected error for invalid sync mode, got nil")
+	}
+
+	_, err = graphdriver.ParseSyncMode("filesystem")
+	if err != nil {
+		t.Errorf("Expected no error for valid sync mode 'filesystem', got %v", err)
+	}
+
+	_, err = graphdriver.ParseSyncMode("none")
+	if err != nil {
+		t.Errorf("Expected no error for valid sync mode 'none', got %v", err)
+	}
 }
 
 func TestVfsTeardown(t *testing.T) {
