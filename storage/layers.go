@@ -1148,6 +1148,21 @@ func (r *layerStore) saveLayers(saveLocations layerLocations, needsSyncfs bool) 
 		if location == volatileLayerLocation {
 			opts.NoSync = true
 		}
+		// If the underlying storage driver is using sync and we are writing data (not just metadata),
+		// make sure we sync everything before saving the layer data, this ensures that all
+		// files/directories are properly created and written.
+		if needsSyncfs {
+			switch r.driver.SyncMode() {
+			case drivers.SyncModeNone:
+				// Nothing to do.
+			case drivers.SyncModeFilesystem:
+				if err := system.Syncfs(filepath.Dir(rpath)); err != nil {
+					return err
+				}
+			default:
+				return fmt.Errorf("unknown sync mode: %q", r.driver.SyncMode().String())
+			}
+		}
 		if err := ioutils.AtomicWriteFileWithOpts(rpath, jldata, 0o600, &opts); err != nil {
 			return err
 		}

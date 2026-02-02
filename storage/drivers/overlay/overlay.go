@@ -113,6 +113,7 @@ type overlayOptions struct {
 	ignoreChownErrors bool
 	forceMask         *os.FileMode
 	useComposefs      bool
+	syncMode          graphdriver.SyncMode
 }
 
 // Driver contains information about the home directory and the list of active mounts that are created using this driver.
@@ -593,6 +594,22 @@ func parseOptions(options []string) (*overlayOptions, error) {
 			}
 			m := os.FileMode(mask)
 			o.forceMask = &m
+		case "sync":
+			logrus.Debugf("overlay: sync=%s", val)
+			mode, err := graphdriver.ParseSyncMode(val)
+			if err != nil {
+				return nil, fmt.Errorf("invalid sync mode for overlay driver: %w", err)
+			}
+			// SyncModeNone and SyncModeFilesystem do not need any special handling because
+			// the overlay storage is always on the same file system as the metadata, thus
+			// the Syncfs() in layers.go covers also any file written by the overlay driver.
+			switch mode {
+			case graphdriver.SyncModeNone, graphdriver.SyncModeFilesystem:
+				// Nothing to do.
+			default:
+				return nil, fmt.Errorf("invalid mode for overlay driver: %q", val)
+			}
+			o.syncMode = mode
 		default:
 			return nil, fmt.Errorf("overlay: unknown option %s", key)
 		}
@@ -863,6 +880,11 @@ func (d *Driver) Cleanup() error {
 		return nil
 	}
 	return mount.Unmount(d.home)
+}
+
+// SyncMode returns the sync mode configured for the driver.
+func (d *Driver) SyncMode() graphdriver.SyncMode {
+	return d.options.syncMode
 }
 
 // pruneStagingDirectories cleans up any staging directory that was leaked.
