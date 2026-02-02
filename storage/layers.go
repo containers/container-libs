@@ -1139,6 +1139,13 @@ func (r *layerStore) saveLayers(saveLocations layerLocations) error {
 		if location == volatileLayerLocation {
 			opts.NoSync = true
 		}
+		// If the underlying storage driver is using sync, make sure we sync everything before
+		// saving the layer data, this ensures that all files/directories are properly created and written.
+		if r.driver.SyncMode() != drivers.SyncModeNone {
+			if err := system.Syncfs(filepath.Dir(rpath)); err != nil {
+				return err
+			}
+		}
 		if err := ioutils.AtomicWriteFileWithOpts(rpath, jldata, 0o600, &opts); err != nil {
 			return err
 		}
