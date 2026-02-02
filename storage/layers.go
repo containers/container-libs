@@ -1610,14 +1610,8 @@ func (r *layerStore) create(id string, parentLayer *Layer, names []string, mount
 		}
 	}
 
-	if oldMappings != nil &&
-		(!reflect.DeepEqual(oldMappings.UIDs(), idMappings.UIDs()) || !reflect.DeepEqual(oldMappings.GIDs(), idMappings.GIDs())) {
-		if err = r.driver.UpdateLayerIDMap(id, oldMappings, idMappings, mountLabel); err != nil {
-			cleanupFailureContext = "in UpdateLayerIDMap"
-			return nil, -1, err
-		}
-	}
-
+	// Write the tar-split file, and especially creating new directories before UpdateLayerIDMap so any sync policy
+	// done there will also cover the new directory created.
 	if len(templateTSdata) > 0 {
 		if err = os.MkdirAll(filepath.Dir(r.tspath(id)), 0o700); err != nil {
 			cleanupFailureContext = "creating tar-split parent directory for a copy from template"
@@ -1625,6 +1619,14 @@ func (r *layerStore) create(id string, parentLayer *Layer, names []string, mount
 		}
 		if err = ioutils.AtomicWriteFile(r.tspath(id), templateTSdata, 0o600); err != nil {
 			cleanupFailureContext = "creating a tar-split copy from template"
+			return nil, -1, err
+		}
+	}
+
+	if oldMappings != nil &&
+		(!reflect.DeepEqual(oldMappings.UIDs(), idMappings.UIDs()) || !reflect.DeepEqual(oldMappings.GIDs(), idMappings.GIDs())) {
+		if err = r.driver.UpdateLayerIDMap(id, oldMappings, idMappings, mountLabel); err != nil {
+			cleanupFailureContext = "in UpdateLayerIDMap"
 			return nil, -1, err
 		}
 	}
