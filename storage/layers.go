@@ -2796,9 +2796,6 @@ func (r *layerStore) applyDiffFromStagingDirectory(id string, diffOutput *driver
 		}
 		maps.Copy(layer.Flags, options.Flags)
 	}
-	if err = r.saveFor(layer); err != nil {
-		return err
-	}
 
 	if diffOutput.TarSplit != nil {
 		tarSplitFile, err := createTarSplitFile(r, layer.ID)
@@ -2839,6 +2836,7 @@ func (r *layerStore) applyDiffFromStagingDirectory(id string, diffOutput *driver
 			return fmt.Errorf("sync tar-split file: %w", err)
 		}
 	}
+
 	for k, v := range diffOutput.BigData {
 		if err := r.SetBigData(id, k, bytes.NewReader(v)); err != nil {
 			if err2 := r.deleteWhileHoldingLock(id); err2 != nil {
@@ -2846,6 +2844,10 @@ func (r *layerStore) applyDiffFromStagingDirectory(id string, diffOutput *driver
 			}
 			return err
 		}
+	}
+
+	if err = r.saveFor(layer); err != nil {
+		return err
 	}
 	return err
 }
