@@ -219,8 +219,8 @@ based file systems.
     Use ComposeFS to mount the data layers image.  ComposeFS support is experimental and not recommended for production use.
     This is a "string bool": "false"|"true" (cannot be native TOML boolean)
 
-**sync**=""
-  Filesystem synchronization mode for layer creation. (default: "")
+**sync**="none|filesystem"
+  Filesystem synchronization mode for layer creation. (default: "none")
 
 - `none`: No synchronization.
   Layer operations complete without calling syncfs().
