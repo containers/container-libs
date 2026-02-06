@@ -558,4 +558,140 @@ var _ = Describe("IPAM", func() {
 		Expect(opts.Networks[netName].StaticIPs).To(HaveLen(1))
 		Expect(opts.Networks[netName].StaticIPs[0]).To(Equal(net.ParseIP("10.0.0.10").To4()))
 	})
+
+	It("ipam alloc and dealloc multiple static IPs", func() {
+		s, _ := types.ParseCIDR("10.89.0.0/16")
+		network, err := networkInterface.NetworkCreate(
+			types.Network{
+				Subnets: []types.Subnet{
+					{
+						Subnet: s,
+					},
+				},
+			},
+			nil,
+		)
+		Expect(err).ToNot(HaveOccurred())
+
+		netName := network.Name
+
+		staticIPs := []net.IP{
+			net.ParseIP("10.89.0.5"),
+			net.ParseIP("10.89.0.10"),
+			net.ParseIP("10.89.0.15"),
+		}
+
+		opts := &types.NetworkOptions{
+			ContainerID: "someContainerID",
+			Networks: map[string]types.PerNetworkOptions{
+				netName: {
+					StaticIPs: staticIPs,
+				},
+			},
+		}
+
+		err = networkInterface.allocIPs(opts)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(opts.Networks).To(HaveKey(netName))
+		Expect(opts.Networks[netName].StaticIPs).To(HaveLen(3))
+		for _, ip := range staticIPs {
+			Expect(opts.Networks[netName].StaticIPs).To(ContainElement(WithTransform(func(i net.IP) string { return i.String() }, Equal(ip.String()))))
+		}
+
+		err = networkInterface.deallocIPs(opts)
+		Expect(err).ToNot(HaveOccurred())
+	})
+
+	It("ipam alloc and dealloc multiple static IPs from two subnets", func() {
+		s1, _ := types.ParseCIDR("10.89.0.0/16")
+		s2, _ := types.ParseCIDR("10.90.0.0/16")
+		network, err := networkInterface.NetworkCreate(
+			types.Network{
+				Subnets: []types.Subnet{
+					{
+						Subnet: s1,
+					},
+					{
+						Subnet: s2,
+					},
+				},
+			},
+			nil,
+		)
+		Expect(err).ToNot(HaveOccurred())
+
+		netName := network.Name
+
+		staticIPs := []net.IP{
+			net.ParseIP("10.89.0.5"),
+			net.ParseIP("10.90.0.10"),
+			net.ParseIP("10.89.0.15"),
+		}
+
+		opts := &types.NetworkOptions{
+			ContainerID: "someContainerID",
+			Networks: map[string]types.PerNetworkOptions{
+				netName: {
+					StaticIPs: staticIPs,
+				},
+			},
+		}
+
+		err = networkInterface.allocIPs(opts)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(opts.Networks).To(HaveKey(netName))
+		Expect(opts.Networks[netName].StaticIPs).To(HaveLen(3))
+		for _, ip := range staticIPs {
+			Expect(opts.Networks[netName].StaticIPs).To(ContainElement(WithTransform(func(i net.IP) string { return i.String() }, Equal(ip.String()))))
+		}
+
+		err = networkInterface.deallocIPs(opts)
+		Expect(err).ToNot(HaveOccurred())
+	})
+
+	It("ipam alloc and dealloc multiple static IPs from one subnet and automatic IP from another subnet", func() {
+		s1, _ := types.ParseCIDR("10.90.0.0/16")
+		s2, _ := types.ParseCIDR("10.89.0.0/16")
+		network, err := networkInterface.NetworkCreate(
+			types.Network{
+				Subnets: []types.Subnet{
+					{
+						Subnet: s1,
+					},
+					{
+						Subnet: s2,
+					},
+				},
+			},
+			nil,
+		)
+		Expect(err).ToNot(HaveOccurred())
+
+		netName := network.Name
+
+		staticIPs := []net.IP{
+			net.ParseIP("10.89.0.5"),
+			net.ParseIP("10.89.0.15"),
+		}
+
+		opts := &types.NetworkOptions{
+			ContainerID: "someContainerID",
+			Networks: map[string]types.PerNetworkOptions{
+				netName: {
+					StaticIPs: staticIPs,
+				},
+			},
+		}
+
+		err = networkInterface.allocIPs(opts)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(opts.Networks).To(HaveKey(netName))
+		Expect(opts.Networks[netName].StaticIPs).To(HaveLen(3))
+		for _, ip := range staticIPs {
+			Expect(opts.Networks[netName].StaticIPs).To(ContainElement(WithTransform(func(i net.IP) string { return i.String() }, Equal(ip.String()))))
+		}
+
+		err = networkInterface.deallocIPs(opts)
+		Expect(err).ToNot(HaveOccurred())
+	})
 })
