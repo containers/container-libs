@@ -48,7 +48,7 @@ func TestTlsConfigFromInvalidCertPath(t *testing.T) {
 	}
 
 	_, err := tlsConfig(ctx)
-	assert.ErrorContains(t, err, "could not read CA certificate")
+	assert.ErrorContains(t, err, "reading CA file")
 }
 
 func TestTlsConfigFromCertPath(t *testing.T) {
