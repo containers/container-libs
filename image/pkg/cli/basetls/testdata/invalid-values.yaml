@@ -1,0 +1,5 @@
+minVersion: "this is not a valid version"
+cipherSuites:
+  - "this is not a valid cipher suite"
+namedGroups:
+  - "this is not a valid named group"
