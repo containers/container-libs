@@ -1,5 +1,10 @@
 //go:build linux && cgo
 
+// Package btrfs implements the btrfs storage driver for container images.
+// It uses native btrfs copy-on-write via subvolumes and snapshots, storing
+// layers as subvolumes under a 'subvolumes/' directory. Child layers are
+// created as snapshots for true copy-on-write semantics. Storage quotas
+// are supported via btrfs qgroups.
 package btrfs
 
 /*
