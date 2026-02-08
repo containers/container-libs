@@ -43,7 +43,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/vishvananda/netlink v1.3.1
 	go.etcd.io/bbolt v1.4.3
-	go.podman.io/image/v5 v5.38.0
+	go.podman.io/image/v5 v5.39.1
 	go.podman.io/storage v1.61.1-0.20260202154637-0e2aefda57c9
 	golang.org/x/crypto v0.47.0
 	golang.org/x/sync v0.19.0
