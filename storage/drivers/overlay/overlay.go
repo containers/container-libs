@@ -2145,7 +2145,10 @@ func (g *overlayFileGetter) Get(path string) (io.ReadCloser, error) {
 				Resolve: unix.RESOLVE_NO_SYMLINKS | unix.RESOLVE_BENEATH,
 			})
 			if err != nil {
-				continue
+				if errors.Is(err, unix.ENOENT) || errors.Is(err, unix.ELOOP) {
+					continue
+				}
+				return nil, &fs.PathError{Op: "openat2", Path: path, Err: err}
 			}
 			n, err := unix.Fgetxattr(cfd, "trusted.overlay.redirect", buf)
 			unix.Close(cfd)

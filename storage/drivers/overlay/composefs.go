@@ -81,6 +81,7 @@ func writeComposeFsBlob(dumpReader io.Reader, composefsDir string) error {
 		outFile.Close()
 		return fmt.Errorf("failed to reopen %s as read-only: %w", destFile, err)
 	}
+	defer roFile.Close()
 
 	err = func() error {
 		// a scope to close outFile before setting fsverity on the read-only fd.
