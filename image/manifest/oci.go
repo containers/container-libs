@@ -143,18 +143,11 @@ func (m *OCI1) UpdateLayerInfos(layerInfos []types.BlobInfo) error {
 			}
 			mimeType = decMimeType
 		}
-		// Nydus layer types don't support compression/decompression operations
-		// They should only be preserved as-is
-		if mimeType == manifest.NydusBootstrapLayerMediaType || mimeType == manifest.NydusBlobLayerMediaType {
-			if info.CompressionOperation != types.PreserveOriginal {
-				return fmt.Errorf("preparing updated manifest, layer %q: Nydus layer types (%q) do not support compression or decompression operations", info.Digest, mimeType)
-			}
-		} else {
-			var err error
-			mimeType, err = updatedMIMEType(oci1CompressionMIMETypeSets, mimeType, info)
-			if err != nil {
-				return fmt.Errorf("preparing updated manifest, layer %q: %w", info.Digest, err)
-			}
+
+		var err error
+		mimeType, err = updatedMIMEType(oci1CompressionMIMETypeSets, mimeType, info)
+		if err != nil {
+			return fmt.Errorf("preparing updated manifest, layer %q: %w", info.Digest, err)
 		}
 
 		if info.CryptoOperation == types.Encrypt {

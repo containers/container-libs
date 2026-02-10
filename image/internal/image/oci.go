@@ -291,7 +291,7 @@ func (m *manifestOCI1) convertToManifestSchema2(_ context.Context, options *type
 			ociencspec.MediaTypeLayerNonDistributableEnc, ociencspec.MediaTypeLayerNonDistributableGzipEnc, ociencspec.MediaTypeLayerNonDistributableZstdEnc:
 			return nil, fmt.Errorf("during manifest conversion: encrypted layers (%q) are not supported in docker images", layers[idx].MediaType)
 		case internalManifest.NydusBootstrapLayerMediaType, internalManifest.NydusBlobLayerMediaType:
-			layers[idx].MediaType = manifest.DockerV2Schema2ForeignLayerMediaType
+			return nil, fmt.Errorf("during manifest conversion: Nydus layers (%q) are not supported in docker images", layers[idx].MediaType)
 		default:
 			return nil, fmt.Errorf("Unknown media type during manifest conversion: %q", layers[idx].MediaType)
 		}
