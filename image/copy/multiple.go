@@ -289,6 +289,41 @@ func (c *copier) copyMultipleImages(ctx context.Context) (copiedManifest []byte,
 		return nil, fmt.Errorf("updating manifest list: %w", err)
 	}
 
+	// Remove skipped instances from the manifest list if StripSparseManifestList is enabled
+	if c.options.ImageListSelection == CopySpecificImages && c.options.SparseManifestListAction == StripSparseManifestList {
+		// Build a set of digests that were copied
+		copiedDigests := set.New[digest.Digest]()
+		for _, instance := range instanceCopyList {
+			copiedDigests.Add(instance.sourceDigest)
+		}
+
+		// Find which indices were skipped
+		var indicesToDelete []int
+		for i, instanceDigest := range instanceDigests {
+			if !copiedDigests.Contains(instanceDigest) {
+				indicesToDelete = append(indicesToDelete, i)
+			}
+		}
+
+		// Build delete operations for skipped instances
+		// Delete from highest to lowest index to avoid shifting
+		var deleteEdits []internalManifest.ListEdit
+		for i := len(indicesToDelete) - 1; i >= 0; i-- {
+			deleteEdits = append(deleteEdits, internalManifest.ListEdit{
+				ListOperation: internalManifest.ListOpDelete,
+				DeleteIndex:   indicesToDelete[i],
+			})
+		}
+
+		// Remove skipped instances from the manifest list using EditInstances
+		if len(deleteEdits) > 0 {
+			logrus.Debugf("Removing %d instances from manifest list", len(deleteEdits))
+			if err := updatedList.EditInstances(deleteEdits, false); err != nil {
+				return nil, fmt.Errorf("stripping sparse manifest list: %w", err)
+			}
+		}
+	}
+
 	// Iterate through supported list types, preferred format first.
 	c.Printf("Writing manifest list to image destination\n")
 	var errs []string

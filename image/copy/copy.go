@@ -71,6 +71,22 @@ const (
 // specific images from the source reference.
 type ImageListSelection int
 
+const (
+	// KeepSparseManifestList is the default value which, when set in
+	// Options.SparseManifestListAction, indicates that the manifest is kept
+	// as is even though some images from the list may be missing. Some
+	// registries may not support this.
+	KeepSparseManifestList SparseManifestListAction = iota
+
+	// StripSparseManifestList will strip missing images from the manifest
+	// list. When images are stripped the digest will differ from the original.
+	StripSparseManifestList
+)
+
+// SparseManifestListAction is one of KeepSparseManifestList or StripSparseManifestList
+// to control the behavior when only a subset of images from a manifest list is copied
+type SparseManifestListAction int
+
 // Options allows supplying non-default configuration modifying the behavior of CopyImage.
 type Options struct {
 	RemoveSignatures bool // Remove any pre-existing signatures. Signers and SignBy… will still add a new signature.
@@ -128,6 +144,10 @@ type Options struct {
 	// Download layer contents with "nondistributable" media types ("foreign" layers) and translate the layer media type
 	// to not indicate "nondistributable".
 	DownloadForeignLayers bool
+
+	// When only a subset of images of a list is copied, this action indicates if the manifest should be kept or stripped.
+	// See CopySpecificImages.
+	SparseManifestListAction SparseManifestListAction
 
 	// Contains slice of OptionCompressionVariant, where copy will ensure that for each platform
 	// in the manifest list, a variant with the requested compression will exist.
