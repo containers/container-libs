@@ -90,7 +90,6 @@ func TestSubVolDelete(t *testing.T) {
 	}
 
 	// Helpers
-
 	runCmd := func(name string, arg ...string) error {
 		cmd := exec.Command(name, arg...)
 		var stderr bytes.Buffer
@@ -100,7 +99,6 @@ func TestSubVolDelete(t *testing.T) {
 		}
 		return nil
 	}
-
 	qgroupShow := func(mountPath string) string {
 		cmd := exec.Command("btrfs", "qgroup", "show", mountPath)
 		var out bytes.Buffer
@@ -117,7 +115,7 @@ func TestSubVolDelete(t *testing.T) {
 	defer os.RemoveAll(baseDir)
 
 	mnt := path.Join(baseDir, "mountpoint")
-	if err := os.Mkdir(mnt, 755); err != nil {
+	if err := os.Mkdir(mnt, 0o755); err != nil {
 		t.Fatalf("Failed to create mountpoint dir: %v", err)
 	}
 
