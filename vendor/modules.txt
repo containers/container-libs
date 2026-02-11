@@ -30,6 +30,9 @@ github.com/VividCortex/ewma
 # github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 ## explicit
 github.com/acarl005/stripansi
+# github.com/cgwalters/jsonrpc-fdpass-go v0.0.0-20260126203148-2bca851a3863
+## explicit; go 1.21
+github.com/cgwalters/jsonrpc-fdpass-go
 # github.com/checkpoint-restore/checkpointctl v1.5.0
 ## explicit; go 1.24.6
 github.com/checkpoint-restore/checkpointctl/lib
