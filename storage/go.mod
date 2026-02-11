@@ -6,6 +6,7 @@ module go.podman.io/storage
 
 require (
 	github.com/BurntSushi/toml v1.6.0
+	github.com/cgwalters/jsonrpc-fdpass-go v0.0.0-20260126203148-2bca851a3863
 	github.com/containerd/stargz-snapshotter/estargz v0.18.2
 	github.com/cyphar/filepath-securejoin v0.6.1
 	github.com/docker/go-units v0.5.0
