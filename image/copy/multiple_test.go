@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	digest "github.com/opencontainers/go-digest"
+	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	internalManifest "go.podman.io/image/v5/internal/manifest"
@@ -169,4 +170,78 @@ func convertInstanceCopyToSimplerInstanceCopy(copies []instanceCopy) []simplerIn
 		})
 	}
 	return res
+}
+
+// TestDetermineSpecificImages tests the platform-based and digest-based instance selection
+func TestDetermineSpecificImages(t *testing.T) {
+	validManifest, err := os.ReadFile(filepath.Join("..", "internal", "manifest", "testdata", "ociv1.image.index.json"))
+	require.NoError(t, err)
+	list, err := internalManifest.ListFromBlob(validManifest, internalManifest.GuessMIMEType(validManifest))
+	require.NoError(t, err)
+
+	// Digests from ociv1.image.index.json
+	ppc64leDigest := digest.Digest("sha256:e692418e4cbaf90ca69d05a66403747baa33ee08806650b51fab815ad7fc331f")
+	amd64Digest := digest.Digest("sha256:5b0bcabd1ed22e9fb1310cf6c2dec7cdef19f0ad69efa1f392e94a4333501270")
+
+	tests := []struct {
+		name              string
+		instances         []digest.Digest
+		instancePlatforms []imgspecv1.Platform
+		expectedSize      int
+		expectedDigests   []digest.Digest
+		expectError       bool
+	}{
+		{
+			name: "PlatformOnly",
+			instancePlatforms: []imgspecv1.Platform{
+				{OS: "linux", Architecture: "ppc64le"},
+			},
+			expectedSize:    1,
+			expectedDigests: []digest.Digest{ppc64leDigest},
+		},
+		{
+			name:            "DigestOnly",
+			instances:       []digest.Digest{amd64Digest},
+			expectedSize:    1,
+			expectedDigests: []digest.Digest{amd64Digest},
+		},
+		{
+			name:      "Combined",
+			instances: []digest.Digest{ppc64leDigest},
+			instancePlatforms: []imgspecv1.Platform{
+				{OS: "linux", Architecture: "amd64"},
+			},
+			expectedSize:    2,
+			expectedDigests: []digest.Digest{ppc64leDigest, amd64Digest},
+		},
+		{
+			name: "NonExistentPlatform",
+			instancePlatforms: []imgspecv1.Platform{
+				{OS: "linux", Architecture: "arm64"},
+			},
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			options := &Options{
+				Instances:         tt.instances,
+				InstancePlatforms: tt.instancePlatforms,
+			}
+			specificImages, err := determineSpecificImages(options, list)
+
+			if tt.expectError {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), "choosing instance for platform")
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedSize, specificImages.Size())
+			for _, expectedDigest := range tt.expectedDigests {
+				assert.True(t, specificImages.Contains(expectedDigest))
+			}
+		})
+	}
 }

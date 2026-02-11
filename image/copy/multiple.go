@@ -19,6 +19,7 @@ import (
 	"go.podman.io/image/v5/internal/set"
 	"go.podman.io/image/v5/manifest"
 	"go.podman.io/image/v5/pkg/compression"
+	"go.podman.io/image/v5/types"
 )
 
 type instanceCopyKind int
@@ -104,7 +105,7 @@ func prepareInstanceCopies(list internalManifest.List, instanceDigests []digest.
 	res := []instanceCopy{}
 	if options.ImageListSelection == CopySpecificImages && len(options.EnsureCompressionVariantsExist) > 0 {
 		// List can already contain compressed instance for a compression selected in `EnsureCompressionVariantsExist`
-		// It’s unclear what it means when `CopySpecificImages` includes an instance in options.Instances,
+		// It's unclear what it means when `CopySpecificImages` includes an instance in options.Instances,
 		// EnsureCompressionVariantsExist asks for an instance with some compression,
 		// an instance with that compression already exists, but is not included in options.Instances.
 		// We might define the semantics and implement this in the future.
@@ -118,9 +119,19 @@ func prepareInstanceCopies(list internalManifest.List, instanceDigests []digest.
 	if err != nil {
 		return nil, err
 	}
+
+	// Determine which specific images to copy (combining digest-based and platform-based selection)
+	var specificImages *set.Set[digest.Digest]
+	if options.ImageListSelection == CopySpecificImages {
+		specificImages, err = determineSpecificImages(options, list)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	for i, instanceDigest := range instanceDigests {
 		if options.ImageListSelection == CopySpecificImages &&
-			!slices.Contains(options.Instances, instanceDigest) {
+			!specificImages.Contains(instanceDigest) {
 			logrus.Debugf("Skipping instance %s (%d/%d)", instanceDigest, i+1, len(instanceDigests))
 			continue
 		}
@@ -155,6 +166,35 @@ func prepareInstanceCopies(list internalManifest.List, instanceDigests []digest.
 		}
 	}
 	return res, nil
+}
+
+// determineSpecificImages returns a set of images to copy based on the
+// Instances and InstancePlatforms fields of the passed-in options structure
+func determineSpecificImages(options *Options, updatedList internalManifest.List) (*set.Set[digest.Digest], error) {
+	// Start with the instances that were listed by digest.
+	specificImages := set.New[digest.Digest]()
+	for _, instanceDigest := range options.Instances {
+		specificImages.Add(instanceDigest)
+	}
+
+	if len(options.InstancePlatforms) > 0 {
+		// Choose the best match for each platform we were asked to
+		// also copy, and add it to the set of instances to copy.
+		for _, platform := range options.InstancePlatforms {
+			platformContext := types.SystemContext{
+				OSChoice:           platform.OS,
+				ArchitectureChoice: platform.Architecture,
+				VariantChoice:      platform.Variant,
+			}
+			instanceDigest, err := updatedList.ChooseInstanceByCompression(&platformContext, options.PreferGzipInstances)
+			if err != nil {
+				return nil, fmt.Errorf("choosing instance for platform spec %v: %w", platform, err)
+			}
+			specificImages.Add(instanceDigest)
+		}
+	}
+
+	return specificImages, nil
 }
 
 // copyMultipleImages copies some or all of an image list's instances, using
