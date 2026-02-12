@@ -12,20 +12,20 @@ import (
 	"strings"
 	"time"
 
+	"github.com/containers/common/pkg/config"
+	registryTransport "github.com/containers/image/v5/docker"
+	dockerArchiveTransport "github.com/containers/image/v5/docker/archive"
+	dockerDaemonTransport "github.com/containers/image/v5/docker/daemon"
+	"github.com/containers/image/v5/docker/reference"
+	ociArchiveTransport "github.com/containers/image/v5/oci/archive"
+	ociTransport "github.com/containers/image/v5/oci/layout"
+	"github.com/containers/image/v5/pkg/shortnames"
+	storageTransport "github.com/containers/image/v5/storage"
+	"github.com/containers/image/v5/transports/alltransports"
+	"github.com/containers/image/v5/types"
+	"github.com/containers/storage"
 	ociSpec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
-	"go.podman.io/common/pkg/config"
-	registryTransport "go.podman.io/image/v5/docker"
-	dockerArchiveTransport "go.podman.io/image/v5/docker/archive"
-	dockerDaemonTransport "go.podman.io/image/v5/docker/daemon"
-	"go.podman.io/image/v5/docker/reference"
-	ociArchiveTransport "go.podman.io/image/v5/oci/archive"
-	ociTransport "go.podman.io/image/v5/oci/layout"
-	"go.podman.io/image/v5/pkg/shortnames"
-	storageTransport "go.podman.io/image/v5/storage"
-	"go.podman.io/image/v5/transports/alltransports"
-	"go.podman.io/image/v5/types"
-	"go.podman.io/storage"
 )
 
 // PullOptions allows for customizing image pulls.
@@ -253,8 +253,8 @@ func (r *Runtime) copyFromDefault(ctx context.Context, ref types.ImageReference,
 		storageName = imageName
 
 	case ociTransport.Transport.Name():
-		_, refName, ok := strings.Cut(ref.StringWithinTransport(), ":")
-		if !ok || refName == "" {
+		split := strings.SplitN(ref.StringWithinTransport(), ":", 2)
+		if len(split) == 1 || split[1] == "" {
 			// Same trick as for the dir transport: we cannot use
 			// the path to a directory as the name.
 			storageName, err = getImageID(ctx, ref, nil)
@@ -263,7 +263,7 @@ func (r *Runtime) copyFromDefault(ctx context.Context, ref types.ImageReference,
 			}
 			imageName = "sha256:" + storageName[1:]
 		} else { // If the OCI-reference includes an image reference, use it
-			storageName = refName
+			storageName = split[1]
 			imageName = storageName
 		}
 
@@ -501,6 +501,18 @@ func (r *Runtime) copySingleImageFromRegistry(ctx context.Context, imageName str
 		}
 	}
 
+	// Images prefixed with "localhost/" (without a port) are local-only by
+	// convention and cannot be pulled from a remote registry.  Return the
+	// local image if available, or an error if not found, without ever
+	// attempting a network pull (see containers/podman/issues/28038).
+	if isLocalhostImage(imageName) {
+		if localImage != nil {
+			logrus.Debugf("Image %s is a localhost image, returning local image", imageName)
+			return localImage, nil
+		}
+		return nil, fmt.Errorf("%s: %w", imageName, storage.ErrImageUnknown)
+	}
+
 	customPlatform := len(options.Architecture)+len(options.OS)+len(options.Variant) > 0
 	if customPlatform && pullPolicy != config.PullPolicyAlways && pullPolicy != config.PullPolicyNever {
 		// Unless the pull policy is always/never, we must
@@ -658,4 +670,12 @@ func (r *Runtime) copySingleImageFromRegistry(ctx context.Context, imageName str
 	}
 
 	return nil, resolved.FormatPullErrors(pullErrors)
+}
+
+// isLocalhostImage returns true if the image name refers to a localhost-only
+// image (i.e., prefixed with "localhost/" but without a port number).
+// Images with "localhost:PORT/" are actual registry references and should
+// not be treated as local-only.
+func isLocalhostImage(name string) bool {
+	return strings.HasPrefix(name, "localhost/")
 }
