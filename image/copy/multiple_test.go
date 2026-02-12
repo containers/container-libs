@@ -187,7 +187,6 @@ func TestDetermineSpecificImages(t *testing.T) {
 		name              string
 		instances         []digest.Digest
 		instancePlatforms []imgspecv1.Platform
-		expectedSize      int
 		expectedDigests   []digest.Digest
 		expectError       bool
 	}{
@@ -196,13 +195,11 @@ func TestDetermineSpecificImages(t *testing.T) {
 			instancePlatforms: []imgspecv1.Platform{
 				{OS: "linux", Architecture: "ppc64le"},
 			},
-			expectedSize:    1,
 			expectedDigests: []digest.Digest{ppc64leDigest},
 		},
 		{
 			name:            "DigestOnly",
 			instances:       []digest.Digest{amd64Digest},
-			expectedSize:    1,
 			expectedDigests: []digest.Digest{amd64Digest},
 		},
 		{
@@ -211,7 +208,6 @@ func TestDetermineSpecificImages(t *testing.T) {
 			instancePlatforms: []imgspecv1.Platform{
 				{OS: "linux", Architecture: "amd64"},
 			},
-			expectedSize:    2,
 			expectedDigests: []digest.Digest{ppc64leDigest, amd64Digest},
 		},
 		{
@@ -238,10 +234,12 @@ func TestDetermineSpecificImages(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, tt.expectedSize, specificImages.Size())
-			for _, expectedDigest := range tt.expectedDigests {
-				assert.True(t, specificImages.Contains(expectedDigest))
+			// Convert Set to slice for comparison
+			actualDigests := []digest.Digest{}
+			for d := range specificImages.All() {
+				actualDigests = append(actualDigests, d)
 			}
+			assert.ElementsMatch(t, tt.expectedDigests, actualDigests)
 		})
 	}
 }
