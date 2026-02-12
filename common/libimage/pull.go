@@ -12,20 +12,20 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containers/common/pkg/config"
-	registryTransport "github.com/containers/image/v5/docker"
-	dockerArchiveTransport "github.com/containers/image/v5/docker/archive"
-	dockerDaemonTransport "github.com/containers/image/v5/docker/daemon"
-	"github.com/containers/image/v5/docker/reference"
-	ociArchiveTransport "github.com/containers/image/v5/oci/archive"
-	ociTransport "github.com/containers/image/v5/oci/layout"
-	"github.com/containers/image/v5/pkg/shortnames"
-	storageTransport "github.com/containers/image/v5/storage"
-	"github.com/containers/image/v5/transports/alltransports"
-	"github.com/containers/image/v5/types"
-	"github.com/containers/storage"
 	ociSpec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
+	"go.podman.io/common/pkg/config"
+	registryTransport "go.podman.io/image/v5/docker"
+	dockerArchiveTransport "go.podman.io/image/v5/docker/archive"
+	dockerDaemonTransport "go.podman.io/image/v5/docker/daemon"
+	"go.podman.io/image/v5/docker/reference"
+	ociArchiveTransport "go.podman.io/image/v5/oci/archive"
+	ociTransport "go.podman.io/image/v5/oci/layout"
+	"go.podman.io/image/v5/pkg/shortnames"
+	storageTransport "go.podman.io/image/v5/storage"
+	"go.podman.io/image/v5/transports/alltransports"
+	"go.podman.io/image/v5/types"
+	"go.podman.io/storage"
 )
 
 // PullOptions allows for customizing image pulls.
@@ -253,8 +253,8 @@ func (r *Runtime) copyFromDefault(ctx context.Context, ref types.ImageReference,
 		storageName = imageName
 
 	case ociTransport.Transport.Name():
-		split := strings.SplitN(ref.StringWithinTransport(), ":", 2)
-		if len(split) == 1 || split[1] == "" {
+		_, refName, ok := strings.Cut(ref.StringWithinTransport(), ":")
+		if !ok || refName == "" {
 			// Same trick as for the dir transport: we cannot use
 			// the path to a directory as the name.
 			storageName, err = getImageID(ctx, ref, nil)
@@ -263,7 +263,7 @@ func (r *Runtime) copyFromDefault(ctx context.Context, ref types.ImageReference,
 			}
 			imageName = "sha256:" + storageName[1:]
 		} else { // If the OCI-reference includes an image reference, use it
-			storageName = split[1]
+			storageName = refName
 			imageName = storageName
 		}
 
