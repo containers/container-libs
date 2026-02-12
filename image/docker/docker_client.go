@@ -282,10 +282,7 @@ func newDockerClient(sys *types.SystemContext, registry, reference string) (*doc
 			return nil, fmt.Errorf("registry %s is blocked in %s or %s", reg.Prefix, sysregistriesv2.ConfigPath(sys), sysregistriesv2.ConfigDirPath(sys))
 		}
 		skipVerify = reg.Insecure
-		registryProxy, err = sysregistriesv2.ParseProxy(reg.Proxy)
-		if err != nil {
-			return nil, err
-		}
+		registryProxy = reg.Proxy
 	}
 	tlsClientConfig.InsecureSkipVerify = skipVerify
 
