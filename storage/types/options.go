@@ -509,39 +509,3 @@ func Options() (StoreOptions, error) {
 	defaultStoreOptionsOnce.Do(loadDefaultStoreOptions)
 	return defaultStoreOptions, loadDefaultStoreOptionsErr
 }
-
-// Save overwrites the tomlConfig in storage.conf with the given conf
-func Save(conf TomlConfig) error {
-	configFile, err := DefaultConfigFile()
-	if err != nil {
-		return err
-	}
-
-	if err = os.Remove(configFile); !os.IsNotExist(err) && err != nil {
-		return err
-	}
-
-	f, err := os.Create(configFile)
-	if err != nil {
-		return err
-	}
-
-	return toml.NewEncoder(f).Encode(conf)
-}
-
-// StorageConfig is used to retrieve the storage.conf toml in order to overwrite it
-func StorageConfig() (*TomlConfig, error) {
-	config := new(TomlConfig)
-
-	configFile, err := DefaultConfigFile()
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = toml.DecodeFile(configFile, &config)
-	if err != nil {
-		return nil, err
-	}
-
-	return config, nil
-}
