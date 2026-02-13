@@ -35,6 +35,7 @@ import (
 	"go.podman.io/storage/pkg/stringid"
 	"go.podman.io/storage/pkg/system"
 	"go.podman.io/storage/pkg/tarlog"
+	"go.podman.io/storage/pkg/terminablereader"
 	"go.podman.io/storage/pkg/truncindex"
 )
 
@@ -2619,7 +2620,8 @@ func applyDiff(layerOptions *LayerOptions, diff io.Reader, tarSplitFile *os.File
 		if err != nil {
 			return -1, err
 		}
-		defer uncompressed.Close()
+		var uncompressed_reader = terminablereader.NewTerminableReader(uncompressed)
+		defer uncompressed_reader.Terminate(errors.New("Reading data from an already terminated stream"))
 		idLogger, err := tarlog.NewLogger(func(h *tar.Header) {
 			if !strings.HasPrefix(path.Base(h.Name), archive.WhiteoutPrefix) {
 				uidLog[uint32(h.Uid)] = struct{}{}
@@ -2635,7 +2637,7 @@ func applyDiff(layerOptions *LayerOptions, diff io.Reader, tarSplitFile *os.File
 		if uncompressedDigester != nil {
 			uncompressedWriter = io.MultiWriter(uncompressedWriter, uncompressedDigester.Hash())
 		}
-		payload, err := asm.NewInputTarStream(io.TeeReader(uncompressed, uncompressedWriter), metadata, storage.NewDiscardFilePutter())
+		payload, err := asm.NewInputTarStream(io.TeeReader(uncompressed_reader, uncompressedWriter), metadata, storage.NewDiscardFilePutter())
 		if err != nil {
 			return -1, err
 		}
