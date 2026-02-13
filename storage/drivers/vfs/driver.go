@@ -1,3 +1,8 @@
+// Package vfs implements the VFS storage driver for container images.
+// It copies directories to create layers, attempting reflinks (FICLONE) first
+// for efficient copy-on-write on supporting filesystems, then falling back to
+// copy_file_range and regular copying. This provides maximum filesystem
+// compatibility while achieving storage efficiency on reflink-capable filesystems.
 package vfs
 
 import (

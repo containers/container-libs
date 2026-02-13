@@ -1,5 +1,10 @@
 //go:build linux || freebsd
 
+// Package zfs implements the ZFS storage driver for container images.
+// It uses ZFS datasets and clones for copy-on-write semantics. Each layer
+// is stored as a dataset under the parent specified by zfs.fsname, with
+// child layers created by snapshotting and cloning. Datasets use
+// mountpoint=legacy so containers-storage controls mount operations.
 package zfs
 
 import (
