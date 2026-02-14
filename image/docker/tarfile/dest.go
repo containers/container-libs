@@ -18,6 +18,7 @@ type Destination struct {
 }
 
 // NewDestination returns a tarfile.Destination for the specified io.Writer.
+//
 // Deprecated: please use NewDestinationWithContext instead
 func NewDestination(dest io.Writer, ref reference.NamedTagged) *Destination {
 	return NewDestinationWithContext(nil, dest, ref)

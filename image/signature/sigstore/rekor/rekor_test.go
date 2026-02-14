@@ -96,7 +96,7 @@ func Test_rekorUploadKeyOrCert(t *testing.T) {
 	require.NoError(t, err)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cl := newRekorClient(u)
+			cl := newRekorClient(u, nil)
 
 			signatureBytes, err := base64.StdEncoding.DecodeString(tt.args.signatureBase64)
 			require.NoError(t, err)

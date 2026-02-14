@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.podman.io/common/pkg/config"
 	"go.podman.io/image/v5/pkg/compression"
-	"go.podman.io/image/v5/types"
 )
 
 func TestPush(t *testing.T) {
@@ -99,7 +98,7 @@ func TestPushOtherPlatform(t *testing.T) {
 }
 
 func TestPushWithForceCompression(t *testing.T) {
-	runtime := testNewRuntime(t)
+	runtime := testNewRuntime(t, testNewRuntimeOptions{dirForceDecompress: true})
 	ctx := context.Background()
 
 	// Prefetch alpine.
@@ -116,8 +115,6 @@ func TestPushWithForceCompression(t *testing.T) {
 
 	// Push newly pulled alpine to directory with uncompressed blobs
 	pushOptions := &PushOptions{}
-	pushOptions.SystemContext = &types.SystemContext{}
-	pushOptions.SystemContext.DirForceDecompress = true
 	pushOptions.Writer = os.Stdout
 	dirDest := t.TempDir()
 	_, err = runtime.Push(ctx, "quay.io/libpod/alpine:latest", "dir:"+dirDest, pushOptions)

@@ -24,6 +24,7 @@ func TestMain(m *testing.M) {
 
 type testNewRuntimeOptions struct {
 	registriesConfPath string
+	dirForceDecompress bool
 }
 
 // Create a new Runtime that can be used for testing.
@@ -41,8 +42,13 @@ func testNewRuntime(t *testing.T, options ...testNewRuntimeOptions) *Runtime {
 		SystemRegistriesConfDirPath: "/dev/null",
 	}
 
-	if len(options) == 1 && options[0].registriesConfPath != "" {
-		systemContext.SystemRegistriesConfPath = options[0].registriesConfPath
+	if len(options) == 1 {
+		if options[0].registriesConfPath != "" {
+			systemContext.SystemRegistriesConfPath = options[0].registriesConfPath
+		}
+		if options[0].dirForceDecompress {
+			systemContext.DirForceDecompress = true
+		}
 	}
 
 	runtime, err := RuntimeFromStoreOptions(&RuntimeOptions{SystemContext: systemContext}, storeOptions)
