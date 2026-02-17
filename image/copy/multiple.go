@@ -100,37 +100,43 @@ func validateCompressionVariantExists(input []OptionCompressionVariant) error {
 }
 
 // prepareInstanceCopies prepares a list of instances which needs to copied to the manifest list.
-func prepareInstanceCopies(list internalManifest.List, instanceDigests []digest.Digest, options *Options) ([]instanceCopy, error) {
+// It returns the list of instances to copy and a list of instance indices to delete (if stripping sparse manifests).
+func prepareInstanceCopies(list internalManifest.List, instanceDigests []digest.Digest, options *Options) ([]instanceCopy, []int, error) {
 	res := []instanceCopy{}
+	indicesToDelete := []int{}
 	if options.ImageListSelection == CopySpecificImages && len(options.EnsureCompressionVariantsExist) > 0 {
 		// List can already contain compressed instance for a compression selected in `EnsureCompressionVariantsExist`
-		// It’s unclear what it means when `CopySpecificImages` includes an instance in options.Instances,
+		// It's unclear what it means when `CopySpecificImages` includes an instance in options.Instances,
 		// EnsureCompressionVariantsExist asks for an instance with some compression,
 		// an instance with that compression already exists, but is not included in options.Instances.
 		// We might define the semantics and implement this in the future.
-		return res, fmt.Errorf("EnsureCompressionVariantsExist is not implemented for CopySpecificImages")
+		return res, indicesToDelete, fmt.Errorf("EnsureCompressionVariantsExist is not implemented for CopySpecificImages")
 	}
 	err := validateCompressionVariantExists(options.EnsureCompressionVariantsExist)
 	if err != nil {
-		return res, err
+		return res, indicesToDelete, err
 	}
 	compressionsByPlatform, err := platformCompressionMap(list, instanceDigests)
 	if err != nil {
-		return nil, err
+		return nil, indicesToDelete, err
 	}
 	for i, instanceDigest := range instanceDigests {
 		if options.ImageListSelection == CopySpecificImages &&
 			!slices.Contains(options.Instances, instanceDigest) {
 			logrus.Debugf("Skipping instance %s (%d/%d)", instanceDigest, i+1, len(instanceDigests))
+			// Track this index for deletion if we're stripping sparse manifests
+			if options.SparseManifestListAction == StripSparseManifestList {
+				indicesToDelete = append(indicesToDelete, i)
+			}
 			continue
 		}
 		instanceDetails, err := list.Instance(instanceDigest)
 		if err != nil {
-			return res, fmt.Errorf("getting details for instance %s: %w", instanceDigest, err)
+			return res, indicesToDelete, fmt.Errorf("getting details for instance %s: %w", instanceDigest, err)
 		}
 		forceCompressionFormat, err := shouldRequireCompressionFormatMatch(options)
 		if err != nil {
-			return nil, err
+			return nil, indicesToDelete, err
 		}
 		res = append(res, instanceCopy{
 			op:                         instanceCopyCopy,
@@ -149,12 +155,12 @@ func prepareInstanceCopies(list internalManifest.List, instanceDigests []digest.
 					clonePlatform:           instanceDetails.ReadOnly.Platform,
 					cloneAnnotations:        maps.Clone(instanceDetails.ReadOnly.Annotations),
 				})
-				// add current compression to the list so that we don’t create duplicate clones
+				// add current compression to the list so that we don't create duplicate clones
 				compressionList.Add(compressionVariant.Algorithm.Name())
 			}
 		}
 	}
-	return res, nil
+	return res, indicesToDelete, nil
 }
 
 // copyMultipleImages copies some or all of an image list's instances, using
@@ -230,7 +236,7 @@ func (c *copier) copyMultipleImages(ctx context.Context) (copiedManifest []byte,
 	// Copy each image, or just the ones we want to copy, in turn.
 	instanceDigests := updatedList.Instances()
 	instanceEdits := []internalManifest.ListEdit{}
-	instanceCopyList, err := prepareInstanceCopies(updatedList, instanceDigests, c.options)
+	instanceCopyList, indicesToDelete, err := prepareInstanceCopies(updatedList, instanceDigests, c.options)
 	if err != nil {
 		return nil, fmt.Errorf("preparing instances for copy: %w", err)
 	}
@@ -284,44 +290,18 @@ func (c *copier) copyMultipleImages(ctx context.Context) (copiedManifest []byte,
 		}
 	}
 
-	// Now reset the digest/size/types of the manifests in the list to account for any conversions that we made.
-	if err = updatedList.EditInstances(instanceEdits, cannotModifyManifestListReason != ""); err != nil {
-		return nil, fmt.Errorf("updating manifest list: %w", err)
+	// Add delete operations for skipped instances if stripping sparse manifests
+	// Delete from highest to lowest index to avoid shifting
+	for i := range slices.Backward(indicesToDelete) {
+		instanceEdits = append(instanceEdits, internalManifest.ListEdit{
+			ListOperation: internalManifest.ListOpDelete,
+			DeleteIndex:   indicesToDelete[i],
+		})
 	}
 
-	// Remove skipped instances from the manifest list if StripSparseManifestList is enabled
-	if c.options.ImageListSelection == CopySpecificImages && c.options.SparseManifestListAction == StripSparseManifestList {
-		// Build a set of digests that were copied
-		copiedDigests := set.New[digest.Digest]()
-		for _, instance := range instanceCopyList {
-			copiedDigests.Add(instance.sourceDigest)
-		}
-
-		// Find which indices were skipped
-		var indicesToDelete []int
-		for i, instanceDigest := range instanceDigests {
-			if !copiedDigests.Contains(instanceDigest) {
-				indicesToDelete = append(indicesToDelete, i)
-			}
-		}
-
-		// Build delete operations for skipped instances
-		// Delete from highest to lowest index to avoid shifting
-		var deleteEdits []internalManifest.ListEdit
-		for i := len(indicesToDelete) - 1; i >= 0; i-- {
-			deleteEdits = append(deleteEdits, internalManifest.ListEdit{
-				ListOperation: internalManifest.ListOpDelete,
-				DeleteIndex:   indicesToDelete[i],
-			})
-		}
-
-		// Remove skipped instances from the manifest list using EditInstances
-		if len(deleteEdits) > 0 {
-			logrus.Debugf("Removing %d instances from manifest list", len(deleteEdits))
-			if err := updatedList.EditInstances(deleteEdits, false); err != nil {
-				return nil, fmt.Errorf("stripping sparse manifest list: %w", err)
-			}
-		}
+	// Now reset the digest/size/types of the manifests in the list and remove deleted instances.
+	if err = updatedList.EditInstances(instanceEdits, cannotModifyManifestListReason != ""); err != nil {
+		return nil, fmt.Errorf("updating manifest list: %w", err)
 	}
 
 	// Iterate through supported list types, preferred format first.

@@ -111,6 +111,9 @@ type Options struct {
 	ForceManifestMIMEType string
 	ImageListSelection    ImageListSelection // set to either CopySystemImage (the default), CopyAllImages, or CopySpecificImages to control which instances we copy when the source reference is a list; ignored if the source reference is not a list
 	Instances             []digest.Digest    // if ImageListSelection is CopySpecificImages, copy only these instances and the list itself
+	// When only a subset of images of a list is copied, this action indicates if the manifest should be kept or stripped.
+	// See CopySpecificImages.
+	SparseManifestListAction SparseManifestListAction
 	// Give priority to pulling gzip images if multiple images are present when configured to OptionalBoolTrue,
 	// prefers the best compression if this is configured as OptionalBoolFalse. Choose automatically (and the choice may change over time)
 	// if this is set to OptionalBoolUndefined (which is the default behavior, and recommended for most callers).
@@ -144,10 +147,6 @@ type Options struct {
 	// Download layer contents with "nondistributable" media types ("foreign" layers) and translate the layer media type
 	// to not indicate "nondistributable".
 	DownloadForeignLayers bool
-
-	// When only a subset of images of a list is copied, this action indicates if the manifest should be kept or stripped.
-	// See CopySpecificImages.
-	SparseManifestListAction SparseManifestListAction
 
 	// Contains slice of OptionCompressionVariant, where copy will ensure that for each platform
 	// in the manifest list, a variant with the requested compression will exist.

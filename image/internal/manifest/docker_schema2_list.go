@@ -136,8 +136,7 @@ func (list *Schema2ListPublic) editInstances(editInstances []ListEdit, cannotMod
 			if editInstance.DeleteIndex < 0 || editInstance.DeleteIndex >= len(list.Manifests) {
 				return fmt.Errorf("Schema2List.EditInstances: invalid delete index %d (list has %d instances)", editInstance.DeleteIndex, len(list.Manifests))
 			}
-			// Remove the element by appending slices before and after the target index
-			list.Manifests = append(list.Manifests[:editInstance.DeleteIndex], list.Manifests[editInstance.DeleteIndex+1:]...)
+			list.Manifests = slices.Delete(list.Manifests, editInstance.DeleteIndex, editInstance.DeleteIndex+1)
 		default:
 			return fmt.Errorf("internal error: invalid operation: %d", editInstance.ListOperation)
 		}
