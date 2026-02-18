@@ -1,0 +1,8 @@
+minVersion: "1.2"
+cipherSuites:
+  - "TLS_AES_128_GCM_SHA256"
+  - "TLS_CHACHA20_POLY1305_SHA256"
+namedGroups:
+  - "secp256r1"
+  - "secp384r1"
+  - "x25519"

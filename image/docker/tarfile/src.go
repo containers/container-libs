@@ -16,6 +16,7 @@ type Source struct {
 }
 
 // NewSourceFromFile returns a tarfile.Source for the specified path.
+//
 // Deprecated: Please use NewSourceFromFileWithContext which will allows you to configure temp directory
 // for big files through SystemContext.BigFilesTemporaryDir
 func NewSourceFromFile(path string) (*Source, error) {
@@ -35,6 +36,7 @@ func NewSourceFromFileWithContext(sys *types.SystemContext, path string) (*Sourc
 // NewSourceFromStream returns a tarfile.Source for the specified inputStream,
 // which can be either compressed or uncompressed. The caller can close the
 // inputStream immediately after NewSourceFromFile returns.
+//
 // Deprecated: Please use NewSourceFromStreamWithSystemContext which will allows you to configure
 // temp directory for big files through SystemContext.BigFilesTemporaryDir
 func NewSourceFromStream(inputStream io.Reader) (*Source, error) {
