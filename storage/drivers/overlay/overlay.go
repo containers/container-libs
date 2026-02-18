@@ -1243,17 +1243,20 @@ func (d *Driver) dir2(id string, useImageStore bool) (string, string, bool) {
 	if useImageStore {
 		homedir = d.homeDirForImageStore()
 	}
-	newpath := path.Join(homedir, id)
+	// If id contains a subpath (e.g. "layer-id/diff"), split it so
+	// the image store lookup is done on the layer directory alone.
+	layerID, suffix, _ := strings.Cut(id, "/")
+	newpath := path.Join(homedir, layerID)
 	if err := fileutils.Exists(newpath); err != nil {
 		for _, p := range d.getAllImageStores() {
-			l := path.Join(p, d.name, id)
+			l := path.Join(p, d.name, layerID)
 			err = fileutils.Exists(l)
 			if err == nil {
-				return l, homedir, true
+				return filepath.Join(l, suffix), homedir, true
 			}
 		}
 	}
-	return newpath, homedir, false
+	return filepath.Join(newpath, suffix), homedir, false
 }
 
 func (d *Driver) getLowerDirs(id string) ([]string, error) {
