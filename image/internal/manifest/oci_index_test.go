@@ -228,6 +228,29 @@ func TestOCI1EditInstances(t *testing.T) {
 			assert.Equal(t, originalInstance, instance)
 		}
 	}
+
+	// Create a fresh list for delete tests
+	list, err = ListFromBlob(validManifest, GuessMIMEType(validManifest))
+	require.NoError(t, err)
+	originalInstances := list.Instances()
+	require.GreaterOrEqual(t, len(originalInstances), 1)
+
+	// Test successful deletion of first instance
+	err = list.EditInstances([]ListEdit{{
+		ListOperation: ListOpDelete,
+		DeleteIndex:   0,
+	}}, false)
+	require.NoError(t, err)
+	assert.Equal(t, len(originalInstances)-1, len(list.Instances()))
+	assert.Equal(t, originalInstances[1:], list.Instances())
+
+	// Test error on invalid index
+	err = list.EditInstances([]ListEdit{{
+		ListOperation: ListOpDelete,
+		DeleteIndex:   999,
+	}}, false)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid delete index")
 }
 
 func TestOCI1IndexChooseInstanceByCompression(t *testing.T) {

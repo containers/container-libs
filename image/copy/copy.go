@@ -71,6 +71,22 @@ const (
 // specific images from the source reference.
 type ImageListSelection int
 
+const (
+	// KeepSparseManifestList is the default value which, when set in
+	// Options.SparseManifestListAction, indicates that the manifest is kept
+	// as is even though some images from the list may be missing. Some
+	// registries may not support this.
+	KeepSparseManifestList SparseManifestListAction = iota
+
+	// StripSparseManifestList will strip missing images from the manifest
+	// list. When images are stripped the digest will differ from the original.
+	StripSparseManifestList
+)
+
+// SparseManifestListAction is one of KeepSparseManifestList or StripSparseManifestList
+// to control the behavior when only a subset of images from a manifest list is copied
+type SparseManifestListAction int
+
 // Options allows supplying non-default configuration modifying the behavior of CopyImage.
 type Options struct {
 	RemoveSignatures bool // Remove any pre-existing signatures. Signers and SignBy… will still add a new signature.
@@ -95,6 +111,9 @@ type Options struct {
 	ForceManifestMIMEType string
 	ImageListSelection    ImageListSelection // set to either CopySystemImage (the default), CopyAllImages, or CopySpecificImages to control which instances we copy when the source reference is a list; ignored if the source reference is not a list
 	Instances             []digest.Digest    // if ImageListSelection is CopySpecificImages, copy only these instances and the list itself
+	// When only a subset of images of a list is copied, this action indicates if the manifest should be kept or stripped.
+	// See CopySpecificImages.
+	SparseManifestListAction SparseManifestListAction
 	// Give priority to pulling gzip images if multiple images are present when configured to OptionalBoolTrue,
 	// prefers the best compression if this is configured as OptionalBoolFalse. Choose automatically (and the choice may change over time)
 	// if this is set to OptionalBoolUndefined (which is the default behavior, and recommended for most callers).
