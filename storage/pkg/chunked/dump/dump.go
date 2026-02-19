@@ -3,12 +3,14 @@
 package dump
 
 import (
+	"archive/tar"
 	"bufio"
 	"encoding/base64"
 	"fmt"
 	"io"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/opencontainers/go-digest"
@@ -268,4 +270,55 @@ func GenerateDump(tocI any, verityDigests map[string]string) (io.Reader, error) 
 		}
 	}()
 	return pipeR, nil
+}
+
+const paxSchilyXattr = "SCHILY.xattr."
+
+// GenerateDumpFromTarHeaders generates a composefs dump from stdlib tar headers,
+// content digests, and verity digests.  It converts the tar headers to
+// minimal.FileMetadata entries internally and delegates to GenerateDump.
+func GenerateDumpFromTarHeaders(headers []*tar.Header, contentDigests, verityDigests map[string]string) (io.Reader, error) {
+	var entries []minimal.FileMetadata
+	for _, hdr := range headers {
+		entry, err := fileMetadataFromTarHeader(hdr)
+		if err != nil {
+			return nil, err
+		}
+		if d, ok := contentDigests[hdr.Name]; ok {
+			entry.Digest = d
+		}
+		entries = append(entries, entry)
+	}
+	toc := &minimal.TOC{Version: 1, Entries: entries}
+	return GenerateDump(toc, verityDigests)
+}
+
+// fileMetadataFromTarHeader creates a minimal.FileMetadata from a stdlib tar.Header.
+func fileMetadataFromTarHeader(hdr *tar.Header) (minimal.FileMetadata, error) {
+	typ, err := minimal.GetType(hdr.Typeflag)
+	if err != nil {
+		return minimal.FileMetadata{}, err
+	}
+	xattrs := make(map[string]string)
+	for k, v := range hdr.PAXRecords {
+		xattrKey, ok := strings.CutPrefix(k, paxSchilyXattr)
+		if !ok {
+			continue
+		}
+		xattrs[xattrKey] = base64.StdEncoding.EncodeToString([]byte(v))
+	}
+	modTime := hdr.ModTime
+	return minimal.FileMetadata{
+		Type:     typ,
+		Name:     hdr.Name,
+		Linkname: hdr.Linkname,
+		Mode:     hdr.Mode,
+		Size:     hdr.Size,
+		UID:      hdr.Uid,
+		GID:      hdr.Gid,
+		ModTime:  &modTime,
+		Devmajor: hdr.Devmajor,
+		Devminor: hdr.Devminor,
+		Xattrs:   xattrs,
+	}, nil
 }
