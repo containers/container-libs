@@ -1,5 +1,9 @@
 //go:build linux
 
+// Package overlay implements the overlay storage driver for container images.
+// It uses Linux OverlayFS to provide copy-on-write semantics, allowing efficient
+// storage sharing between image layers. When enabled, composefs can be used as
+// an optional mode for enhanced integrity verification of container images.
 package overlay
 
 import (
