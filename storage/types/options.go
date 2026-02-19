@@ -19,7 +19,7 @@ import (
 type TomlConfig struct {
 	Storage struct {
 		Driver              string            `toml:"driver,omitempty"`
-		DriverPriority      []string          `toml:"driver_priority,omitempty"`
+		DriverPriority      configfile.Slice  `toml:"driver_priority,omitempty"`
 		RunRoot             string            `toml:"runroot,omitempty"`
 		ImageStore          string            `toml:"imagestore,omitempty"`
 		GraphRoot           string            `toml:"graphroot,omitempty"`
@@ -162,7 +162,7 @@ func LoadStoreOptions(opts LoadOptions) (StoreOptions, error) {
 		logrus.Warnf("Switching default driver from overlay2 to the equivalent overlay driver")
 		storeOptions.GraphDriverName = overlayDriver
 	}
-	storeOptions.GraphDriverPriority = config.Storage.DriverPriority
+	storeOptions.GraphDriverPriority = config.Storage.DriverPriority.Values
 	if storeOptions.GraphDriverName == "" && len(storeOptions.GraphDriverPriority) == 0 {
 		logrus.Warn("The storage 'driver' option should be set in storage.conf. A driver was picked automatically")
 	}
@@ -171,10 +171,10 @@ func LoadStoreOptions(opts LoadOptions) (StoreOptions, error) {
 		storeOptions.ImageStore = config.Storage.ImageStore
 	}
 
-	for _, s := range config.Storage.Options.AdditionalImageStores {
+	for _, s := range config.Storage.Options.AdditionalImageStores.Values {
 		storeOptions.GraphDriverOptions = append(storeOptions.GraphDriverOptions, fmt.Sprintf("%s.imagestore=%s", config.Storage.Driver, s))
 	}
-	for _, s := range config.Storage.Options.AdditionalLayerStores {
+	for _, s := range config.Storage.Options.AdditionalLayerStores.Values {
 		storeOptions.GraphDriverOptions = append(storeOptions.GraphDriverOptions, fmt.Sprintf("%s.additionallayerstore=%s", config.Storage.Driver, s))
 	}
 	if config.Storage.Options.Size != "" {
