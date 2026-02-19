@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 	"os"
+
+	"go.podman.io/storage/pkg/configfile"
 )
 
 type BtrfsOptionsConfig struct {
@@ -53,7 +55,7 @@ type OptionsConfig struct {
 	// AdditionalImagesStores is the location of additional read/only
 	// Image stores.  Usually used to access Networked File System
 	// for shared image content
-	AdditionalImageStores []string `toml:"additionalimagestores,omitempty"`
+	AdditionalImageStores configfile.Slice `toml:"additionalimagestores,omitempty"`
 
 	// ImageStore is the location of image store which is separated from the
 	// container store. Usually this is not recommended unless users wants
@@ -65,7 +67,7 @@ type OptionsConfig struct {
 	// for shared image content
 	// This API is experimental and can be changed without bumping the
 	// major version number.
-	AdditionalLayerStores []string `toml:"additionallayerstores,omitempty"`
+	AdditionalLayerStores configfile.Slice `toml:"additionallayerstores,omitempty"`
 
 	// Size
 	Size string `toml:"size,omitempty"`
