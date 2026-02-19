@@ -22,6 +22,10 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+const (
+	freebsd = "freebsd"
+)
+
 func TestCanonicalTarNameForPath(t *testing.T) {
 	cases := []struct{ in, expected string }{
 		{"foo", "foo"},

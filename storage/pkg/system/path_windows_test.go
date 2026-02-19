@@ -8,7 +8,7 @@ import "testing"
 func TestCheckSystemDriveAndRemoveDriveLetter(t *testing.T) {
 	// Fails if not C drive.
 	path, err := CheckSystemDriveAndRemoveDriveLetter(`d:\`)
-	if err == nil || (err != nil && err.Error() != "The specified path is not on the system drive (C:)") {
+	if err == nil || err.Error() != "The specified path is not on the system drive (C:)" {
 		t.Fatalf("Expected error for d:")
 	}
 

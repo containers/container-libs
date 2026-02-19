@@ -1,5 +1,5 @@
 package archive
 
-func resetSymlinkTimes(path string) error {
+func resetSymlinkTimes(_ string) error {
 	return nil
 }

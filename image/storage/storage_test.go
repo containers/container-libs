@@ -630,7 +630,7 @@ func TestNamespaces(t *testing.T) {
 	for _, namespace := range namespaces {
 		t.Logf("namespace: %q", namespace)
 		err = Transport.ValidatePolicyConfigurationScope(namespace)
-		if ref == nil {
+		if err != nil {
 			t.Fatalf("ValidatePolicyConfigurationScope(%q) returned error: %v", namespace, err)
 		}
 	}

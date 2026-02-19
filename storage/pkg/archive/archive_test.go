@@ -20,6 +20,10 @@ import (
 	"go.podman.io/storage/pkg/idtools"
 )
 
+const (
+	solaris = "solaris"
+)
+
 var defaultArchiver = NewDefaultArchiver()
 
 func defaultTarUntar(src, dst string) error {
