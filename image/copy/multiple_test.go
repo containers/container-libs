@@ -12,7 +12,7 @@ import (
 	"go.podman.io/image/v5/pkg/compression"
 )
 
-// Test `instanceCopyCopy` cases.
+// Test `instanceOpCopy` cases.
 func TestPrepareCopyInstancesforInstanceCopyCopy(t *testing.T) {
 	validManifest, err := os.ReadFile(filepath.Join("..", "internal", "manifest", "testdata", "oci1.index.zstd-selection.json"))
 	require.NoError(t, err)
@@ -29,11 +29,11 @@ func TestPrepareCopyInstancesforInstanceCopyCopy(t *testing.T) {
 	instancesToCopy, indicesToDelete, err := prepareInstanceCopies(list, sourceInstances, &Options{})
 	require.NoError(t, err)
 	require.Empty(t, indicesToDelete)
-	compare := []instanceCopy{}
+	compare := []instanceOp{}
 
 	for _, instance := range sourceInstances {
-		compare = append(compare, instanceCopy{
-			op:           instanceCopyCopy,
+		compare = append(compare, instanceOp{
+			op:           instanceOpCopy,
 			sourceDigest: instance, copyForceCompressionFormat: false,
 		})
 	}
@@ -43,8 +43,8 @@ func TestPrepareCopyInstancesforInstanceCopyCopy(t *testing.T) {
 	instancesToCopy, indicesToDelete, err = prepareInstanceCopies(list, sourceInstances, &Options{Instances: []digest.Digest{sourceInstances[1]}, ImageListSelection: CopySpecificImages})
 	require.NoError(t, err)
 	require.Empty(t, indicesToDelete) // No stripping requested
-	compare = []instanceCopy{{
-		op:           instanceCopyCopy,
+	compare = []instanceOp{{
+		op:           instanceOpCopy,
 		sourceDigest: sourceInstances[1],
 	}}
 	assert.Equal(t, instancesToCopy, compare)
@@ -57,8 +57,8 @@ func TestPrepareCopyInstancesforInstanceCopyCopy(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, []int{0, 2}, indicesToDelete) // Should delete indices 0 and 2
-	compare = []instanceCopy{{
-		op:           instanceCopyCopy,
+	compare = []instanceOp{{
+		op:           instanceOpCopy,
 		sourceDigest: sourceInstances[1],
 	}}
 	assert.Equal(t, instancesToCopy, compare)
@@ -67,14 +67,14 @@ func TestPrepareCopyInstancesforInstanceCopyCopy(t *testing.T) {
 	require.EqualError(t, err, "cannot use ForceCompressionFormat with undefined default compression format")
 }
 
-// Test `instanceCopyClone` cases.
+// Test `instanceOpClone` cases.
 func TestPrepareCopyInstancesforInstanceCopyClone(t *testing.T) {
 	validManifest, err := os.ReadFile(filepath.Join("..", "internal", "manifest", "testdata", "oci1.index.zstd-selection.json"))
 	require.NoError(t, err)
 	list, err := internalManifest.ListFromBlob(validManifest, internalManifest.GuessMIMEType(validManifest))
 	require.NoError(t, err)
 
-	// Prepare option for `instanceCopyClone` case.
+	// Prepare option for `instanceOpClone` case.
 	ensureCompressionVariantsExist := []OptionCompressionVariant{{Algorithm: compression.Zstd}}
 
 	sourceInstances := []digest.Digest{
@@ -107,12 +107,12 @@ func TestPrepareCopyInstancesforInstanceCopyClone(t *testing.T) {
 	expectedResponse := []simplerInstanceCopy{}
 	for _, instance := range sourceInstances {
 		expectedResponse = append(expectedResponse, simplerInstanceCopy{
-			op:           instanceCopyCopy,
+			op:           instanceOpCopy,
 			sourceDigest: instance,
 		})
 		// If its `arm64` and sourceDigest[2] , expect a clone to happen
 		if instance == sourceInstances[2] {
-			expectedResponse = append(expectedResponse, simplerInstanceCopy{op: instanceCopyClone, sourceDigest: instance, cloneCompressionVariant: "zstd", clonePlatform: "arm64-linux-"})
+			expectedResponse = append(expectedResponse, simplerInstanceCopy{op: instanceOpClone, sourceDigest: instance, cloneCompressionVariant: "zstd", clonePlatform: "arm64-linux-"})
 		}
 	}
 	actualResponse := convertInstanceCopyToSimplerInstanceCopy(instancesToCopy)
@@ -127,12 +127,12 @@ func TestPrepareCopyInstancesforInstanceCopyClone(t *testing.T) {
 	expectedResponse = []simplerInstanceCopy{}
 	for _, instance := range sourceInstances {
 		expectedResponse = append(expectedResponse, simplerInstanceCopy{
-			op:           instanceCopyCopy,
+			op:           instanceOpCopy,
 			sourceDigest: instance,
 		})
 		// If its `arm64` and sourceDigest[2] , expect a clone to happen
 		if instance == sourceInstances[2] {
-			expectedResponse = append(expectedResponse, simplerInstanceCopy{op: instanceCopyClone, sourceDigest: instance, cloneCompressionVariant: "zstd", clonePlatform: "arm64-linux-"})
+			expectedResponse = append(expectedResponse, simplerInstanceCopy{op: instanceOpClone, sourceDigest: instance, cloneCompressionVariant: "zstd", clonePlatform: "arm64-linux-"})
 		}
 	}
 	actualResponse = convertInstanceCopyToSimplerInstanceCopy(instancesToCopy)
@@ -150,27 +150,27 @@ func TestPrepareCopyInstancesforInstanceCopyClone(t *testing.T) {
 	// two copies but clone should happen only once
 	numberOfCopyClone := 0
 	for _, instance := range instancesToCopy {
-		if instance.op == instanceCopyClone {
+		if instance.op == instanceOpClone {
 			numberOfCopyClone++
 		}
 	}
 	assert.Equal(t, 1, numberOfCopyClone)
 }
 
-// simpler version of `instanceCopy` for testing where fields are string
+// simpler version of `instanceOp` for testing where fields are string
 // instead of pointer
 type simplerInstanceCopy struct {
-	op           instanceCopyKind
+	op           instanceOpKind
 	sourceDigest digest.Digest
 
 	// Fields which can be used by callers when operation
-	// is `instanceCopyClone`
+	// is `instanceOpClone`
 	cloneCompressionVariant string
 	clonePlatform           string
 	cloneAnnotations        map[string]string
 }
 
-func convertInstanceCopyToSimplerInstanceCopy(copies []instanceCopy) []simplerInstanceCopy {
+func convertInstanceCopyToSimplerInstanceCopy(copies []instanceOp) []simplerInstanceCopy {
 	res := []simplerInstanceCopy{}
 	for _, instance := range copies {
 		compression := ""
