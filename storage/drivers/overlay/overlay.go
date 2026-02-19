@@ -2140,17 +2140,24 @@ func (g *overlayFileGetter) Get(path string) (io.ReadCloser, error) {
 	buf := make([]byte, unix.PathMax)
 	for _, d := range g.diffDirs {
 		if f, found := g.composefsMounts[d]; found {
-			// there is no *at equivalent for getxattr, but it can be emulated by opening the file under /proc/self/fd/$FD/$PATH
-			len, err := unix.Getxattr(fmt.Sprintf("/proc/self/fd/%d/%s", int(f.Fd()), path), "trusted.overlay.redirect", buf)
+			cfd, err := unix.Openat2(int(f.Fd()), path, &unix.OpenHow{
+				Flags:   unix.O_RDONLY | unix.O_CLOEXEC | unix.O_PATH,
+				Resolve: unix.RESOLVE_NO_SYMLINKS | unix.RESOLVE_BENEATH,
+			})
+			if err != nil {
+				continue
+			}
+			n, err := unix.Fgetxattr(cfd, "trusted.overlay.redirect", buf)
+			unix.Close(cfd)
 			if err != nil {
 				if errors.Is(err, unix.ENODATA) {
 					continue
 				}
-				return nil, &fs.PathError{Op: "getxattr", Path: path, Err: err}
+				return nil, &fs.PathError{Op: "fgetxattr", Path: path, Err: err}
 			}
 
 			// the xattr value is the path to the file in the composefs layer diff directory
-			return os.Open(filepath.Join(d, string(buf[:len])))
+			return os.Open(filepath.Join(d, string(buf[:n])))
 		}
 
 		f, err := os.Open(filepath.Join(d, path))
