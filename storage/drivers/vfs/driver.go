@@ -64,6 +64,19 @@ func Init(home string, options graphdriver.Options) (graphdriver.Driver, error) 
 			if err != nil {
 				return nil, err
 			}
+		case "vfs.sync", ".sync":
+			logrus.Debugf("vfs: sync=%s", val)
+			var err error
+			d.syncMode, err = graphdriver.ParseSyncMode(val)
+			if err != nil {
+				return nil, fmt.Errorf("invalid sync mode for vfs driver: %w", err)
+			}
+			// SyncModeNone and SyncModeFilesystem do not need any special handling because
+			// the vfs storage is always on the same file system as the metadata, thus the
+			// Syncfs() in layers.go cover also any file written by the vfs driver.
+			if d.syncMode != graphdriver.SyncModeNone && d.syncMode != graphdriver.SyncModeFilesystem {
+				return nil, fmt.Errorf("invalid mode for vfs driver: %q", val)
+			}
 		default:
 			return nil, fmt.Errorf("vfs driver does not support %s options", key)
 		}
@@ -84,6 +97,7 @@ type Driver struct {
 	home              string
 	additionalHomes   []string
 	ignoreChownErrors bool
+	syncMode          graphdriver.SyncMode
 	naiveDiff         graphdriver.DiffDriver
 	updater           graphdriver.LayerIDMapUpdater
 	imageStore        string
@@ -106,6 +120,11 @@ func (d *Driver) Metadata(id string) (map[string]string, error) {
 // Cleanup is used to implement graphdriver.ProtoDriver. There is no cleanup required for this driver.
 func (d *Driver) Cleanup() error {
 	return nil
+}
+
+// SyncMode returns the sync mode configured for the driver.
+func (d *Driver) SyncMode() graphdriver.SyncMode {
+	return d.syncMode
 }
 
 type fileGetNilCloser struct {
@@ -136,7 +155,12 @@ func (d *Driver) ApplyDiff(id string, options graphdriver.ApplyDiffOpts) (size i
 	if d.ignoreChownErrors {
 		options.IgnoreChownErrors = d.ignoreChownErrors
 	}
-	return d.naiveDiff.ApplyDiff(id, options)
+	size, err = d.naiveDiff.ApplyDiff(id, options)
+	if err != nil {
+		return 0, err
+	}
+
+	return size, nil
 }
 
 // CreateReadWrite creates a layer that is writable for use as a container

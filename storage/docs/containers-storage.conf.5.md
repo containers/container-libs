@@ -219,6 +219,16 @@ based file systems.
     Use ComposeFS to mount the data layers image.  ComposeFS support is experimental and not recommended for production use.
     This is a "string bool": "false"|"true" (cannot be native TOML boolean)
 
+**sync**="none|filesystem"
+  Filesystem synchronization mode for layer creation. (default: "none")
+
+- `none`: No synchronization.
+  Layer operations complete without calling syncfs().
+
+- `filesystem`: Sync before completion.
+  Flush all pending writes to the file system before marking the layer
+  as present.  This helps prevent data corruption if the system
+  crashes or loses power during layer operations.
 
 ### STORAGE OPTIONS FOR VFS TABLE
 
@@ -228,6 +238,16 @@ The `storage.options.vfs` table supports the following options:
   ignore_chown_errors can be set to allow a non privileged user running with a  single UID within a user namespace to run containers. The user can pull and use any image even those with multiple uids.  Note multiple UIDs will be squashed down to the default uid in the container.  These images will have no separation between the users in the container.
   This is a "string bool": "false"|"true" (cannot be native TOML boolean)
 
+**sync**=""
+  Filesystem synchronization mode for layer creation. (default: "")
+
+- `none`: No synchronization
+  Layer operations complete without calling syncfs().
+
+- `filesystem`: Sync before completion
+  Flush all pending writes to the file system before marking the layer
+  as present.  This helps prevent data corruption if the system
+  crashes or loses power during layer operations.
 
 ### STORAGE OPTIONS FOR ZFS TABLE
 
