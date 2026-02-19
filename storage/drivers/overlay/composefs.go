@@ -3,10 +3,12 @@
 package overlay
 
 import (
+	"archive/tar"
 	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -43,12 +45,23 @@ func getComposefsBlob(dataDir string) string {
 }
 
 func generateComposeFsBlob(verityDigests map[string]string, toc any, composefsDir string) error {
-	if err := os.MkdirAll(composefsDir, 0o700); err != nil {
-		return err
-	}
-
 	dumpReader, err := dump.GenerateDump(toc, verityDigests)
 	if err != nil {
+		return err
+	}
+	return writeComposeFsBlob(dumpReader, composefsDir)
+}
+
+func generateComposeFsBlobFromHeaders(headers []*tar.Header, contentDigests, verityDigests map[string]string, composefsDir string) error {
+	dumpReader, err := dump.GenerateDumpFromTarHeaders(headers, contentDigests, verityDigests)
+	if err != nil {
+		return err
+	}
+	return writeComposeFsBlob(dumpReader, composefsDir)
+}
+
+func writeComposeFsBlob(dumpReader io.Reader, composefsDir string) error {
+	if err := os.MkdirAll(composefsDir, 0o700); err != nil {
 		return err
 	}
 
