@@ -863,7 +863,11 @@ func (d *Driver) Cleanup() error {
 	if anyPresent {
 		return nil
 	}
-	return mount.Unmount(d.home)
+	// Ensure that we do not unmount anything not mounted by us
+	if !d.options.skipMountHome {
+		return mount.Unmount(d.home)
+	}
+	return nil
 }
 
 // pruneStagingDirectories cleans up any staging directory that was leaked.
