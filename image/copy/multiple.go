@@ -26,6 +26,7 @@ type instanceOpKind int
 const (
 	instanceOpCopy instanceOpKind = iota
 	instanceOpClone
+	instanceOpDelete
 )
 
 type instanceOp struct {
@@ -42,6 +43,10 @@ type instanceOp struct {
 	cloneCompressionVariant OptionCompressionVariant
 	clonePlatform           *imgspecv1.Platform
 	cloneAnnotations        map[string]string
+
+	// Fields which can be used by callers when operation
+	// is `instanceOpDelete`
+	deleteIndex int
 }
 
 // internal type only to make imgspecv1.Platform comparable
@@ -99,44 +104,47 @@ func validateCompressionVariantExists(input []OptionCompressionVariant) error {
 	return nil
 }
 
-// prepareInstanceCopies prepares a list of instances which needs to copied to the manifest list.
-// It returns the list of instances to copy and a list of instance indices to delete (if stripping sparse manifests).
-func prepareInstanceCopies(list internalManifest.List, instanceDigests []digest.Digest, options *Options) ([]instanceOp, []int, error) {
+// prepareInstanceCopies prepares a list of operations to perform on instances (copy, clone, or delete).
+// It returns a unified list of all operations.
+func prepareInstanceCopies(list internalManifest.List, instanceDigests []digest.Digest, options *Options) ([]instanceOp, error) {
 	res := []instanceOp{}
-	indicesToDelete := []int{}
+	deleteOps := []instanceOp{}
 	if options.ImageListSelection == CopySpecificImages && len(options.EnsureCompressionVariantsExist) > 0 {
 		// List can already contain compressed instance for a compression selected in `EnsureCompressionVariantsExist`
 		// It's unclear what it means when `CopySpecificImages` includes an instance in options.Instances,
 		// EnsureCompressionVariantsExist asks for an instance with some compression,
 		// an instance with that compression already exists, but is not included in options.Instances.
 		// We might define the semantics and implement this in the future.
-		return res, indicesToDelete, fmt.Errorf("EnsureCompressionVariantsExist is not implemented for CopySpecificImages")
+		return res, fmt.Errorf("EnsureCompressionVariantsExist is not implemented for CopySpecificImages")
 	}
 	err := validateCompressionVariantExists(options.EnsureCompressionVariantsExist)
 	if err != nil {
-		return res, indicesToDelete, err
+		return res, err
 	}
 	compressionsByPlatform, err := platformCompressionMap(list, instanceDigests)
 	if err != nil {
-		return nil, indicesToDelete, err
+		return nil, err
 	}
 	for i, instanceDigest := range instanceDigests {
 		if options.ImageListSelection == CopySpecificImages &&
 			!slices.Contains(options.Instances, instanceDigest) {
 			logrus.Debugf("Skipping instance %s (%d/%d)", instanceDigest, i+1, len(instanceDigests))
-			// Track this index for deletion if we're stripping sparse manifests
+			// Create delete operation if we're stripping sparse manifests
 			if options.SparseManifestListAction == StripSparseManifestList {
-				indicesToDelete = append(indicesToDelete, i)
+				deleteOps = append(deleteOps, instanceOp{
+					op:          instanceOpDelete,
+					deleteIndex: i,
+				})
 			}
 			continue
 		}
 		instanceDetails, err := list.Instance(instanceDigest)
 		if err != nil {
-			return res, indicesToDelete, fmt.Errorf("getting details for instance %s: %w", instanceDigest, err)
+			return res, fmt.Errorf("getting details for instance %s: %w", instanceDigest, err)
 		}
 		forceCompressionFormat, err := shouldRequireCompressionFormatMatch(options)
 		if err != nil {
-			return nil, indicesToDelete, err
+			return nil, err
 		}
 		res = append(res, instanceOp{
 			op:                         instanceOpCopy,
@@ -160,7 +168,12 @@ func prepareInstanceCopies(list internalManifest.List, instanceDigests []digest.
 			}
 		}
 	}
-	return res, indicesToDelete, nil
+
+	// Add delete operations in reverse order (highest to lowest index) to avoid shifting
+	slices.Reverse(deleteOps)
+	res = append(res, deleteOps...)
+
+	return res, nil
 }
 
 // copyMultipleImages copies some or all of an image list's instances, using
@@ -236,7 +249,7 @@ func (c *copier) copyMultipleImages(ctx context.Context) (copiedManifest []byte,
 	// Copy each image, or just the ones we want to copy, in turn.
 	instanceDigests := updatedList.Instances()
 	instanceEdits := []internalManifest.ListEdit{}
-	instanceOpList, indicesToDelete, err := prepareInstanceCopies(updatedList, instanceDigests, c.options)
+	instanceOpList, err := prepareInstanceCopies(updatedList, instanceDigests, c.options)
 	if err != nil {
 		return nil, fmt.Errorf("preparing instances for copy: %w", err)
 	}
@@ -285,18 +298,14 @@ func (c *copier) copyMultipleImages(ctx context.Context) (copiedManifest []byte,
 				AddAnnotations:           instance.cloneAnnotations,
 				AddCompressionAlgorithms: updated.compressionAlgorithms,
 			})
+		case instanceOpDelete:
+			instanceEdits = append(instanceEdits, internalManifest.ListEdit{
+				ListOperation: internalManifest.ListOpDelete,
+				DeleteIndex:   instance.deleteIndex,
+			})
 		default:
 			return nil, fmt.Errorf("copying image: invalid copy operation %d", instance.op)
 		}
-	}
-
-	// Add delete operations for skipped instances if stripping sparse manifests
-	// Delete from highest to lowest index to avoid shifting
-	for i := range slices.Backward(indicesToDelete) {
-		instanceEdits = append(instanceEdits, internalManifest.ListEdit{
-			ListOperation: internalManifest.ListOpDelete,
-			DeleteIndex:   indicesToDelete[i],
-		})
 	}
 
 	// Now reset the digest/size/types of the manifests in the list and remove deleted instances.

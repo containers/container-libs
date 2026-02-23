@@ -26,9 +26,8 @@ func TestPrepareCopyInstancesforInstanceCopyCopy(t *testing.T) {
 		digest.Digest("sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"),
 	}
 
-	instancesToCopy, indicesToDelete, err := prepareInstanceCopies(list, sourceInstances, &Options{})
+	instancesToCopy, err := prepareInstanceCopies(list, sourceInstances, &Options{})
 	require.NoError(t, err)
-	require.Empty(t, indicesToDelete)
 	compare := []instanceOp{}
 
 	for _, instance := range sourceInstances {
@@ -40,9 +39,8 @@ func TestPrepareCopyInstancesforInstanceCopyCopy(t *testing.T) {
 	assert.Equal(t, instancesToCopy, compare)
 
 	// Test CopySpecificImages where selected instance is sourceInstances[1]
-	instancesToCopy, indicesToDelete, err = prepareInstanceCopies(list, sourceInstances, &Options{Instances: []digest.Digest{sourceInstances[1]}, ImageListSelection: CopySpecificImages})
+	instancesToCopy, err = prepareInstanceCopies(list, sourceInstances, &Options{Instances: []digest.Digest{sourceInstances[1]}, ImageListSelection: CopySpecificImages})
 	require.NoError(t, err)
-	require.Empty(t, indicesToDelete) // No stripping requested
 	compare = []instanceOp{{
 		op:           instanceOpCopy,
 		sourceDigest: sourceInstances[1],
@@ -50,20 +48,30 @@ func TestPrepareCopyInstancesforInstanceCopyCopy(t *testing.T) {
 	assert.Equal(t, instancesToCopy, compare)
 
 	// Test CopySpecificImages with StripSparseManifestList where selected instance is sourceInstances[1]
-	instancesToCopy, indicesToDelete, err = prepareInstanceCopies(list, sourceInstances, &Options{
+	instancesToCopy, err = prepareInstanceCopies(list, sourceInstances, &Options{
 		Instances:                []digest.Digest{sourceInstances[1]},
 		ImageListSelection:       CopySpecificImages,
 		SparseManifestListAction: StripSparseManifestList,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, []int{0, 2}, indicesToDelete) // Should delete indices 0 and 2
-	compare = []instanceOp{{
-		op:           instanceOpCopy,
-		sourceDigest: sourceInstances[1],
-	}}
-	assert.Equal(t, instancesToCopy, compare)
+	// Should have 1 copy operation followed by 2 delete operations (for indices 0 and 2)
+	expected := []instanceOp{
+		{
+			op:           instanceOpCopy,
+			sourceDigest: sourceInstances[1],
+		},
+		{
+			op:          instanceOpDelete,
+			deleteIndex: 2, // Delete from highest to lowest
+		},
+		{
+			op:          instanceOpDelete,
+			deleteIndex: 0,
+		},
+	}
+	assert.Equal(t, expected, instancesToCopy)
 
-	_, _, err = prepareInstanceCopies(list, sourceInstances, &Options{Instances: []digest.Digest{sourceInstances[1]}, ImageListSelection: CopySpecificImages, ForceCompressionFormat: true})
+	_, err = prepareInstanceCopies(list, sourceInstances, &Options{Instances: []digest.Digest{sourceInstances[1]}, ImageListSelection: CopySpecificImages, ForceCompressionFormat: true})
 	require.EqualError(t, err, "cannot use ForceCompressionFormat with undefined default compression format")
 }
 
@@ -84,7 +92,7 @@ func TestPrepareCopyInstancesforInstanceCopyClone(t *testing.T) {
 	}
 
 	// CopySpecificImage must fail with error
-	_, _, err = prepareInstanceCopies(list, sourceInstances, &Options{
+	_, err = prepareInstanceCopies(list, sourceInstances, &Options{
 		EnsureCompressionVariantsExist: ensureCompressionVariantsExist,
 		Instances:                      []digest.Digest{sourceInstances[1]},
 		ImageListSelection:             CopySpecificImages,
@@ -92,9 +100,8 @@ func TestPrepareCopyInstancesforInstanceCopyClone(t *testing.T) {
 	require.EqualError(t, err, "EnsureCompressionVariantsExist is not implemented for CopySpecificImages")
 
 	// Test copying all images with replication
-	instancesToCopy, indicesToDelete, err := prepareInstanceCopies(list, sourceInstances, &Options{EnsureCompressionVariantsExist: ensureCompressionVariantsExist})
+	instancesToCopy, err := prepareInstanceCopies(list, sourceInstances, &Options{EnsureCompressionVariantsExist: ensureCompressionVariantsExist})
 	require.NoError(t, err)
-	require.Empty(t, indicesToDelete)
 
 	// Following test ensures
 	// * Still copy gzip variants if they exist in the original
@@ -121,9 +128,8 @@ func TestPrepareCopyInstancesforInstanceCopyClone(t *testing.T) {
 	// Test option with multiple copy request for same compression format.
 	// The above expectation should stay the same, if ensureCompressionVariantsExist requests zstd twice.
 	ensureCompressionVariantsExist = []OptionCompressionVariant{{Algorithm: compression.Zstd}, {Algorithm: compression.Zstd}}
-	instancesToCopy, indicesToDelete, err = prepareInstanceCopies(list, sourceInstances, &Options{EnsureCompressionVariantsExist: ensureCompressionVariantsExist})
+	instancesToCopy, err = prepareInstanceCopies(list, sourceInstances, &Options{EnsureCompressionVariantsExist: ensureCompressionVariantsExist})
 	require.NoError(t, err)
-	require.Empty(t, indicesToDelete)
 	expectedResponse = []simplerInstanceCopy{}
 	for _, instance := range sourceInstances {
 		expectedResponse = append(expectedResponse, simplerInstanceCopy{
@@ -144,9 +150,8 @@ func TestPrepareCopyInstancesforInstanceCopyClone(t *testing.T) {
 		digest.Digest("sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"),
 		digest.Digest("sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"),
 	}
-	instancesToCopy, indicesToDelete, err = prepareInstanceCopies(list, sourceInstances, &Options{EnsureCompressionVariantsExist: ensureCompressionVariantsExist})
+	instancesToCopy, err = prepareInstanceCopies(list, sourceInstances, &Options{EnsureCompressionVariantsExist: ensureCompressionVariantsExist})
 	require.NoError(t, err)
-	require.Empty(t, indicesToDelete)
 	// two copies but clone should happen only once
 	numberOfCopyClone := 0
 	for _, instance := range instancesToCopy {
