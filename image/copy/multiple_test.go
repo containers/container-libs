@@ -3,6 +3,7 @@ package copy
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	digest "github.com/opencontainers/go-digest"
@@ -235,10 +236,8 @@ func TestDetermineSpecificImages(t *testing.T) {
 
 			require.NoError(t, err)
 			// Convert Set to slice for comparison
-			actualDigests := []digest.Digest{}
-			for d := range specificImages.All() {
-				actualDigests = append(actualDigests, d)
-			}
+			actualDigests := slices.Collect(specificImages.All())
+
 			assert.ElementsMatch(t, tt.expectedDigests, actualDigests)
 		})
 	}
