@@ -131,6 +131,7 @@ func prepareInstanceCopies(list internalManifest.List, instanceDigests []digest.
 			logrus.Debugf("Skipping instance %s (%d/%d)", instanceDigest, i+1, len(instanceDigests))
 			// Create delete operation if we're stripping sparse manifests
 			if options.SparseManifestListAction == StripSparseManifestList {
+				logrus.Debugf("Deleting instance %s (%d/%d)", instanceDigest, i+1, len(instanceDigests))
 				deleteOps = append(deleteOps, instanceOp{
 					op:          instanceOpDelete,
 					deleteIndex: i,
