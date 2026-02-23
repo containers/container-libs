@@ -18,6 +18,7 @@ import (
 	graphdriver "go.podman.io/storage/drivers"
 	"go.podman.io/storage/internal/tempdir"
 	"go.podman.io/storage/pkg/directory"
+	"go.podman.io/storage/pkg/idmap"
 	"go.podman.io/storage/pkg/idtools"
 	"go.podman.io/storage/pkg/mount"
 	"go.podman.io/storage/pkg/parsers"
@@ -470,6 +471,19 @@ func (d *Driver) Get(id string, options graphdriver.MountOpts) (_ string, retErr
 		}
 	}
 
+	// Apply idmapped mount if UID/GID mappings are explicitly provided
+	// This enables rootless container support by translating UIDs/GIDs
+	if len(options.UidMaps) > 0 || len(options.GidMaps) > 0 {
+		logrus.WithField("storage-driver", "zfs").Debugf("applying idmapped mount to %s with %d uid maps, %d gid maps", mountpoint, len(options.UidMaps), len(options.GidMaps))
+		if err := applyIDMappedMount(mountpoint, options.UidMaps, options.GidMaps); err != nil {
+			logrus.WithField("storage-driver", "zfs").Warnf("failed to apply idmapped mount to %s: %v", mountpoint, err)
+			if unmountErr := detachUnmount(mountpoint); unmountErr != nil {
+				logrus.WithField("storage-driver", "zfs").Warnf("failed to unmount %s after idmap failure: %v", mountpoint, unmountErr)
+			}
+			return "", fmt.Errorf("applying idmapped mount for zfs: %w", err)
+		}
+	}
+
 	return mountpoint, nil
 }
 
@@ -491,6 +505,24 @@ func (d *Driver) Put(id string) error {
 		logger.Debugf("Failed to remove %s mount point %s: %v", id, mountpoint, err)
 	}
 
+	return nil
+}
+
+// applyIDMappedMount creates an idmapped mount over the ZFS mount to translate UIDs/GIDs
+// for rootless container support. This uses the Linux mount_setattr() syscall with
+// MOUNT_ATTR_IDMAP to create a view of the filesystem with translated ownership.
+func applyIDMappedMount(mountpoint string, uidMaps, gidMaps []idtools.IDMap) error {
+	// Create a user namespace process with the desired UID/GID mappings
+	pid, cleanupFunc, err := idmap.CreateUsernsProcess(uidMaps, gidMaps)
+	if err != nil {
+		return fmt.Errorf("creating user namespace process for idmap: %w", err)
+	}
+	defer cleanupFunc()
+
+	// Apply the idmapped mount using the user namespace
+	if err := idmap.CreateIDMappedMount(mountpoint, mountpoint, pid); err != nil {
+		return fmt.Errorf("creating idmapped mount at %s: %w", mountpoint, err)
+	}
 	return nil
 }
 
