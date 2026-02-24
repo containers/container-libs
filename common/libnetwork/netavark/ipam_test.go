@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"os"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -29,10 +30,12 @@ var _ = Describe("IPAM", func() {
 	})
 
 	JustBeforeEach(func() {
+		netavarkBinary := os.Getenv("NETAVARK_BINARY")
 		libpodNet, err := NewNetworkInterface(&InitConfig{
 			Config:           &config.Config{},
 			NetworkConfigDir: networkConfDir,
 			NetworkRunDir:    networkConfDir,
+			NetavarkBinary:   netavarkBinary,
 		})
 		if err != nil {
 			Fail("Failed to create NewCNINetworkInterface")
