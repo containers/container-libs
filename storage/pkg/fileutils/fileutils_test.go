@@ -115,31 +115,24 @@ func TestReadSymlinkedDirectoryExistingDirectory(t *testing.T) {
 	if runtime.GOOS == windows {
 		t.Skip("Needs porting to Windows")
 	}
-	var err error
-	if err = os.Mkdir("/tmp/testReadSymlinkToExistingDirectory", 0o777); err != nil {
-		t.Errorf("failed to create directory: %s", err)
-	}
 
-	if err = os.Symlink("/tmp/testReadSymlinkToExistingDirectory", "/tmp/dirLinkTest"); err != nil {
-		t.Errorf("failed to create symlink: %s", err)
-	}
+	workdir := t.TempDir()
+	err := os.Mkdir(filepath.Join(workdir, "foo"), 0o755)
+	require.NoError(t, err)
 
-	var path string
-	if path, err = ReadSymlinkedDirectory("/tmp/dirLinkTest"); err != nil {
-		t.Fatalf("failed to read symlink to directory: %s", err)
-	}
+	err = os.Symlink(filepath.Join(workdir, "foo"), filepath.Join(workdir, "bar"))
+	require.NoError(t, err)
 
-	if path != "/tmp/testReadSymlinkToExistingDirectory" {
-		t.Fatalf("symlink returned unexpected directory: %s", path)
-	}
+	// On some systems e.g. macOS, t.TempDir() may give a path in /tmp/... or /var/...
+	// but these are symlinked to /private/tmp/... or /private/var/... so expand any
+	// symlinks in the provided path before trying to read and compare.
+	realpath, err := filepath.EvalSymlinks(filepath.Join(workdir, "foo"))
+	require.NoError(t, err)
 
-	if err = os.Remove("/tmp/testReadSymlinkToExistingDirectory"); err != nil {
-		t.Errorf("failed to remove temporary directory: %s", err)
-	}
+	path, err := ReadSymlinkedDirectory(filepath.Join(workdir, "bar"))
+	require.NoError(t, err, "failed to read symlink to directory: %s", err)
 
-	if err = os.Remove("/tmp/dirLinkTest"); err != nil {
-		t.Errorf("failed to remove symlink: %s", err)
-	}
+	require.Equal(t, path, realpath, "symlink returned unexpected directory: %s", path)
 }
 
 // Reading a non-existing symlink must fail
