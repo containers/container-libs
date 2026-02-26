@@ -17,6 +17,7 @@ import (
 	"go.podman.io/image/v5/internal/image"
 	internalManifest "go.podman.io/image/v5/internal/manifest"
 	"go.podman.io/image/v5/internal/set"
+	internalsig "go.podman.io/image/v5/internal/signature"
 	"go.podman.io/image/v5/manifest"
 	"go.podman.io/image/v5/pkg/compression"
 )
@@ -219,13 +220,34 @@ func (c *copier) copyMultipleImages(ctx context.Context) (copiedManifest []byte,
 	// Compare, and perhaps keep in sync with, the version in copySingleImage.
 	cannotModifyManifestListReason := ""
 	if len(sigs) > 0 {
-		cannotModifyManifestListReason = "Would invalidate signatures"
+		// If StripOnlyListSignatures is set, we allow modification of the manifest list
+		// by stripping only the list-level signature while preserving per-instance signatures.
+		// This is handled below by setting sigs to empty (similar to RemoveSignatures).
+		if !c.options.StripOnlyListSignatures {
+			cannotModifyManifestListReason = "Would invalidate signatures"
+		}
 	}
 	if destIsDigestedReference {
 		cannotModifyManifestListReason = "Destination specifies a digest"
 	}
 	if c.options.PreserveDigests {
 		cannotModifyManifestListReason = "Instructed to preserve digests"
+	}
+
+	// Validate that when using StripSparseManifestList with signed images, the user explicitly
+	// acknowledges signature handling via either StripOnlyListSignatures or RemoveSignatures.
+	// This is consistent with requiring explicit acknowledgment for other manifest edits.
+	if c.options.SparseManifestListAction == StripSparseManifestList && len(sigs) > 0 &&
+		!c.options.RemoveSignatures && !c.options.StripOnlyListSignatures {
+		return nil, fmt.Errorf("SparseManifestListAction.StripSparseManifestList will modify the signed manifest list; use RemoveSignatures to remove all signatures, or StripOnlyListSignatures to strip only the list signature while preserving per-instance signatures")
+	}
+
+	// If StripOnlyListSignatures is set, strip the list-level signatures.
+	// Per-instance signatures will be preserved because copySingleImage handles each instance
+	// independently and won't have RemoveSignatures set (unless the user also set it).
+	if c.options.StripOnlyListSignatures && len(sigs) > 0 {
+		logrus.Debugf("Stripping manifest list signatures while preserving per-instance signatures")
+		sigs = []internalsig.Signature{}
 	}
 
 	// Determine if we'll need to convert the manifest list to a different format.

@@ -90,6 +90,10 @@ type SparseManifestListAction int
 // Options allows supplying non-default configuration modifying the behavior of CopyImage.
 type Options struct {
 	RemoveSignatures bool // Remove any pre-existing signatures. Signers and SignBy… will still add a new signature.
+	// StripOnlyListSignatures strips the manifest list signature while preserving per-instance signatures.
+	// Only valid with CopySpecificImages and SparseManifestListAction=StripSparseManifestList.
+	// If RemoveSignatures is also true, RemoveSignatures takes precedence.
+	StripOnlyListSignatures bool
 	// Signers to use to add signatures during the copy.
 	// Callers are still responsible for closing these Signer objects; they can be reused for multiple copy.Image operations in a row.
 	Signers                          []*signer.Signer
@@ -334,6 +338,9 @@ func Image(ctx context.Context, policyContext *signature.PolicyContext, destRef,
 		if len(options.EnsureCompressionVariantsExist) > 0 {
 			return nil, fmt.Errorf("EnsureCompressionVariantsExist is not implemented when not creating a multi-architecture image")
 		}
+		if options.StripOnlyListSignatures {
+			return nil, fmt.Errorf("StripOnlyListSignatures can only be used with manifest lists, not single images")
+		}
 		requireCompressionFormatMatch, err := shouldRequireCompressionFormatMatch(options)
 		if err != nil {
 			return nil, err
@@ -347,6 +354,9 @@ func Image(ctx context.Context, policyContext *signature.PolicyContext, destRef,
 	} else if c.options.ImageListSelection == CopySystemImage {
 		if len(options.EnsureCompressionVariantsExist) > 0 {
 			return nil, fmt.Errorf("EnsureCompressionVariantsExist is not implemented when not creating a multi-architecture image")
+		}
+		if options.StripOnlyListSignatures {
+			return nil, fmt.Errorf("StripOnlyListSignatures can only be used with CopySpecificImages and SparseManifestListAction=StripSparseManifestList, not with CopySystemImage")
 		}
 		requireCompressionFormatMatch, err := shouldRequireCompressionFormatMatch(options)
 		if err != nil {
@@ -377,6 +387,15 @@ func Image(ctx context.Context, policyContext *signature.PolicyContext, destRef,
 		// If we were asked to copy multiple images and can't, that's an error.
 		if !supportsMultipleImages(c.dest) {
 			return nil, fmt.Errorf("copying multiple images: destination transport %q does not support copying multiple images as a group", destRef.Transport().Name())
+		}
+		// Validate StripOnlyListSignatures usage
+		if options.StripOnlyListSignatures {
+			if c.options.ImageListSelection != CopySpecificImages {
+				return nil, fmt.Errorf("StripOnlyListSignatures can only be used with CopySpecificImages, not CopyAllImages")
+			}
+			if options.SparseManifestListAction != StripSparseManifestList {
+				return nil, fmt.Errorf("StripOnlyListSignatures requires SparseManifestListAction=StripSparseManifestList")
+			}
 		}
 		// Copy some or all of the images.
 		switch c.options.ImageListSelection {
