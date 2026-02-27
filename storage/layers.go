@@ -1139,6 +1139,13 @@ func (r *layerStore) saveLayers(saveLocations layerLocations) error {
 		if location == volatileLayerLocation {
 			opts.NoSync = true
 		}
+		// If the underlying storage driver is using sync, make sure we sync everything before
+		// saving the layer data, this ensures that all files/directories are properly created and written.
+		if r.driver.SyncMode() != drivers.SyncModeNone {
+			if err := system.Syncfs(filepath.Dir(rpath)); err != nil {
+				return err
+			}
+		}
 		if err := ioutils.AtomicWriteFileWithOpts(rpath, jldata, 0o600, &opts); err != nil {
 			return err
 		}
@@ -1610,14 +1617,8 @@ func (r *layerStore) create(id string, parentLayer *Layer, names []string, mount
 		}
 	}
 
-	if oldMappings != nil &&
-		(!reflect.DeepEqual(oldMappings.UIDs(), idMappings.UIDs()) || !reflect.DeepEqual(oldMappings.GIDs(), idMappings.GIDs())) {
-		if err = r.driver.UpdateLayerIDMap(id, oldMappings, idMappings, mountLabel); err != nil {
-			cleanupFailureContext = "in UpdateLayerIDMap"
-			return nil, -1, err
-		}
-	}
-
+	// Write the tar-split file, and especially creating new directories before UpdateLayerIDMap so any sync policy
+	// done there will also cover the new directory created.
 	if len(templateTSdata) > 0 {
 		if err = os.MkdirAll(filepath.Dir(r.tspath(id)), 0o700); err != nil {
 			cleanupFailureContext = "creating tar-split parent directory for a copy from template"
@@ -1625,6 +1626,14 @@ func (r *layerStore) create(id string, parentLayer *Layer, names []string, mount
 		}
 		if err = ioutils.AtomicWriteFile(r.tspath(id), templateTSdata, 0o600); err != nil {
 			cleanupFailureContext = "creating a tar-split copy from template"
+			return nil, -1, err
+		}
+	}
+
+	if oldMappings != nil &&
+		(!reflect.DeepEqual(oldMappings.UIDs(), idMappings.UIDs()) || !reflect.DeepEqual(oldMappings.GIDs(), idMappings.GIDs())) {
+		if err = r.driver.UpdateLayerIDMap(id, oldMappings, idMappings, mountLabel); err != nil {
+			cleanupFailureContext = "in UpdateLayerIDMap"
 			return nil, -1, err
 		}
 	}
@@ -2806,9 +2815,6 @@ func (r *layerStore) applyDiffFromStagingDirectory(id string, diffOutput *driver
 		}
 		maps.Copy(layer.Flags, options.Flags)
 	}
-	if err = r.saveFor(layer); err != nil {
-		return err
-	}
 
 	if diffOutput.TarSplit != nil {
 		tarSplitFile, err := createTarSplitFile(r, layer.ID)
@@ -2849,6 +2855,7 @@ func (r *layerStore) applyDiffFromStagingDirectory(id string, diffOutput *driver
 			return fmt.Errorf("sync tar-split file: %w", err)
 		}
 	}
+
 	for k, v := range diffOutput.BigData {
 		if err := r.SetBigData(id, k, bytes.NewReader(v)); err != nil {
 			if err2 := r.deleteWhileHoldingLock(id); err2 != nil {
@@ -2856,6 +2863,10 @@ func (r *layerStore) applyDiffFromStagingDirectory(id string, diffOutput *driver
 			}
 			return err
 		}
+	}
+
+	if err = r.saveFor(layer); err != nil {
+		return err
 	}
 	return err
 }
