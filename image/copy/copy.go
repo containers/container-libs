@@ -71,9 +71,29 @@ const (
 // specific images from the source reference.
 type ImageListSelection int
 
+const (
+	// KeepSparseManifestList is the default value which, when set in
+	// Options.SparseManifestListAction, indicates that the manifest is kept
+	// as is even though some images from the list may be missing. Some
+	// registries may not support this.
+	KeepSparseManifestList SparseManifestListAction = iota
+
+	// StripSparseManifestList will strip missing images from the manifest
+	// list. When images are stripped the digest will differ from the original.
+	StripSparseManifestList
+)
+
+// SparseManifestListAction is one of KeepSparseManifestList or StripSparseManifestList
+// to control the behavior when only a subset of images from a manifest list is copied
+type SparseManifestListAction int
+
 // Options allows supplying non-default configuration modifying the behavior of CopyImage.
 type Options struct {
 	RemoveSignatures bool // Remove any pre-existing signatures. Signers and SignBy… will still add a new signature.
+	// StripOnlyListSignatures strips the manifest list signature while preserving per-instance signatures.
+	// Only valid with CopySpecificImages and SparseManifestListAction=StripSparseManifestList.
+	// If RemoveSignatures is also true, RemoveSignatures takes precedence.
+	StripOnlyListSignatures bool
 	// Signers to use to add signatures during the copy.
 	// Callers are still responsible for closing these Signer objects; they can be reused for multiple copy.Image operations in a row.
 	Signers                          []*signer.Signer
@@ -95,6 +115,9 @@ type Options struct {
 	ForceManifestMIMEType string
 	ImageListSelection    ImageListSelection // set to either CopySystemImage (the default), CopyAllImages, or CopySpecificImages to control which instances we copy when the source reference is a list; ignored if the source reference is not a list
 	Instances             []digest.Digest    // if ImageListSelection is CopySpecificImages, copy only these instances and the list itself
+	// When only a subset of images of a list is copied, this action indicates if the manifest should be kept or stripped.
+	// See CopySpecificImages.
+	SparseManifestListAction SparseManifestListAction
 	// Give priority to pulling gzip images if multiple images are present when configured to OptionalBoolTrue,
 	// prefers the best compression if this is configured as OptionalBoolFalse. Choose automatically (and the choice may change over time)
 	// if this is set to OptionalBoolUndefined (which is the default behavior, and recommended for most callers).
@@ -315,6 +338,9 @@ func Image(ctx context.Context, policyContext *signature.PolicyContext, destRef,
 		if len(options.EnsureCompressionVariantsExist) > 0 {
 			return nil, fmt.Errorf("EnsureCompressionVariantsExist is not implemented when not creating a multi-architecture image")
 		}
+		if options.StripOnlyListSignatures {
+			return nil, fmt.Errorf("StripOnlyListSignatures can only be used with manifest lists, not single images")
+		}
 		requireCompressionFormatMatch, err := shouldRequireCompressionFormatMatch(options)
 		if err != nil {
 			return nil, err
@@ -328,6 +354,9 @@ func Image(ctx context.Context, policyContext *signature.PolicyContext, destRef,
 	} else if c.options.ImageListSelection == CopySystemImage {
 		if len(options.EnsureCompressionVariantsExist) > 0 {
 			return nil, fmt.Errorf("EnsureCompressionVariantsExist is not implemented when not creating a multi-architecture image")
+		}
+		if options.StripOnlyListSignatures {
+			return nil, fmt.Errorf("StripOnlyListSignatures can only be used with CopySpecificImages and SparseManifestListAction=StripSparseManifestList, not with CopySystemImage")
 		}
 		requireCompressionFormatMatch, err := shouldRequireCompressionFormatMatch(options)
 		if err != nil {
@@ -358,6 +387,15 @@ func Image(ctx context.Context, policyContext *signature.PolicyContext, destRef,
 		// If we were asked to copy multiple images and can't, that's an error.
 		if !supportsMultipleImages(c.dest) {
 			return nil, fmt.Errorf("copying multiple images: destination transport %q does not support copying multiple images as a group", destRef.Transport().Name())
+		}
+		// Validate StripOnlyListSignatures usage
+		if options.StripOnlyListSignatures {
+			if c.options.ImageListSelection != CopySpecificImages {
+				return nil, fmt.Errorf("StripOnlyListSignatures can only be used with CopySpecificImages, not CopyAllImages")
+			}
+			if options.SparseManifestListAction != StripSparseManifestList {
+				return nil, fmt.Errorf("StripOnlyListSignatures requires SparseManifestListAction=StripSparseManifestList")
+			}
 		}
 		// Copy some or all of the images.
 		switch c.options.ImageListSelection {
