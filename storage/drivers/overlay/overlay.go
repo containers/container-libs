@@ -815,7 +815,7 @@ func (d *Driver) Status() [][2]string {
 // Metadata returns meta data about the overlay driver such as
 // LowerDir, UpperDir, WorkDir and MergeDir used to store data.
 func (d *Driver) Metadata(id string) (map[string]string, error) {
-	dir, _, inAdditionalStore := d.dir2(id, false)
+	dir, inAdditionalStore := d.dir2(id, false)
 	if err := fileutils.Exists(dir); err != nil {
 		return nil, err
 	}
@@ -1021,7 +1021,7 @@ func (d *Driver) getLayerPermissions(parent string, uidMaps, gidMaps []idtools.I
 }
 
 func (d *Driver) create(id, parent string, opts *graphdriver.CreateOpts, readOnly bool) (retErr error) {
-	dir, _, _ := d.dir2(id, readOnly)
+	dir, _ := d.dir2(id, readOnly)
 
 	disableQuota := readOnly
 
@@ -1166,7 +1166,7 @@ func (d *Driver) getLower(parent string) (string, error) {
 }
 
 func (d *Driver) dir(id string) string {
-	p, _, _ := d.dir2(id, false)
+	p, _ := d.dir2(id, false)
 	return p
 }
 
@@ -1188,7 +1188,7 @@ func (d *Driver) homeDirForImageStore() string {
 	return d.home
 }
 
-func (d *Driver) dir2(id string, useImageStore bool) (string, string, bool) {
+func (d *Driver) dir2(id string, useImageStore bool) (string, bool) {
 	homedir := d.home
 	if useImageStore {
 		homedir = d.homeDirForImageStore()
@@ -1202,11 +1202,11 @@ func (d *Driver) dir2(id string, useImageStore bool) (string, string, bool) {
 			l := path.Join(p, d.name, layerID)
 			err = fileutils.Exists(l)
 			if err == nil {
-				return filepath.Join(l, suffix), homedir, true
+				return filepath.Join(l, suffix), true
 			}
 		}
 	}
-	return filepath.Join(newpath, suffix), homedir, false
+	return filepath.Join(newpath, suffix), false
 }
 
 func (d *Driver) getLowerDirs(id string) ([]string, error) {
@@ -1340,7 +1340,7 @@ func (d *Driver) Get(id string, options graphdriver.MountOpts) (string, error) {
 }
 
 func (d *Driver) get(id string, disableShifting bool, options graphdriver.MountOpts) (_ string, retErr error) {
-	dir, _, inAdditionalStore := d.dir2(id, false)
+	dir, inAdditionalStore := d.dir2(id, false)
 	if err := fileutils.Exists(dir); err != nil {
 		return "", err
 	}
@@ -1792,7 +1792,7 @@ func (d *Driver) getMergedDir(id, dir string, inAdditionalStore bool) string {
 
 // Put unmounts the mount path created for the give id.
 func (d *Driver) Put(id string) error {
-	dir, _, inAdditionalStore := d.dir2(id, false)
+	dir, inAdditionalStore := d.dir2(id, false)
 	if err := fileutils.Exists(dir); err != nil {
 		return err
 	}
@@ -2710,7 +2710,7 @@ func getMappedMountRoot(path string) string {
 func (d *Driver) Dedup(req graphdriver.DedupArgs) (graphdriver.DedupResult, error) {
 	var dirs []string
 	for _, layer := range req.Layers {
-		dir, _, inAdditionalStore := d.dir2(layer, false)
+		dir, inAdditionalStore := d.dir2(layer, false)
 		if inAdditionalStore {
 			continue
 		}
