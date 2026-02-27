@@ -18,8 +18,10 @@ you would do by default (but do use them when separating large conceptually
 different parts of the function’s code).
 
 Don't add redundant comments that add no value. Code in style
-    // Add a user
-    ….addUser(…)
+```go
+// Add a user
+….addUser(…)
+```
 is _never_ acceptable.
 
 # Tests
@@ -51,15 +53,23 @@ in the commit message), followed by a separate commit that adds the required fea
 
 Most data structures with scope larger than a single function probably need documentation.
 Document field interactions:
-    UseTLS bool
-    TLSConfig … // Only used if UseTLS
+```go
+UseTLS bool
+TLSConfig … // Only used if UseTLS
+```
 special values:
-    Name // "" if unknown
+```go
+Name … // "" if unknown
+```
 _Never_ add comments that add no value:
-    // A user
-    type User struct { …}
+```go
+// A user
+type User struct { …}
+```
 or
-    Name // name
+```go
+Name // name
+```
 is never acceptable.
 
 Most functions should have documentation, documenting in enough detail that, when working
