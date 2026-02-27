@@ -1,11 +1,11 @@
-package uploadreader
+package terminablereader
 
 import (
 	"io"
 	"sync"
 )
 
-// UploadReader is a pass-through reader for use in sending non-trivial data using the net/http
+// TerminableReader is a pass-through reader for use in sending non-trivial data using the net/http
 // package (http.NewRequest, http.Post and the like).
 //
 // The net/http package uses a separate goroutine to upload data to a HTTP connection,
@@ -16,21 +16,21 @@ import (
 // As a result, any data used/updated by the io.Reader() provided as the request body may be
 // used/updated even after http.Client.Do returns, causing races.
 //
-// To fix this, UploadReader provides a synchronized Terminate() method, which can block for
+// To fix this, TerminableReader provides a synchronized Terminate() method, which can block for
 // a not-completely-negligible time (for a duration of the underlying Read()), but guarantees that
 // after Terminate() returns, the underlying reader is never used any more (unlike calling
 // the cancellation callback of context.WithCancel, which returns before any recipients may have
 // reacted to the cancellation).
-type UploadReader struct {
+type TerminableReader struct {
 	mutex sync.Mutex
 	// The following members can only be used with mutex held
 	reader           io.Reader
 	terminationError error // nil if not terminated yet
 }
 
-// NewUploadReader returns an UploadReader for an "underlying" reader.
-func NewUploadReader(underlying io.Reader) *UploadReader {
-	return &UploadReader{
+// NewTerminableReader returns an TerminableReader for an "underlying" reader.
+func NewTerminableReader(underlying io.Reader) *TerminableReader {
+	return &TerminableReader{
 		reader:           underlying,
 		terminationError: nil,
 	}
@@ -38,7 +38,7 @@ func NewUploadReader(underlying io.Reader) *UploadReader {
 
 // Read returns the error set by Terminate, if any, or calls the underlying reader.
 // It is safe to call this from a different goroutine than Terminate.
-func (ur *UploadReader) Read(p []byte) (int, error) {
+func (ur *TerminableReader) Read(p []byte) (int, error) {
 	ur.mutex.Lock()
 	defer ur.mutex.Unlock()
 
@@ -53,7 +53,7 @@ func (ur *UploadReader) Read(p []byte) (int, error) {
 // reader will never be used any more.
 //
 // It is safe to call this from a different goroutine than Read.
-func (ur *UploadReader) Terminate(err error) {
+func (ur *TerminableReader) Terminate(err error) {
 	ur.mutex.Lock() // May block for some time if ur.reader.Read() is in progress
 	defer ur.mutex.Unlock()
 
