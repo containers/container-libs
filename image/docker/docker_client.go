@@ -267,6 +267,11 @@ func newDockerClient(sys *types.SystemContext, registry, reference string) (*doc
 		return nil, err
 	}
 
+	// If the non-host-specific trust bundle is given add it to the RootCAs pool
+	if sys.DockerAdditionalTrustedBundle != "" {
+		tlsClientConfig.RootCAs.AppendCertsFromPEM([]byte(sys.DockerAdditionalTrustedBundle))
+	}
+
 	// Check if TLS verification shall be skipped (default=false) which can
 	// be specified in the sysregistriesv2 configuration.
 	skipVerify := false
