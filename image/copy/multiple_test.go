@@ -178,9 +178,9 @@ func convertInstanceCopyToSimplerInstanceCopy(copies []instanceCopy) []simplerIn
 func TestDetermineSpecificImages(t *testing.T) {
 	// Test manifest files
 	const (
-		manifestBasic          = "ociv1.image.index.json"
-		manifestMultiCompress  = "oci1.index.zstd-selection.json"
-		manifestVariants       = "ocilist-variants.json"
+		index                    = "ociv1.image.index.json"
+		indexWithZstdCompression = "oci1.index.zstd-selection.json"
+		indexWithVariants        = "ocilist-variants.json"
 	)
 
 	// Digests from ociv1.image.index.json
@@ -214,7 +214,7 @@ func TestDetermineSpecificImages(t *testing.T) {
 		// Basic tests with single instance per platform
 		{
 			name:         "PlatformOnly",
-			manifestFile: manifestBasic,
+			manifestFile: index,
 			instancePlatforms: []imgspecv1.Platform{
 				{OS: "linux", Architecture: "ppc64le"},
 			},
@@ -228,7 +228,7 @@ func TestDetermineSpecificImages(t *testing.T) {
 		},
 		{
 			name:         "Combined",
-			manifestFile: manifestBasic,
+			manifestFile: index,
 			instances:    []digest.Digest{ppc64leDigest},
 			instancePlatforms: []imgspecv1.Platform{
 				{OS: "linux", Architecture: "amd64"},
@@ -237,7 +237,7 @@ func TestDetermineSpecificImages(t *testing.T) {
 		},
 		{
 			name:         "NonExistentPlatform",
-			manifestFile: manifestBasic,
+			manifestFile: index,
 			instancePlatforms: []imgspecv1.Platform{
 				{OS: "linux", Architecture: "arm64"},
 			},
@@ -245,7 +245,7 @@ func TestDetermineSpecificImages(t *testing.T) {
 		},
 		{
 			name:         "VariantNotSupported",
-			manifestFile: manifestBasic,
+			manifestFile: index,
 			instancePlatforms: []imgspecv1.Platform{
 				{OS: "linux", Architecture: "amd64", Variant: "v7"},
 			},
@@ -254,7 +254,7 @@ func TestDetermineSpecificImages(t *testing.T) {
 		// Multi-compression tests - verify ALL instances are copied
 		{
 			name:         "MultipleCompressionVariants",
-			manifestFile: manifestMultiCompress,
+			manifestFile: indexWithZstdCompression,
 			instancePlatforms: []imgspecv1.Platform{
 				{OS: "linux", Architecture: "amd64"},
 			},
@@ -262,7 +262,7 @@ func TestDetermineSpecificImages(t *testing.T) {
 		},
 		{
 			name:         "MultiplePlatformsWithMultipleInstances",
-			manifestFile: manifestMultiCompress,
+			manifestFile: indexWithZstdCompression,
 			instancePlatforms: []imgspecv1.Platform{
 				{OS: "linux", Architecture: "amd64"},
 				{OS: "linux", Architecture: "arm64"},
@@ -271,7 +271,7 @@ func TestDetermineSpecificImages(t *testing.T) {
 		},
 		{
 			name:         "CombinedDigestAndPlatformMultiCompression",
-			manifestFile: manifestMultiCompress,
+			manifestFile: indexWithZstdCompression,
 			instances:    []digest.Digest{s390xDigest},
 			instancePlatforms: []imgspecv1.Platform{
 				{OS: "linux", Architecture: "amd64"},
@@ -280,7 +280,7 @@ func TestDetermineSpecificImages(t *testing.T) {
 		},
 		{
 			name:         "SingleInstancePlatform",
-			manifestFile: manifestMultiCompress,
+			manifestFile: indexWithZstdCompression,
 			instancePlatforms: []imgspecv1.Platform{
 				{OS: "linux", Architecture: "s390x"},
 			},
@@ -289,7 +289,7 @@ func TestDetermineSpecificImages(t *testing.T) {
 		// Variant tests - verify ALL variants are copied when no variant specified
 		{
 			name:         "AllArmVariants",
-			manifestFile: manifestVariants,
+			manifestFile: indexWithVariants,
 			instancePlatforms: []imgspecv1.Platform{
 				{OS: "linux", Architecture: "arm"},
 			},
@@ -297,7 +297,7 @@ func TestDetermineSpecificImages(t *testing.T) {
 		},
 		{
 			name:         "VariantSpecifiedShouldError",
-			manifestFile: manifestVariants,
+			manifestFile: indexWithVariants,
 			instancePlatforms: []imgspecv1.Platform{
 				{OS: "linux", Architecture: "arm", Variant: "v7"},
 			},
@@ -305,7 +305,7 @@ func TestDetermineSpecificImages(t *testing.T) {
 		},
 		{
 			name:         "MultipleArchitecturesIncludingVariants",
-			manifestFile: manifestVariants,
+			manifestFile: indexWithVariants,
 			instancePlatforms: []imgspecv1.Platform{
 				{OS: "linux", Architecture: "amd64"},
 				{OS: "linux", Architecture: "arm"},
@@ -329,7 +329,7 @@ func TestDetermineSpecificImages(t *testing.T) {
 
 			if tt.expectedError != "" {
 				require.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedError)
+				assert.ErrorContains(t, err, tt.expectedError)
 				return
 			}
 

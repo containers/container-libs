@@ -170,23 +170,16 @@ func prepareInstanceCopies(list internalManifest.List, instanceDigests []digest.
 // determineSpecificImages returns a set of images to copy based on the
 // Instances and InstancePlatforms fields of the passed-in options structure
 func determineSpecificImages(options *Options, updatedList internalManifest.List) (*set.Set[digest.Digest], error) {
-	// Start with the instances that were listed by digest.
-	specificImages := set.New[digest.Digest]()
-	for _, instanceDigest := range options.Instances {
-		specificImages.Add(instanceDigest)
-	}
+	specificImages := set.NewWithValues(options.Instances...)
 
 	if len(options.InstancePlatforms) > 0 {
-		// Find ALL instances matching each platform specification.
-		// We match on OS and Architecture only, copying all compression variants,
-		// OS features, etc. for the specified platform.
+		// Find ALL instances matching each platform specification (OS and Architecture)
+		// Variant, OSVersion and OSFeatures is not currently supported
 		for _, platform := range options.InstancePlatforms {
-			// Validate that variant is not specified - variant filtering is not currently supported
 			if platform.Variant != "" {
-				return nil, fmt.Errorf("InstancePlatforms with variant is not currently supported (platform: %v)", platform)
+				return nil, fmt.Errorf("InstancePlatforms with variant is not currently supported (platform: %s/%s)", platform.OS, platform.Architecture)
 			}
 
-			// Find ALL instances matching OS + Architecture
 			matched := false
 			instanceDigests := updatedList.Instances()
 			for _, instanceDigest := range instanceDigests {
@@ -195,7 +188,6 @@ func determineSpecificImages(options *Options, updatedList internalManifest.List
 					return nil, fmt.Errorf("getting details for instance %s: %w", instanceDigest, err)
 				}
 
-				// Match on OS and Architecture only (ignore variant, compression, OSVersion, OSFeatures)
 				if instanceDetails.ReadOnly.Platform != nil &&
 					instanceDetails.ReadOnly.Platform.OS == platform.OS &&
 					instanceDetails.ReadOnly.Platform.Architecture == platform.Architecture {
@@ -205,7 +197,7 @@ func determineSpecificImages(options *Options, updatedList internalManifest.List
 			}
 
 			if !matched {
-				return nil, fmt.Errorf("no instances found for platform spec %v", platform)
+				return nil, fmt.Errorf("no instances found for platform %s/%s", platform.OS, platform.Architecture)
 			}
 		}
 	}

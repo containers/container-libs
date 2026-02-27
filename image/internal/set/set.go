@@ -53,7 +53,3 @@ func (s *Set[E]) Empty() bool {
 func (s *Set[E]) All() iter.Seq[E] {
 	return maps.Keys(s.m)
 }
-
-func (s *Set[E]) Size() int {
-	return len(s.m)
-}
