@@ -19,7 +19,6 @@ import (
 	"go.podman.io/image/v5/internal/set"
 	"go.podman.io/image/v5/manifest"
 	"go.podman.io/image/v5/pkg/compression"
-	"go.podman.io/image/v5/types"
 )
 
 type instanceCopyKind int
@@ -178,19 +177,36 @@ func determineSpecificImages(options *Options, updatedList internalManifest.List
 	}
 
 	if len(options.InstancePlatforms) > 0 {
-		// Choose the best match for each platform we were asked to
-		// also copy, and add it to the set of instances to copy.
+		// Find ALL instances matching each platform specification.
+		// We match on OS and Architecture only, copying all compression variants,
+		// OS features, etc. for the specified platform.
 		for _, platform := range options.InstancePlatforms {
-			platformContext := types.SystemContext{
-				OSChoice:           platform.OS,
-				ArchitectureChoice: platform.Architecture,
-				VariantChoice:      platform.Variant,
+			// Validate that variant is not specified - variant filtering is not currently supported
+			if platform.Variant != "" {
+				return nil, fmt.Errorf("InstancePlatforms with variant is not currently supported (platform: %v)", platform)
 			}
-			instanceDigest, err := updatedList.ChooseInstanceByCompression(&platformContext, options.PreferGzipInstances)
-			if err != nil {
-				return nil, fmt.Errorf("choosing instance for platform spec %v: %w", platform, err)
+
+			// Find ALL instances matching OS + Architecture
+			matched := false
+			instanceDigests := updatedList.Instances()
+			for _, instanceDigest := range instanceDigests {
+				instanceDetails, err := updatedList.Instance(instanceDigest)
+				if err != nil {
+					return nil, fmt.Errorf("getting details for instance %s: %w", instanceDigest, err)
+				}
+
+				// Match on OS and Architecture only (ignore variant, compression, OSVersion, OSFeatures)
+				if instanceDetails.ReadOnly.Platform != nil &&
+					instanceDetails.ReadOnly.Platform.OS == platform.OS &&
+					instanceDetails.ReadOnly.Platform.Architecture == platform.Architecture {
+					specificImages.Add(instanceDigest)
+					matched = true
+				}
 			}
-			specificImages.Add(instanceDigest)
+
+			if !matched {
+				return nil, fmt.Errorf("no instances found for platform spec %v", platform)
+			}
 		}
 	}
 
