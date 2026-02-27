@@ -104,7 +104,7 @@ func prepareInstanceCopies(list internalManifest.List, instanceDigests []digest.
 	res := []instanceCopy{}
 	if options.ImageListSelection == CopySpecificImages && len(options.EnsureCompressionVariantsExist) > 0 {
 		// List can already contain compressed instance for a compression selected in `EnsureCompressionVariantsExist`
-		// It’s unclear what it means when `CopySpecificImages` includes an instance in options.Instances,
+		// It's unclear what it means when `CopySpecificImages` includes an instance in options.Instances,
 		// EnsureCompressionVariantsExist asks for an instance with some compression,
 		// an instance with that compression already exists, but is not included in options.Instances.
 		// We might define the semantics and implement this in the future.
@@ -118,9 +118,19 @@ func prepareInstanceCopies(list internalManifest.List, instanceDigests []digest.
 	if err != nil {
 		return nil, err
 	}
+
+	// Determine which specific images to copy (combining digest-based and platform-based selection)
+	var specificImages *set.Set[digest.Digest]
+	if options.ImageListSelection == CopySpecificImages {
+		specificImages, err = determineSpecificImages(options, list)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	for i, instanceDigest := range instanceDigests {
 		if options.ImageListSelection == CopySpecificImages &&
-			!slices.Contains(options.Instances, instanceDigest) {
+			!specificImages.Contains(instanceDigest) {
 			logrus.Debugf("Skipping instance %s (%d/%d)", instanceDigest, i+1, len(instanceDigests))
 			continue
 		}
@@ -155,6 +165,44 @@ func prepareInstanceCopies(list internalManifest.List, instanceDigests []digest.
 		}
 	}
 	return res, nil
+}
+
+// determineSpecificImages returns a set of images to copy based on the
+// Instances and InstancePlatforms fields of the passed-in options structure
+func determineSpecificImages(options *Options, updatedList internalManifest.List) (*set.Set[digest.Digest], error) {
+	specificImages := set.NewWithValues(options.Instances...)
+
+	if len(options.InstancePlatforms) > 0 {
+		// Find ALL instances matching each platform specification (OS and Architecture)
+		// Variant, OSVersion and OSFeatures is not currently supported
+		for _, platform := range options.InstancePlatforms {
+			if platform.Variant != "" {
+				return nil, fmt.Errorf("InstancePlatforms with variant is not currently supported (platform: %s/%s)", platform.OS, platform.Architecture)
+			}
+
+			matched := false
+			instanceDigests := updatedList.Instances()
+			for _, instanceDigest := range instanceDigests {
+				instanceDetails, err := updatedList.Instance(instanceDigest)
+				if err != nil {
+					return nil, fmt.Errorf("getting details for instance %s: %w", instanceDigest, err)
+				}
+
+				if instanceDetails.ReadOnly.Platform != nil &&
+					instanceDetails.ReadOnly.Platform.OS == platform.OS &&
+					instanceDetails.ReadOnly.Platform.Architecture == platform.Architecture {
+					specificImages.Add(instanceDigest)
+					matched = true
+				}
+			}
+
+			if !matched {
+				return nil, fmt.Errorf("no instances found for platform %s/%s", platform.OS, platform.Architecture)
+			}
+		}
+	}
+
+	return specificImages, nil
 }
 
 // copyMultipleImages copies some or all of an image list's instances, using

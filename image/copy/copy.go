@@ -11,6 +11,7 @@ import (
 
 	encconfig "github.com/containers/ocicrypt/config"
 	digest "github.com/opencontainers/go-digest"
+	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
 	"go.podman.io/image/v5/docker/reference"
 	internalblobinfocache "go.podman.io/image/v5/internal/blobinfocache"
@@ -93,8 +94,9 @@ type Options struct {
 	PreserveDigests bool
 	// manifest MIME type of image set by user. "" is default and means use the autodetection to the manifest MIME type
 	ForceManifestMIMEType string
-	ImageListSelection    ImageListSelection // set to either CopySystemImage (the default), CopyAllImages, or CopySpecificImages to control which instances we copy when the source reference is a list; ignored if the source reference is not a list
-	Instances             []digest.Digest    // if ImageListSelection is CopySpecificImages, copy only these instances and the list itself
+	ImageListSelection    ImageListSelection   // set to either CopySystemImage (the default), CopyAllImages, or CopySpecificImages to control which instances we copy when the source reference is a list; ignored if the source reference is not a list
+	Instances         []digest.Digest      // if ImageListSelection is CopySpecificImages, copy only these instances, instances matching the InstancePlatforms list, and the list itself
+	InstancePlatforms []imgspecv1.Platform // if ImageListSelection is CopySpecificImages, copy ALL instances matching the specified OS and Architecture (ignoring Variant, OSVersion, OSFeatures, and compression), instances listed in the Instances list, and the list itself. The Variant field is not currently supported and will cause an error if specified.
 	// Give priority to pulling gzip images if multiple images are present when configured to OptionalBoolTrue,
 	// prefers the best compression if this is configured as OptionalBoolFalse. Choose automatically (and the choice may change over time)
 	// if this is set to OptionalBoolUndefined (which is the default behavior, and recommended for most callers).
