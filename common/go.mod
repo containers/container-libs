@@ -9,8 +9,6 @@ require (
 	github.com/checkpoint-restore/checkpointctl v1.5.0
 	github.com/checkpoint-restore/go-criu/v8 v8.2.0
 	github.com/containerd/platforms v1.0.0-rc.2
-	github.com/containernetworking/cni v1.3.0
-	github.com/containernetworking/plugins v1.9.0
 	github.com/containers/ocicrypt v1.2.1
 	github.com/coreos/go-systemd/v22 v22.7.0
 	github.com/cyphar/filepath-securejoin v0.6.1
