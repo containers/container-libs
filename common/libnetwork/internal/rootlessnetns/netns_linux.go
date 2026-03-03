@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/containernetworking/plugins/pkg/ns"
 	"github.com/hashicorp/go-multierror"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opencontainers/selinux/go-selinux/label"
@@ -101,9 +100,9 @@ func (n *Netns) getPath(path string) string {
 
 // getOrCreateNetns returns the rootless netns, if it created a new one the
 // returned bool is set to true.
-func (n *Netns) getOrCreateNetns() (ns.NetNS, bool, error) {
+func (n *Netns) getOrCreateNetns() (netns.NetNS, bool, error) {
 	nsPath := n.getPath(rootlessNetnsDir)
-	nsRef, err := ns.GetNS(nsPath)
+	nsRef, err := netns.GetNS(nsPath)
 	if err == nil {
 		pidPath := n.getPath(rootlessNetNsConnPidFile)
 		pid, err := readPidFile(pidPath)
@@ -134,7 +133,7 @@ func (n *Netns) getOrCreateNetns() (ns.NetNS, bool, error) {
 		// the file and mounting it. Or if the file is not on tmpfs (deleted on boot)
 		// you might run into it as well: https://github.com/containers/podman/issues/25144
 		// We have to do this because NewNSAtPath fails with EEXIST otherwise
-		if errors.As(err, &ns.NSPathNotNSErr{}) {
+		if errors.As(err, &netns.NSPathNotNSErr{}) {
 			// We don't care if this fails, NewNSAtPath() should return the real error.
 			_ = os.Remove(nsPath)
 		}
@@ -533,7 +532,7 @@ func (n *Netns) runInner(toRun func() error, cleanup bool) (err error) {
 		}()
 	}
 
-	return nsRef.Do(func(_ ns.NetNS) error {
+	return nsRef.Do(func(_ netns.NetNS) error {
 		if err := n.setupMounts(); err != nil {
 			return err
 		}
