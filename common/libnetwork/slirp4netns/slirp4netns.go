@@ -558,7 +558,6 @@ func SetupRootlessPortMappingViaRLK(opts *SetupOptions, slirpSubnet *net.IPNet, 
 		TmpDir:      opts.Config.Engine.TmpDir,
 		ChildIP:     childIP,
 		ContainerID: opts.ContainerID,
-		RootlessCNI: netStatus != nil,
 	}
 	cfgJSON, err := json.Marshal(cfg)
 	if err != nil {
