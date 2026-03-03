@@ -418,33 +418,13 @@ Specified as "directory-on-host:directory-in-container:options".
 Example:  "/db:/var/lib/db:ro".
 
 ## NETWORK TABLE
-The `network` table contains settings pertaining to the management of CNI
-plugins.
+The `network` table contains settings pertaining to the management of container
+networks.
 
 **network_backend**=""
 
 Network backend determines what network driver will be used to set up and tear down container networks.
-Valid values are "cni" and "netavark".
-The default value is empty which means that it will automatically choose CNI or netavark. If there are
-already containers/images or CNI networks preset it will choose CNI.
-
-Before changing this value all containers must be stopped otherwise it is likely that
-firewall rules and network interfaces might leak on the host. A reboot will fix this.
-
-**cni_plugin_dirs**=[]
-
-List of paths to directories where CNI plugin binaries are located.
-
-The default list is:
-```
-cni_plugin_dirs = [
-  "/usr/local/libexec/cni",
-  "/usr/libexec/cni",
-  "/usr/local/lib/cni",
-  "/usr/lib/cni",
-  "/opt/cni/bin",
-]
-```
+The only supported value is "netavark".
 
 **netavark_plugin_dirs**=[]
 
@@ -498,12 +478,10 @@ default_subnet_pools = [
 Configure which rootless network program to use by default. Valid options are
 `slirp4netns` and `pasta` (default).
 
-**network_config_dir**="/etc/cni/net.d/"
+**network_config_dir**="/etc/containers/networks"
 
 Path to the directory where network configuration files are located.
-For the CNI backend the default is __/etc/cni/net.d__ as root
-and __$HOME/.config/cni/net.d__ as rootless.
-For the netavark backend "/etc/containers/networks" is used as root
+The default is "/etc/containers/networks" as root
 and "$graphroot/networks" as rootless.
 
 **firewall_driver**=""

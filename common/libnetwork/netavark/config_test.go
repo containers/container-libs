@@ -38,7 +38,7 @@ var _ = Describe("Config", func() {
 		var err error
 		libpodNet, err = getNetworkInterface(networkConfDir)
 		if err != nil {
-			Fail("Failed to create NewCNINetworkInterface")
+			Fail("Failed to create NewNetworkInterface")
 		}
 	})
 
