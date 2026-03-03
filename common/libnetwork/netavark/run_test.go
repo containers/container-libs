@@ -41,7 +41,7 @@ var _ = Describe("run netavark", func() {
 	)
 
 	// runTest is a helper function to run a test. It ensures that each test
-	// is run in its own netns. It also creates a mounts to mount a tmpfs to /var/lib/cni.
+	// is run in its own netns.
 	runTest := func(run func()) {
 		_ = netNSTest.Do(func(_ netns.NetNS) error {
 			defer GinkgoRecover()
@@ -62,7 +62,7 @@ var _ = Describe("run netavark", func() {
 
 		// The tests need root privileges.
 		// Technically we could work around that by using user namespaces and
-		// the rootless cni code but this is to much work to get it right for a unit test.
+		// the rootless netns code but this is too much work to get it right for a unit test.
 		if unshare.IsRootless() {
 			Skip("this test needs to be run as root")
 		}
@@ -107,7 +107,7 @@ var _ = Describe("run netavark", func() {
 		var err error
 		libpodNet, err = getNetworkInterface(confDir)
 		if err != nil {
-			Fail("Failed to create NewCNINetworkInterface")
+			Fail("Failed to create NewNetworkInterface")
 		}
 	})
 
