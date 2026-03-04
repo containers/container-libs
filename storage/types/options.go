@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -172,28 +173,28 @@ func LoadStoreOptions(opts LoadOptions) (StoreOptions, error) {
 	}
 
 	for _, s := range config.Storage.Options.AdditionalImageStores.Values {
-		storeOptions.GraphDriverOptions = append(storeOptions.GraphDriverOptions, fmt.Sprintf("%s.imagestore=%s", config.Storage.Driver, s))
+		storeOptions.GraphDriverOptions = append(storeOptions.GraphDriverOptions, "imagestore="+s)
 	}
 	for _, s := range config.Storage.Options.AdditionalLayerStores.Values {
-		storeOptions.GraphDriverOptions = append(storeOptions.GraphDriverOptions, fmt.Sprintf("%s.additionallayerstore=%s", config.Storage.Driver, s))
+		storeOptions.GraphDriverOptions = append(storeOptions.GraphDriverOptions, "additionallayerstore="+s)
 	}
 	if config.Storage.Options.Size != "" {
-		storeOptions.GraphDriverOptions = append(storeOptions.GraphDriverOptions, fmt.Sprintf("%s.size=%s", config.Storage.Driver, config.Storage.Options.Size))
+		storeOptions.GraphDriverOptions = append(storeOptions.GraphDriverOptions, "size="+config.Storage.Options.Size)
 	}
 	if config.Storage.Options.MountProgram != "" {
-		storeOptions.GraphDriverOptions = append(storeOptions.GraphDriverOptions, fmt.Sprintf("%s.mount_program=%s", config.Storage.Driver, config.Storage.Options.MountProgram))
+		storeOptions.GraphDriverOptions = append(storeOptions.GraphDriverOptions, " mount_program="+config.Storage.Options.MountProgram)
 	}
 	if config.Storage.Options.SkipMountHome != "" {
-		storeOptions.GraphDriverOptions = append(storeOptions.GraphDriverOptions, fmt.Sprintf("%s.skip_mount_home=%s", config.Storage.Driver, config.Storage.Options.SkipMountHome))
+		storeOptions.GraphDriverOptions = append(storeOptions.GraphDriverOptions, "skip_mount_home="+config.Storage.Options.SkipMountHome)
 	}
 	if config.Storage.Options.IgnoreChownErrors != "" {
-		storeOptions.GraphDriverOptions = append(storeOptions.GraphDriverOptions, fmt.Sprintf("%s.ignore_chown_errors=%s", config.Storage.Driver, config.Storage.Options.IgnoreChownErrors))
+		storeOptions.GraphDriverOptions = append(storeOptions.GraphDriverOptions, "ignore_chown_errors="+config.Storage.Options.IgnoreChownErrors)
 	}
 	if config.Storage.Options.ForceMask != 0 {
-		storeOptions.GraphDriverOptions = append(storeOptions.GraphDriverOptions, fmt.Sprintf("%s.force_mask=%o", config.Storage.Driver, config.Storage.Options.ForceMask))
+		storeOptions.GraphDriverOptions = append(storeOptions.GraphDriverOptions, "force_mask="+strconv.FormatUint(uint64(config.Storage.Options.ForceMask), 8))
 	}
 	if config.Storage.Options.MountOpt != "" {
-		storeOptions.GraphDriverOptions = append(storeOptions.GraphDriverOptions, fmt.Sprintf("%s.mountopt=%s", config.Storage.Driver, config.Storage.Options.MountOpt))
+		storeOptions.GraphDriverOptions = append(storeOptions.GraphDriverOptions, "mountopt="+config.Storage.Options.MountOpt)
 	}
 	storeOptions.RootAutoNsUser = config.Storage.Options.RootAutoUsernsUser
 	if config.Storage.Options.AutoUsernsMinSize > 0 {
@@ -209,7 +210,7 @@ func LoadStoreOptions(opts LoadOptions) (StoreOptions, error) {
 	storeOptions.DisableVolatile = config.Storage.Options.DisableVolatile
 	storeOptions.TransientStore = config.Storage.TransientStore
 
-	storeOptions.GraphDriverOptions = append(storeOptions.GraphDriverOptions, cfg.GetGraphDriverOptions(storeOptions.GraphDriverName, config.Storage.Options)...)
+	storeOptions.GraphDriverOptions = append(storeOptions.GraphDriverOptions, cfg.GetGraphDriverOptions(config.Storage.Options)...)
 
 	if opts, ok := os.LookupEnv("STORAGE_OPTS"); ok {
 		storeOptions.GraphDriverOptions = strings.Split(opts, ",")

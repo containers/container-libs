@@ -27,14 +27,14 @@ func TestBtrfsOptions(t *testing.T) {
 		doptions []string
 		options  OptionsConfig
 	)
-	doptions = GetGraphDriverOptions("btrfs", options)
+	doptions = GetGraphDriverOptions(options)
 	if len(doptions) != 0 {
 		t.Fatalf("Expected 0 options, got %v", doptions)
 	}
 	// Make sure legacy mountopt still works
 	options = OptionsConfig{}
 	options.Btrfs.MinSpace = s100
-	doptions = GetGraphDriverOptions("btrfs", options)
+	doptions = GetGraphDriverOptions(options)
 	if len(doptions) == 0 {
 		t.Fatalf("Expected 0 options, got %v", doptions)
 	}
@@ -43,17 +43,9 @@ func TestBtrfsOptions(t *testing.T) {
 	}
 
 	options = OptionsConfig{}
-	options.Size = s200
-	doptions = GetGraphDriverOptions("btrfs", options)
-	if len(doptions) == 0 {
-		t.Fatalf("Expected 0 options, got %v", doptions)
-	}
-	if !searchOptions(doptions, s200) {
-		t.Fatalf("Expected to find size %q options, got %v", s200, doptions)
-	}
 	// Make sure Btrfs.Size takes precedence
 	options.Btrfs.Size = s100
-	doptions = GetGraphDriverOptions("btrfs", options)
+	doptions = GetGraphDriverOptions(options)
 	if len(doptions) == 0 {
 		t.Fatalf("Expected 0 options, got %v", doptions)
 	}
@@ -67,54 +59,24 @@ func TestOverlayOptions(t *testing.T) {
 		doptions []string
 		options  OptionsConfig
 	)
-	doptions = GetGraphDriverOptions("overlay", options)
-	if len(doptions) != 0 {
-		t.Fatalf("Expected 0 options, got %v", doptions)
-	}
-	options.Vfs.IgnoreChownErrors = trueString
-	doptions = GetGraphDriverOptions("overlay", options)
+	doptions = GetGraphDriverOptions(options)
 	if len(doptions) != 0 {
 		t.Fatalf("Expected 0 options, got %v", doptions)
 	}
 	options.Overlay.IgnoreChownErrors = trueString
-	doptions = GetGraphDriverOptions("overlay", options)
+	doptions = GetGraphDriverOptions(options)
 	if len(doptions) == 0 {
 		t.Fatalf("Expected 1 options, got %v", doptions)
 	}
 	options.Overlay.IgnoreChownErrors = "false"
-	doptions = GetGraphDriverOptions("overlay", options)
+	doptions = GetGraphDriverOptions(options)
 	if len(doptions) == 0 {
 		t.Fatalf("Expected 0 options, got %v", doptions)
-	}
-
-	// Make sure legacy IgnoreChownErrors still works
-	options = OptionsConfig{}
-	options.IgnoreChownErrors = trueString
-	doptions = GetGraphDriverOptions("overlay", options)
-	if len(doptions) == 0 {
-		t.Fatalf("Expected 1 options, got %v", doptions)
-	}
-	// Make sure legacy mountopt still works
-	options = OptionsConfig{}
-	options.MountOpt = foobar
-	doptions = GetGraphDriverOptions("overlay", options)
-	if len(doptions) == 0 {
-		t.Fatalf("Expected 0 options, got %v", doptions)
-	}
-	if !searchOptions(doptions, "mountopt=foobar") {
-		t.Fatalf("Expected to find 'foobar' options, got %v", doptions)
-	}
-
-	// Make sure Overlay ignores other drivers mountpoints takes presedence
-	options.Zfs.MountOpt = nodev
-	doptions = GetGraphDriverOptions("overlay", options)
-	if searchOptions(doptions, "mountopt=nodev") {
-		t.Fatalf("Expected to find 'nodev' options, got %v", doptions)
 	}
 
 	// Make sure OverlayMountOpt takes precedence
 	options.Overlay.MountOpt = nodev
-	doptions = GetGraphDriverOptions("overlay", options)
+	doptions = GetGraphDriverOptions(options)
 	if len(doptions) == 0 {
 		t.Fatalf("Expected 0 options, got %v", doptions)
 	}
@@ -122,17 +84,8 @@ func TestOverlayOptions(t *testing.T) {
 		t.Fatalf("Expected to find 'nodev' options, got %v", doptions)
 	}
 
-	// Make sure mount_program takes precedence
-	options.MountProgram = "/usr/bin/root_overlay"
-	doptions = GetGraphDriverOptions("overlay", options)
-	if len(doptions) == 0 {
-		t.Fatalf("Expected 0 options, got %v", doptions)
-	}
-	if !searchOptions(doptions, "mount_program=/usr/bin/root_overlay") {
-		t.Fatalf("Expected to find 'root_overlay' options, got %v", doptions)
-	}
 	options.Overlay.MountProgram = "/usr/bin/fuse_overlay"
-	doptions = GetGraphDriverOptions("overlay", options)
+	doptions = GetGraphDriverOptions(options)
 	if len(doptions) == 0 {
 		t.Fatalf("Expected 0 options, got %v", doptions)
 	}
@@ -140,7 +93,7 @@ func TestOverlayOptions(t *testing.T) {
 		t.Fatalf("Expected to find 'fuse_overlay' options, got %v", doptions)
 	}
 	options.Overlay.SkipMountHome = "true"
-	doptions = GetGraphDriverOptions("overlay", options)
+	doptions = GetGraphDriverOptions(options)
 	if len(doptions) == 0 {
 		t.Fatalf("Expected 0 options, got %v", doptions)
 	}
@@ -149,7 +102,7 @@ func TestOverlayOptions(t *testing.T) {
 	}
 
 	options.Overlay.UseComposefs = "true"
-	doptions = GetGraphDriverOptions("overlay", options)
+	doptions = GetGraphDriverOptions(options)
 	if len(doptions) == 0 {
 		t.Fatalf("Expected > 0 options, got %v", doptions)
 	}
@@ -157,28 +110,9 @@ func TestOverlayOptions(t *testing.T) {
 		t.Fatalf("Expected to find 'use_composefs' options, got %v", doptions)
 	}
 
-	// Make sure legacy mountopt still works
-	options = OptionsConfig{}
-	options.SkipMountHome = "true"
-	doptions = GetGraphDriverOptions("overlay", options)
-	if len(doptions) == 0 {
-		t.Fatalf("Expected 0 options, got %v", doptions)
-	}
-	if !searchOptions(doptions, "skip_mount_home") {
-		t.Fatalf("Expected to find 'skip_mount_home' options, got %v", doptions)
-	}
-
-	options.Size = s200
-	doptions = GetGraphDriverOptions("overlay", options)
-	if len(doptions) == 0 {
-		t.Fatalf("Expected 0 options, got %v", doptions)
-	}
-	if !searchOptions(doptions, s200) {
-		t.Fatalf("Expected to find size %q options, got %v", s200, doptions)
-	}
 	// Make sure Overlay.Size takes precedence
 	options.Overlay.Size = s100
-	doptions = GetGraphDriverOptions("overlay", options)
+	doptions = GetGraphDriverOptions(options)
 	if len(doptions) == 0 {
 		t.Fatalf("Expected 0 options, got %v", doptions)
 	}
@@ -192,24 +126,17 @@ func TestVfsOptions(t *testing.T) {
 		doptions []string
 		options  OptionsConfig
 	)
-	doptions = GetGraphDriverOptions("vfs", options)
+	doptions = GetGraphDriverOptions(options)
 	if len(doptions) != 0 {
 		t.Fatalf("Expected 0 options, got %v", doptions)
 	}
 	options.Overlay.IgnoreChownErrors = trueString
-	doptions = GetGraphDriverOptions("vfs", options)
-	if len(doptions) != 0 {
-		t.Fatalf("Expected 0 options, got %v", doptions)
-	}
-	options.Vfs.IgnoreChownErrors = trueString
-	doptions = GetGraphDriverOptions("vfs", options)
-	if len(doptions) == 0 {
+	doptions = GetGraphDriverOptions(options)
+	if len(doptions) != 1 {
 		t.Fatalf("Expected 1 options, got %v", doptions)
 	}
-	// Make sure legacy IgnoreChownErrors still works
-	options = OptionsConfig{}
-	options.IgnoreChownErrors = trueString
-	doptions = GetGraphDriverOptions("vfs", options)
+	options.Vfs.IgnoreChownErrors = trueString
+	doptions = GetGraphDriverOptions(options)
 	if len(doptions) == 0 {
 		t.Fatalf("Expected 1 options, got %v", doptions)
 	}
@@ -220,38 +147,24 @@ func TestZfsOptions(t *testing.T) {
 		doptions []string
 		options  OptionsConfig
 	)
-	doptions = GetGraphDriverOptions("zfs", options)
+	doptions = GetGraphDriverOptions(options)
 	if len(doptions) != 0 {
 		t.Fatalf("Expected 0 options, got %v", doptions)
 	}
 	// Make sure legacy mountopt still works
 	options = OptionsConfig{}
 	options.Zfs.Name = foobar
-	doptions = GetGraphDriverOptions("zfs", options)
+	doptions = GetGraphDriverOptions(options)
 	if len(doptions) == 0 {
 		t.Fatalf("Expected 0 options, got %v", doptions)
 	}
 	if !searchOptions(doptions, options.Zfs.Name) {
 		t.Fatalf("Expected to find 'foobar' options, got %v", doptions)
 	}
-	// Make sure Zfs ignores other drivers mountpoints takes presedence
-	options.Overlay.MountOpt = nodev
-	doptions = GetGraphDriverOptions("zfs", options)
-	if searchOptions(doptions, "mountopt=nodev") {
-		t.Fatalf("Expected Not to find 'nodev' options, got %v", doptions)
-	}
 
-	options.Size = s200
-	doptions = GetGraphDriverOptions("zfs", options)
-	if len(doptions) == 0 {
-		t.Fatalf("Expected 0 options, got %v", doptions)
-	}
-	if !searchOptions(doptions, s200) {
-		t.Fatalf("Expected to find size %q options, got %v", s200, doptions)
-	}
 	// Make sure Zfs.Size takes precedence
 	options.Zfs.Size = s100
-	doptions = GetGraphDriverOptions("zfs", options)
+	doptions = GetGraphDriverOptions(options)
 	if len(doptions) == 0 {
 		t.Fatalf("Expected 0 options, got %v", doptions)
 	}
