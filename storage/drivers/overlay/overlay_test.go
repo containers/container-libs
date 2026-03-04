@@ -4,15 +4,19 @@ package overlay
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	graphdriver "go.podman.io/storage/drivers"
 	"go.podman.io/storage/drivers/graphtest"
+	"go.podman.io/storage/drivers/quota"
 	"go.podman.io/storage/pkg/archive"
 	"go.podman.io/storage/pkg/idtools"
 	"go.podman.io/storage/pkg/reexec"
+
+	_ "go.podman.io/storage/drivers/vfs" // needed by parseOptions
 )
 
 const driverName = "overlay"
@@ -179,4 +183,184 @@ func BenchmarkDiff20Layers(b *testing.B) {
 
 func BenchmarkRead20Layers(b *testing.B) {
 	graphtest.DriverBenchDeepLayerRead(b, 20, driverName)
+}
+
+func Test_parseOptions(t *testing.T) {
+	var (
+		sharedMask  = os.FileMode(0o755)
+		privateMask = os.FileMode(0o700)
+		customMask  = os.FileMode(0o644)
+	)
+
+	tmpDir := t.TempDir()
+	tmpFile := filepath.Join(tmpDir, "test-file")
+
+	f, err := os.Create(tmpFile)
+	require.NoError(t, err)
+	require.NoError(t, f.Close())
+
+	tests := []struct {
+		name string // description of this test case
+		// Named input parameters for target function.
+		options []string
+		want    *overlayOptions
+		wantErr string
+	}{
+		{
+			name:    "no opts",
+			options: []string{},
+			want:    &overlayOptions{},
+		},
+		{
+			name:    "mountopt",
+			options: []string{"mountopt=abc"},
+			want:    &overlayOptions{mountOptions: "abc"},
+		},
+		{
+			name:    "overlay prefix handling",
+			options: []string{"overlay.mountopt=def"},
+			want:    &overlayOptions{mountOptions: "def"},
+		},
+		{
+			name:    "overlay2 prefix handling",
+			options: []string{"overlay2.mountopt=ghi"},
+			want:    &overlayOptions{mountOptions: "ghi"},
+		},
+		{
+			name:    "size",
+			options: []string{"size=50kb"},
+			want:    &overlayOptions{quota: quota.Quota{Size: 51200}},
+		},
+		{
+			name:    "size - invalid",
+			options: []string{"size=abc"},
+			wantErr: "invalid size",
+		},
+		{
+			name:    "inodes",
+			options: []string{"inodes=1024"},
+			want:    &overlayOptions{quota: quota.Quota{Inodes: 1024}},
+		},
+		{
+			name:    "inodes - invalid",
+			options: []string{"inodes=abc"},
+			wantErr: "invalid syntax",
+		},
+		{
+			name:    "override_kernel_check",
+			options: []string{"override_kernel_check=true"},
+			want:    &overlayOptions{}, // Has no effect other than log output
+		},
+		{
+			name:    "imagestore - valid directory",
+			options: []string{"imagestore=" + tmpDir},
+			want:    &overlayOptions{imageStores: []string{tmpDir}},
+		},
+		{
+			name:    "imagestore - invalid (relative path)",
+			options: []string{"imagestore=./relative/path"},
+			wantErr: "is not absolute",
+		},
+		{
+			name:    "imagestore - invalid (file instead of dir)",
+			options: []string{"imagestore=" + tmpFile},
+			wantErr: "must be a directory",
+		},
+		{
+			name:    "additionallayerstore - valid directory",
+			options: []string{"additionallayerstore=" + tmpDir},
+			want:    &overlayOptions{layerStores: []additionalLayerStore{{path: tmpDir, withReference: false}}},
+		},
+		{
+			name:    "additionallayerstore - with ref",
+			options: []string{"additionallayerstore=" + tmpDir + ":ref"},
+			want:    &overlayOptions{layerStores: []additionalLayerStore{{path: tmpDir, withReference: true}}},
+		},
+		{
+			name:    "additionallayerstore - ref used twice",
+			options: []string{"additionallayerstore=" + tmpDir + ":ref:ref"},
+			wantErr: "contains \"ref\" option twice",
+		},
+		{
+			name:    "additionallayerstore - unknown option",
+			options: []string{"additionallayerstore=" + tmpDir + ":unknown"},
+			wantErr: "contains unknown option \"unknown\"",
+		},
+		{
+			name:    "mount_program - valid file",
+			options: []string{"mount_program=" + tmpFile},
+			want:    &overlayOptions{mountProgram: tmpFile},
+		},
+		{
+			name:    "mount_program - missing file",
+			options: []string{"mount_program=/does/not/exist"},
+			wantErr: "can't stat program",
+		},
+		{
+			name:    "use_composefs",
+			options: []string{"use_composefs=true"},
+			want:    &overlayOptions{useComposefs: true},
+		},
+		{
+			name:    "use_composefs - invalid",
+			options: []string{"use_composefs=notabool"},
+			wantErr: "invalid syntax",
+		},
+		{
+			name:    "skip_mount_home",
+			options: []string{"skip_mount_home=true"},
+			want:    &overlayOptions{skipMountHome: true},
+		},
+		{
+			name:    "ignore_chown_errors",
+			options: []string{"ignore_chown_errors=true"},
+			want:    &overlayOptions{ignoreChownErrors: true},
+		},
+		{
+			name:    "force_mask - shared",
+			options: []string{"force_mask=shared"},
+			want:    &overlayOptions{forceMask: &sharedMask},
+		},
+		{
+			name:    "force_mask - private",
+			options: []string{"force_mask=private"},
+			want:    &overlayOptions{forceMask: &privateMask},
+		},
+		{
+			name:    "force_mask - custom octal",
+			options: []string{"force_mask=644"},
+			want:    &overlayOptions{forceMask: &customMask},
+		},
+		{
+			name:    "force_mask - invalid syntax",
+			options: []string{"force_mask=hello"},
+			wantErr: "invalid syntax",
+		},
+		{
+			name:    "unknown option",
+			options: []string{"unknown=value"},
+			wantErr: "unknown option unknown",
+		},
+		{
+			name:    "unknown overlay prefix option",
+			options: []string{"overlay.123=value"},
+			wantErr: "unknown option overlay.123",
+		},
+		{
+			name:    "other driver option should not error",
+			options: []string{"vfs.unknown=value"},
+			want:    &overlayOptions{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, gotErr := parseOptions(tt.options)
+			if tt.wantErr != "" {
+				require.ErrorContains(t, gotErr, tt.wantErr)
+				return
+			}
+			require.NoError(t, gotErr)
+			assert.Equal(t, tt.want, got)
+		})
+	}
 }
