@@ -164,9 +164,6 @@ func LoadStoreOptions(opts LoadOptions) (StoreOptions, error) {
 		storeOptions.GraphDriverName = overlayDriver
 	}
 	storeOptions.GraphDriverPriority = config.Storage.DriverPriority.Values
-	if storeOptions.GraphDriverName == "" && len(storeOptions.GraphDriverPriority) == 0 {
-		logrus.Warn("The storage 'driver' option should be set in storage.conf. A driver was picked automatically")
-	}
 
 	if config.Storage.ImageStore != "" {
 		storeOptions.ImageStore = config.Storage.ImageStore
