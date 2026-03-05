@@ -1040,7 +1040,7 @@ load helpers
 	echo "$output"
 	[ "$status" -eq 0 ]
 
-	run storage --graph=$TESTDIR/newstore --storage-opt=.imagestore=$TESTDIR/imagestore --debug=false create-image $layer
+	run storage --graph=$TESTDIR/newstore --storage-opt=imagestore=$TESTDIR/imagestore --debug=false create-image $layer
 	echo "$output"
 	[ "$status" -eq 0 ]
 	image="$output"
@@ -1050,7 +1050,7 @@ load helpers
 		gidrange[$i]=$((($RANDOM+32767)*65536))
 	done
 
-	run storage --graph=$TESTDIR/newstore --storage-opt=.imagestore=$TESTDIR/imagestore --debug=false create-container --uidmap 0:${uidrange[0]}:$(($n+1)) --gidmap 0:${gidrange[0]}:$(($n+1)) $image
+	run storage --graph=$TESTDIR/newstore --storage-opt=imagestore=$TESTDIR/imagestore --debug=false create-container --uidmap 0:${uidrange[0]}:$(($n+1)) --gidmap 0:${gidrange[0]}:$(($n+1)) $image
 	echo "$output"
 	[ "$status" -eq 0 ]
 	[ "$output" != "" ]
