@@ -367,6 +367,9 @@ func Image(ctx context.Context, policyContext *signature.PolicyContext, destRef,
 		if len(options.EnsureCompressionVariantsExist) > 0 {
 			return nil, fmt.Errorf("EnsureCompressionVariantsExist is not implemented when not creating a multi-architecture image")
 		}
+		if c.options.RemoveListSignatures {
+			return nil, fmt.Errorf("RemoveListSignatures is not applicable when copying a single instance")
+		}
 		requireCompressionFormatMatch, err := shouldRequireCompressionFormatMatch(options)
 		if err != nil {
 			return nil, err
