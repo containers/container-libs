@@ -3,6 +3,7 @@ package copy
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -42,6 +43,7 @@ type imageCopier struct {
 	compressionFormat             *compressiontypes.Algorithm // Compression algorithm to use, if the user explicitly requested one, or nil.
 	compressionLevel              *int
 	requireCompressionFormatMatch bool
+	stripSentinel                 bool // Remove sentinel layer[0] and DiffID[0] from final manifest/config
 }
 
 type copySingleImageOptions struct {
@@ -458,6 +460,35 @@ func (ic *imageCopier) copyLayers(ctx context.Context) ([]compressiontypes.Algor
 	}
 	manifestLayerInfos := man.LayerInfos()
 
+	// Let the destination filter manifest layer infos before copying.
+	// Destinations that support it (e.g., c/storage) may detect storage-specific
+	// markers and return indices of layers that should be skipped.
+	type layerFilter interface {
+		FilterLayers([]manifest.LayerInfo) []int
+	}
+	filteredLayers := set.New[int]()
+	if f, ok := ic.c.dest.(layerFilter); ok {
+		for _, idx := range f.FilterLayers(manifestLayerInfos) {
+			filteredLayers.Add(idx)
+		}
+	}
+
+	// If the destination does not implement FilterLayers (non-storage), strip the
+	// sentinel layer when compression is changing away from zstd:chunked.
+	if filteredLayers.Empty() && len(manifestLayerInfos) > 0 && manifestLayerInfos[0].Digest == chunkedToc.ZstdChunkedSentinelDigest {
+		destFormat := ic.compressionFormat
+		if destFormat == nil {
+			destFormat = defaultCompressionFormat
+		}
+		if destFormat.Name() != compressiontypes.ZstdChunkedAlgorithmName {
+			if ic.cannotModifyManifestReason != "" {
+				return nil, fmt.Errorf("copying this image requires stripping the zstd:chunked sentinel layer, which we cannot do: %q", ic.cannotModifyManifestReason)
+			}
+			filteredLayers.Add(0)
+			ic.stripSentinel = true
+		}
+	}
+
 	// copyGroup is used to determine if all layers are copied
 	copyGroup := sync.WaitGroup{}
 
@@ -466,7 +497,10 @@ func (ic *imageCopier) copyLayers(ctx context.Context) ([]compressiontypes.Algor
 		defer ic.c.concurrentBlobCopiesSemaphore.Release(1)
 		defer copyGroup.Done()
 		cld := copyLayerData{}
-		if !ic.c.options.DownloadForeignLayers && ic.c.dest.AcceptsForeignLayerURLs() && len(srcLayer.URLs) != 0 {
+		if manifestLayerInfos[index].EmptyLayer || filteredLayers.Contains(index) {
+			cld.destInfo = srcLayer
+			logrus.Debugf("Skipping layer %q", srcLayer.Digest)
+		} else if !ic.c.options.DownloadForeignLayers && ic.c.dest.AcceptsForeignLayerURLs() && len(srcLayer.URLs) != 0 {
 			// DiffIDs are, currently, needed only when converting from schema1.
 			// In which case src.LayerInfos will not have URLs because schema1
 			// does not support them.
@@ -592,8 +626,20 @@ func (ic *imageCopier) copyUpdatedConfigAndManifest(ctx context.Context, instanc
 		return nil, "", fmt.Errorf("reading manifest: %w", err)
 	}
 
-	if err := ic.copyConfig(ctx, pendingImage); err != nil {
-		return nil, "", err
+	configBlob, err := pendingImage.ConfigBlob(ctx)
+	if err != nil {
+		return nil, "", fmt.Errorf("reading config blob: %w", err)
+	}
+
+	if ic.stripSentinel {
+		man, configBlob, err = ic.stripSentinelFromManifestAndConfig(ctx, man, configBlob)
+		if err != nil {
+			return nil, "", err
+		}
+	} else {
+		if err := ic.copyConfig(ctx, pendingImage); err != nil {
+			return nil, "", err
+		}
 	}
 
 	ic.c.Printf("Writing manifest to image destination\n")
@@ -609,6 +655,69 @@ func (ic *imageCopier) copyUpdatedConfigAndManifest(ctx context.Context, instanc
 		return nil, "", fmt.Errorf("writing manifest: %w", err)
 	}
 	return man, manifestDigest, nil
+}
+
+// stripSentinelFromManifestAndConfig removes the sentinel layer (layer[0]) from
+// the OCI manifest and the corresponding DiffID (DiffIDs[0]) from the config.
+// It pushes the new config to the destination and returns the updated manifest
+// and config blobs.
+func (ic *imageCopier) stripSentinelFromManifestAndConfig(ctx context.Context, manBlob []byte, configBlob []byte) ([]byte, []byte, error) {
+	ociMan, err := manifest.OCI1FromManifest(manBlob)
+	if err != nil {
+		return nil, nil, fmt.Errorf("parsing OCI manifest for sentinel stripping: %w", err)
+	}
+	if len(ociMan.Layers) == 0 || ociMan.Layers[0].Digest != chunkedToc.ZstdChunkedSentinelDigest {
+		return nil, nil, errors.New("internal error: stripSentinel set but manifest layer[0] is not the sentinel")
+	}
+	ociMan.Layers = ociMan.Layers[1:]
+
+	var ociConfig imgspecv1.Image
+	if err := json.Unmarshal(configBlob, &ociConfig); err != nil {
+		return nil, nil, fmt.Errorf("parsing config for sentinel stripping: %w", err)
+	}
+	if len(ociConfig.RootFS.DiffIDs) == 0 || ociConfig.RootFS.DiffIDs[0] != chunkedToc.ZstdChunkedSentinelDigest {
+		return nil, nil, errors.New("internal error: stripSentinel set but config DiffIDs[0] is not the sentinel")
+	}
+	ociConfig.RootFS.DiffIDs = ociConfig.RootFS.DiffIDs[1:]
+
+	newConfigBlob, err := json.Marshal(ociConfig)
+	if err != nil {
+		return nil, nil, fmt.Errorf("marshaling config after sentinel stripping: %w", err)
+	}
+	configDigest := digest.FromBytes(newConfigBlob)
+
+	// Push new config to destination.
+	configBlobInfo := types.BlobInfo{
+		Digest:    configDigest,
+		Size:      int64(len(newConfigBlob)),
+		MediaType: imgspecv1.MediaTypeImageConfig,
+	}
+	reused, _, err := ic.c.dest.TryReusingBlobWithOptions(ctx, configBlobInfo,
+		private.TryReusingBlobOptions{Cache: ic.c.blobInfoCache})
+	if err != nil {
+		return nil, nil, fmt.Errorf("checking stripped config blob: %w", err)
+	}
+	if !reused {
+		_, err = ic.c.dest.PutBlobWithOptions(ctx, bytes.NewReader(newConfigBlob),
+			configBlobInfo, private.PutBlobOptions{Cache: ic.c.blobInfoCache, IsConfig: true})
+		if err != nil {
+			return nil, nil, fmt.Errorf("pushing stripped config blob: %w", err)
+		}
+	}
+
+	// Update manifest to point to the new config.
+	ociMan.Config = imgspecv1.Descriptor{
+		MediaType: imgspecv1.MediaTypeImageConfig,
+		Digest:    configDigest,
+		Size:      int64(len(newConfigBlob)),
+	}
+	newManBlob, err := ociMan.Serialize()
+	if err != nil {
+		return nil, nil, fmt.Errorf("serializing manifest after sentinel stripping: %w", err)
+	}
+
+	logrus.Debugf("Stripped zstd:chunked sentinel layer from manifest and config")
+	return newManBlob, newConfigBlob, nil
 }
 
 // copyConfig copies config.json, if any, from src to dest.
