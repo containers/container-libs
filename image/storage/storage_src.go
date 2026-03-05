@@ -122,6 +122,10 @@ func (s *storageImageSource) GetBlob(ctx context.Context, info types.BlobInfo, c
 		return io.NopCloser(bytes.NewReader(image.GzippedEmptyLayer)), int64(len(image.GzippedEmptyLayer)), nil
 	}
 
+	if digest == toc.ZstdChunkedSentinelDigest {
+		return io.NopCloser(bytes.NewReader(toc.ZstdChunkedSentinelContent)), int64(len(toc.ZstdChunkedSentinelContent)), nil
+	}
+
 	var layers []storage.Layer
 
 	// This lookup path is strictly necessary for layers identified by TOC digest

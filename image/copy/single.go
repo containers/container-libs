@@ -56,6 +56,7 @@ type copySingleImageResult struct {
 	manifestMIMEType      string
 	manifestDigest        digest.Digest
 	compressionAlgorithms []compressiontypes.Algorithm
+	configBlob            []byte // The config as written to the destination
 }
 
 // copySingleImage copies a single (non-manifest-list) image unparsedImage, using c.policyContext to validate
@@ -241,11 +242,12 @@ func (c *copier) copySingleImage(ctx context.Context, unparsedImage *image.Unpar
 	// without actually trying to upload something and getting a types.ManifestTypeRejectedError.
 	// So, try the preferred manifest MIME type with possibly-updated blob digests, media types, and sizes if
 	// we're altering how they're compressed.  If the process succeeds, fine…
-	manifestBytes, manifestDigest, err := ic.copyUpdatedConfigAndManifest(ctx, targetInstance)
+	manifestBytes, manifestDigest, configBlob, err := ic.copyUpdatedConfigAndManifest(ctx, targetInstance)
 	wipResult := copySingleImageResult{
 		manifest:         manifestBytes,
 		manifestMIMEType: ic.manifestConversionPlan.preferredMIMEType,
 		manifestDigest:   manifestDigest,
+		configBlob:       configBlob,
 	}
 	if err != nil {
 		logrus.Debugf("Writing manifest using preferred type %s failed: %v", ic.manifestConversionPlan.preferredMIMEType, err)
@@ -276,7 +278,7 @@ func (c *copier) copySingleImage(ctx context.Context, unparsedImage *image.Unpar
 		for _, manifestMIMEType := range ic.manifestConversionPlan.otherMIMETypeCandidates {
 			logrus.Debugf("Trying to use manifest type %s…", manifestMIMEType)
 			ic.manifestUpdates.ManifestMIMEType = manifestMIMEType
-			attemptedManifest, attemptedManifestDigest, err := ic.copyUpdatedConfigAndManifest(ctx, targetInstance)
+			attemptedManifest, attemptedManifestDigest, attemptedConfigBlob, err := ic.copyUpdatedConfigAndManifest(ctx, targetInstance)
 			if err != nil {
 				logrus.Debugf("Upload of manifest type %s failed: %v", manifestMIMEType, err)
 				errs = append(errs, fmt.Sprintf("%s(%v)", manifestMIMEType, err))
@@ -288,6 +290,7 @@ func (c *copier) copySingleImage(ctx context.Context, unparsedImage *image.Unpar
 				manifest:         attemptedManifest,
 				manifestMIMEType: manifestMIMEType,
 				manifestDigest:   attemptedManifestDigest,
+				configBlob:       attemptedConfigBlob,
 			}
 			errs = nil // Mark this as a success so that we don't abort below.
 			break
@@ -582,11 +585,11 @@ func layerDigestsDiffer(a, b []types.BlobInfo) bool {
 // copyUpdatedConfigAndManifest updates the image per ic.manifestUpdates, if necessary,
 // stores the resulting config and manifest to the destination, and returns the stored manifest
 // and its digest.
-func (ic *imageCopier) copyUpdatedConfigAndManifest(ctx context.Context, instanceDigest *digest.Digest) ([]byte, digest.Digest, error) {
+func (ic *imageCopier) copyUpdatedConfigAndManifest(ctx context.Context, instanceDigest *digest.Digest) ([]byte, digest.Digest, []byte, error) {
 	var pendingImage types.Image = ic.src
 	if !ic.noPendingManifestUpdates() {
 		if ic.cannotModifyManifestReason != "" {
-			return nil, "", fmt.Errorf("Internal error: copy needs an updated manifest but that was known to be forbidden: %q", ic.cannotModifyManifestReason)
+			return nil, "", nil, fmt.Errorf("Internal error: copy needs an updated manifest but that was known to be forbidden: %q", ic.cannotModifyManifestReason)
 		}
 		if !ic.diffIDsAreNeeded && ic.src.UpdatedImageNeedsLayerDiffIDs(*ic.manifestUpdates) {
 			// We have set ic.diffIDsAreNeeded based on the preferred MIME type returned by determineManifestConversion.
@@ -595,36 +598,41 @@ func (ic *imageCopier) copyUpdatedConfigAndManifest(ctx context.Context, instanc
 			// when ic.c.dest.SupportedManifestMIMETypes() includes both s1 and s2, the upload using s1 failed, and we are now trying s2.
 			// Supposedly s2-only registries do not exist or are extremely rare, so failing with this error message is good enough for now.
 			// If handling such registries turns out to be necessary, we could compute ic.diffIDsAreNeeded based on the full list of manifest MIME type candidates.
-			return nil, "", fmt.Errorf("Can not convert image to %s, preparing DiffIDs for this case is not supported", ic.manifestUpdates.ManifestMIMEType)
+			return nil, "", nil, fmt.Errorf("Can not convert image to %s, preparing DiffIDs for this case is not supported", ic.manifestUpdates.ManifestMIMEType)
 		}
 		pi, err := ic.src.UpdatedImage(ctx, *ic.manifestUpdates)
 		if err != nil {
-			return nil, "", fmt.Errorf("creating an updated image manifest: %w", err)
+			return nil, "", nil, fmt.Errorf("creating an updated image manifest: %w", err)
 		}
 		pendingImage = pi
 	}
 	man, _, err := pendingImage.Manifest(ctx)
 	if err != nil {
-		return nil, "", fmt.Errorf("reading manifest: %w", err)
+		return nil, "", nil, fmt.Errorf("reading manifest: %w", err)
 	}
 
 	if err := ic.copyConfig(ctx, pendingImage); err != nil {
-		return nil, "", err
+		return nil, "", nil, err
+	}
+
+	configBlob, err := pendingImage.ConfigBlob(ctx)
+	if err != nil {
+		return nil, "", nil, fmt.Errorf("reading config blob: %w", err)
 	}
 
 	ic.c.Printf("Writing manifest to image destination\n")
 	manifestDigest, err := manifest.Digest(man)
 	if err != nil {
-		return nil, "", err
+		return nil, "", nil, err
 	}
 	if instanceDigest != nil {
 		instanceDigest = &manifestDigest
 	}
 	if err := ic.c.dest.PutManifest(ctx, man, instanceDigest); err != nil {
 		logrus.Debugf("Error %v while writing manifest %q", err, string(man))
-		return nil, "", fmt.Errorf("writing manifest: %w", err)
+		return nil, "", nil, fmt.Errorf("writing manifest: %w", err)
 	}
-	return man, manifestDigest, nil
+	return man, manifestDigest, configBlob, nil
 }
 
 // copyConfig copies config.json, if any, from src to dest.
