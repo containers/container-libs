@@ -138,7 +138,6 @@ func prepareInstanceOps(list internalManifest.List, instanceDigests []digest.Dig
 	for i, instanceDigest := range instanceDigests {
 		if options.ImageListSelection == CopySpecificImages &&
 			!specificImages.Contains(instanceDigest) {
-			// Create delete operation if we're stripping sparse manifests
 			if options.SparseManifestListAction == StripSparseManifestList {
 				logrus.Debugf("deleting instance %s from destination’s manifest (%d/%d)", instanceDigest, i+1, len(instanceDigests))
 				deleteOps = append(deleteOps, instanceOp{
