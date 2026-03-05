@@ -115,15 +115,15 @@ func prepareInstanceOps(list internalManifest.List, instanceDigests []digest.Dig
 		// EnsureCompressionVariantsExist asks for an instance with some compression,
 		// an instance with that compression already exists, but is not included in options.Instances.
 		// We might define the semantics and implement this in the future.
-		return res, 0, fmt.Errorf("EnsureCompressionVariantsExist is not implemented for CopySpecificImages")
+		return res, -1, fmt.Errorf("EnsureCompressionVariantsExist is not implemented for CopySpecificImages")
 	}
 	err := validateCompressionVariantExists(options.EnsureCompressionVariantsExist)
 	if err != nil {
-		return res, 0, err
+		return res, -1, err
 	}
 	compressionsByPlatform, err := platformCompressionMap(list, instanceDigests)
 	if err != nil {
-		return nil, 0, err
+		return nil, -1, err
 	}
 
 	// Determine which specific images to copy (combining digest-based and platform-based selection)
@@ -131,7 +131,7 @@ func prepareInstanceOps(list internalManifest.List, instanceDigests []digest.Dig
 	if options.ImageListSelection == CopySpecificImages {
 		specificImages, err = determineSpecificImages(options, list)
 		if err != nil {
-			return nil, 0, err
+			return nil, -1, err
 		}
 	}
 
@@ -152,11 +152,11 @@ func prepareInstanceOps(list internalManifest.List, instanceDigests []digest.Dig
 		}
 		instanceDetails, err := list.Instance(instanceDigest)
 		if err != nil {
-			return res, 0, fmt.Errorf("getting details for instance %s: %w", instanceDigest, err)
+			return res, -1, fmt.Errorf("getting details for instance %s: %w", instanceDigest, err)
 		}
 		forceCompressionFormat, err := shouldRequireCompressionFormatMatch(options)
 		if err != nil {
-			return nil, 0, err
+			return nil, -1, err
 		}
 		res = append(res, instanceOp{
 			op:                         instanceOpCopy,
