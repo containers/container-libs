@@ -364,7 +364,6 @@ func Image(ctx context.Context, policyContext *signature.PolicyContext, destRef,
 	} // else: a multi-instance copy
 
 	if singleInstance != nil {
-		// Single-image copy path
 		if len(options.EnsureCompressionVariantsExist) > 0 {
 			return nil, fmt.Errorf("EnsureCompressionVariantsExist is not implemented when not creating a multi-architecture image")
 		}
