@@ -458,6 +458,19 @@ func (ic *imageCopier) copyLayers(ctx context.Context) ([]compressiontypes.Algor
 	}
 	manifestLayerInfos := man.LayerInfos()
 
+	// Let the destination filter manifest layer infos before copying.
+	// Destinations that support it (e.g., c/storage) may detect storage-specific
+	// markers and return indices of layers that should be skipped.
+	type layerFilter interface {
+		FilterLayers([]manifest.LayerInfo) []int
+	}
+	filteredLayers := set.New[int]()
+	if f, ok := ic.c.dest.(layerFilter); ok {
+		for _, idx := range f.FilterLayers(manifestLayerInfos) {
+			filteredLayers.Add(idx)
+		}
+	}
+
 	// copyGroup is used to determine if all layers are copied
 	copyGroup := sync.WaitGroup{}
 
@@ -466,7 +479,10 @@ func (ic *imageCopier) copyLayers(ctx context.Context) ([]compressiontypes.Algor
 		defer ic.c.concurrentBlobCopiesSemaphore.Release(1)
 		defer copyGroup.Done()
 		cld := copyLayerData{}
-		if !ic.c.options.DownloadForeignLayers && ic.c.dest.AcceptsForeignLayerURLs() && len(srcLayer.URLs) != 0 {
+		if manifestLayerInfos[index].EmptyLayer || filteredLayers.Contains(index) {
+			cld.destInfo = srcLayer
+			logrus.Debugf("Skipping layer %q", srcLayer.Digest)
+		} else if !ic.c.options.DownloadForeignLayers && ic.c.dest.AcceptsForeignLayerURLs() && len(srcLayer.URLs) != 0 {
 			// DiffIDs are, currently, needed only when converting from schema1.
 			// In which case src.LayerInfos will not have URLs because schema1
 			// does not support them.
