@@ -377,7 +377,6 @@ func Image(ctx context.Context, policyContext *signature.PolicyContext, destRef,
 		}
 		copiedManifest = single.manifest
 	} else {
-		// Multi-image copy path
 		// If we were asked to copy multiple images and can't, that's an error.
 		if !supportsMultipleImages(c.dest) {
 			return nil, fmt.Errorf("copying multiple images: destination transport %q does not support copying multiple images as a group", destRef.Transport().Name())
