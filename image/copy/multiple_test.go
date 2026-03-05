@@ -16,8 +16,6 @@ import (
 )
 
 const (
-	// Test manifest file paths
-	ociManifestFile  = "../internal/manifest/testdata/ociv1.manifest.json"
 	ociIndexZstdFile = "../internal/manifest/testdata/oci1.index.zstd-selection.json"
 )
 
