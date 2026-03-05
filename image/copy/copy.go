@@ -340,7 +340,6 @@ func Image(ctx context.Context, policyContext *signature.PolicyContext, destRef,
 		return nil, fmt.Errorf("determining manifest MIME type for %s: %w", transports.ImageName(srcRef), err)
 	}
 
-	// Determine if we're copying a single image or multiple images
 	var singleInstance *image.UnparsedImage
 	if !multiImage {
 		// The simple case: just copy a single image.
