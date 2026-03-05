@@ -13,14 +13,14 @@
 # The "container storage" table contains all of the server options.
 [storage]
 
-# Default Storage Driver, Must be set for proper operation.
-driver = "zfs"
+# Default storage driver. Optional.
+# driver = "zfs"
 
 # Temporary storage location
-runroot = "/var/run/containers/storage"
+# runroot = "/var/run/containers/storage"
 
 # Primary Read/Write location of container storage
-graphroot = "/var/db/containers/storage"
+# graphroot = "/var/db/containers/storage"
 
 # Optional value for image storage location
 # If set, it must be different than graphroot.
@@ -36,8 +36,7 @@ graphroot = "/var/db/containers/storage"
 
 # AdditionalImageStores is used to pass paths to additional Read/Only image stores
 # Must be comma separated list.
-additionalimagestores = [
-]
+# additionalimagestores = []
 
 # Root-auto-userns-user is a user name which can be used to look up one or more UID/GID
 # ranges in the /etc/subuid and /etc/subgid file.  These ranges will be partitioned
