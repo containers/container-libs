@@ -97,7 +97,6 @@ type SparseManifestListAction int
 type Options struct {
 	RemoveSignatures bool // Remove any pre-existing signatures. Signers and SignBy… will still add a new signature.
 	// RemoveListSignatures removes the manifest list signature while preserving per-instance signatures.
-	// This option is orthogonal to other copy options; if set, it removes list signatures when applicable.
 	// If RemoveSignatures is also true, RemoveSignatures takes precedence.
 	RemoveListSignatures bool
 	// Signers to use to add signatures during the copy.
