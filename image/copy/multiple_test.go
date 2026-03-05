@@ -35,7 +35,7 @@ func TestPrepareInstanceOpsForInstanceCopy(t *testing.T) {
 		digest.Digest("sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"),
 	}
 
-	instancesToCopy, _, err := prepareInstanceOps(list, sourceInstances, &Options{})
+	instancesToCopy, _, err := prepareInstanceOps(list, sourceInstances, &Options{}, "")
 	require.NoError(t, err)
 	compare := []instanceOp{}
 
@@ -48,7 +48,7 @@ func TestPrepareInstanceOpsForInstanceCopy(t *testing.T) {
 	assert.Equal(t, instancesToCopy, compare)
 
 	// Test CopySpecificImages where selected instance is sourceInstances[1]
-	instancesToCopy, _, err = prepareInstanceOps(list, sourceInstances, &Options{Instances: []digest.Digest{sourceInstances[1]}, ImageListSelection: CopySpecificImages})
+	instancesToCopy, _, err = prepareInstanceOps(list, sourceInstances, &Options{Instances: []digest.Digest{sourceInstances[1]}, ImageListSelection: CopySpecificImages}, "")
 	require.NoError(t, err)
 	compare = []instanceOp{{
 		op:           instanceOpCopy,
@@ -61,7 +61,7 @@ func TestPrepareInstanceOpsForInstanceCopy(t *testing.T) {
 		Instances:                []digest.Digest{sourceInstances[1]},
 		ImageListSelection:       CopySpecificImages,
 		SparseManifestListAction: StripSparseManifestList,
-	})
+	}, "")
 	require.NoError(t, err)
 	// Should have 1 copy operation followed by 2 delete operations (for indices 0 and 2)
 	expected := []instanceOp{
@@ -80,7 +80,7 @@ func TestPrepareInstanceOpsForInstanceCopy(t *testing.T) {
 	}
 	assert.Equal(t, expected, instancesToCopy)
 
-	_, _, err = prepareInstanceOps(list, sourceInstances, &Options{Instances: []digest.Digest{sourceInstances[1]}, ImageListSelection: CopySpecificImages, ForceCompressionFormat: true})
+	_, _, err = prepareInstanceOps(list, sourceInstances, &Options{Instances: []digest.Digest{sourceInstances[1]}, ImageListSelection: CopySpecificImages, ForceCompressionFormat: true}, "")
 	require.EqualError(t, err, "cannot use ForceCompressionFormat with undefined default compression format")
 }
 
@@ -105,11 +105,11 @@ func TestPrepareInstanceOpsForInstanceClone(t *testing.T) {
 		EnsureCompressionVariantsExist: ensureCompressionVariantsExist,
 		Instances:                      []digest.Digest{sourceInstances[1]},
 		ImageListSelection:             CopySpecificImages,
-	})
+	}, "")
 	require.EqualError(t, err, "EnsureCompressionVariantsExist is not implemented for CopySpecificImages")
 
 	// Test copying all images with replication
-	instancesToCopy, _, err := prepareInstanceOps(list, sourceInstances, &Options{EnsureCompressionVariantsExist: ensureCompressionVariantsExist})
+	instancesToCopy, _, err := prepareInstanceOps(list, sourceInstances, &Options{EnsureCompressionVariantsExist: ensureCompressionVariantsExist}, "")
 	require.NoError(t, err)
 
 	// Following test ensures
@@ -137,7 +137,7 @@ func TestPrepareInstanceOpsForInstanceClone(t *testing.T) {
 	// Test option with multiple copy request for same compression format.
 	// The above expectation should stay the same, if ensureCompressionVariantsExist requests zstd twice.
 	ensureCompressionVariantsExist = []OptionCompressionVariant{{Algorithm: compression.Zstd}, {Algorithm: compression.Zstd}}
-	instancesToCopy, _, err = prepareInstanceOps(list, sourceInstances, &Options{EnsureCompressionVariantsExist: ensureCompressionVariantsExist})
+	instancesToCopy, _, err = prepareInstanceOps(list, sourceInstances, &Options{EnsureCompressionVariantsExist: ensureCompressionVariantsExist}, "")
 	require.NoError(t, err)
 	expectedResponse = []simplerInstanceCopy{}
 	for _, instance := range sourceInstances {
@@ -159,7 +159,7 @@ func TestPrepareInstanceOpsForInstanceClone(t *testing.T) {
 		digest.Digest("sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"),
 		digest.Digest("sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"),
 	}
-	instancesToCopy, _, err = prepareInstanceOps(list, sourceInstances, &Options{EnsureCompressionVariantsExist: ensureCompressionVariantsExist})
+	instancesToCopy, _, err = prepareInstanceOps(list, sourceInstances, &Options{EnsureCompressionVariantsExist: ensureCompressionVariantsExist}, "")
 	require.NoError(t, err)
 	// two copies but clone should happen only once
 	numberOfCopyClone := 0
@@ -401,7 +401,7 @@ func TestStripSparseManifestListRequiresSignatureHandling(t *testing.T) {
 				SparseManifestListAction: StripSparseManifestList,
 			},
 			addSignature:  true,
-			expectedError: "stripping unselected instances from a signed manifest list would invalidate signatures; remove all signatures, or remove only the list signature while preserving per-instance signatures",
+			expectedError: "we should delete instance",
 		},
 		{
 			name: "Valid: StripSparseManifestList with unsigned manifest (no signature handling needed)",

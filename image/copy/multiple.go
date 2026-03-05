@@ -106,7 +106,7 @@ func validateCompressionVariantExists(input []OptionCompressionVariant) error {
 
 // prepareInstanceOps prepares a list of operations to perform on instances (copy, clone, or delete).
 // It returns a unified list of all operations and the count of copy/clone operations (excluding deletes).
-func prepareInstanceOps(list internalManifest.List, instanceDigests []digest.Digest, options *Options) ([]instanceOp, int, error) {
+func prepareInstanceOps(list internalManifest.List, instanceDigests []digest.Digest, options *Options, cannotModifyManifestListReason string) ([]instanceOp, int, error) {
 	res := []instanceOp{}
 	deleteOps := []instanceOp{}
 	if options.ImageListSelection == CopySpecificImages && len(options.EnsureCompressionVariantsExist) > 0 {
@@ -139,6 +139,9 @@ func prepareInstanceOps(list internalManifest.List, instanceDigests []digest.Dig
 		if options.ImageListSelection == CopySpecificImages &&
 			!specificImages.Contains(instanceDigest) {
 			if options.SparseManifestListAction == StripSparseManifestList {
+				if cannotModifyManifestListReason != "" {
+					return nil, -1, fmt.Errorf("we should delete instance %s from manifest list, but we cannot: %s", instanceDigest, cannotModifyManifestListReason)
+				}
 				logrus.Debugf("deleting instance %s from destination’s manifest (%d/%d)", instanceDigest, i+1, len(instanceDigests))
 				deleteOps = append(deleteOps, instanceOp{
 					op:          instanceOpDelete,
@@ -273,7 +276,7 @@ func (c *copier) copyMultipleImages(ctx context.Context) (copiedManifest []byte,
 		// by stripping only the list-level signature while preserving per-instance signatures.
 		// This is handled below by setting sigs to empty (similar to RemoveSignatures).
 		if !c.options.RemoveListSignatures {
-			cannotModifyManifestListReason = "Would invalidate signatures"
+			cannotModifyManifestListReason = "Would invalidate signatures; consider removing them from the multi-platform list"
 		}
 	}
 	if destIsDigestedReference {
@@ -281,14 +284,6 @@ func (c *copier) copyMultipleImages(ctx context.Context) (copiedManifest []byte,
 	}
 	if c.options.PreserveDigests {
 		cannotModifyManifestListReason = "Instructed to preserve digests"
-	}
-
-	// Validate that when using StripSparseManifestList with signed images, the user explicitly
-	// acknowledges signature handling via either RemoveListSignatures or RemoveSignatures.
-	// This is consistent with requiring explicit acknowledgment for other manifest edits.
-	if c.options.SparseManifestListAction == StripSparseManifestList && len(sigs) > 0 &&
-		!c.options.RemoveSignatures && !c.options.RemoveListSignatures {
-		return nil, fmt.Errorf("stripping unselected instances from a signed manifest list would invalidate signatures; remove all signatures, or remove only the list signature while preserving per-instance signatures")
 	}
 
 	// Determine if we'll need to convert the manifest list to a different format.
@@ -306,17 +301,14 @@ func (c *copier) copyMultipleImages(ctx context.Context) (copiedManifest []byte,
 	}
 	if selectedListType != originalList.MIMEType() {
 		if cannotModifyManifestListReason != "" {
-			if cannotModifyManifestListReason == "Would invalidate signatures" {
-				return nil, fmt.Errorf("Manifest list must be converted to type %q to be written to destination, but we cannot modify it: %q; consider removing only the list signature to allow modification while preserving per-instance signatures", selectedListType, cannotModifyManifestListReason)
-			}
-			return nil, fmt.Errorf("Manifest list must be converted to type %q to be written to destination, but we cannot modify it: %q", selectedListType, cannotModifyManifestListReason)
+			return nil, fmt.Errorf("Manifest list must be converted to type %q to be written to destination, but we cannot modify it: %s", selectedListType, cannotModifyManifestListReason)
 		}
 	}
 
 	// Copy each image, or just the ones we want to copy, in turn.
 	instanceDigests := updatedList.Instances()
 	instanceEdits := []internalManifest.ListEdit{}
-	instanceOpList, copyLen, err := prepareInstanceOps(updatedList, instanceDigests, c.options)
+	instanceOpList, copyLen, err := prepareInstanceOps(updatedList, instanceDigests, c.options, cannotModifyManifestListReason)
 	if err != nil {
 		return nil, fmt.Errorf("preparing instances for copy: %w", err)
 	}
