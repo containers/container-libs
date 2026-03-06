@@ -418,7 +418,7 @@ func TestStripSparseManifestListRequiresSignatureHandling(t *testing.T) {
 			// Set up source directory with the manifest
 			srcDir := t.TempDir()
 			srcManifestPath := filepath.Join(srcDir, "manifest.json")
-			require.NoError(t, os.WriteFile(srcManifestPath, manifest, 0644))
+			require.NoError(t, os.WriteFile(srcManifestPath, manifest, 0o644))
 
 			// Add a signature file if requested
 			if tt.addSignature {
@@ -427,7 +427,7 @@ func TestStripSparseManifestListRequiresSignatureHandling(t *testing.T) {
 				existingSignature, err := os.ReadFile(filepath.Join("..", "internal", "signature", "testdata", "simple.signature"))
 				require.NoError(t, err)
 				signaturePath := filepath.Join(srcDir, "signature-1")
-				require.NoError(t, os.WriteFile(signaturePath, existingSignature, 0644))
+				require.NoError(t, os.WriteFile(signaturePath, existingSignature, 0o644))
 			}
 
 			// Set up destination directory
