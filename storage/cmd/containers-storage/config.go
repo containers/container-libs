@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"go.podman.io/storage"
 	"go.podman.io/storage/pkg/mflag"
@@ -9,14 +10,14 @@ import (
 )
 
 func config(flags *mflag.FlagSet, action string, m storage.Store, args []string) (int, error) {
+	if len(args) > 0 {
+		if err := os.Setenv("CONTAINERS_STORAGE_CONF", args[0]); err != nil {
+			return 1, fmt.Errorf("setenv: %w", err)
+		}
+	}
 	options, err := types.DefaultStoreOptions()
 	if err != nil {
-		return 1, fmt.Errorf("default: %+v", err)
-	}
-	if len(args) > 0 {
-		if err = types.ReloadConfigurationFileIfNeeded(args[0], &options); err != nil {
-			return 1, fmt.Errorf("reload: %+v", err)
-		}
+		return 1, fmt.Errorf("load default options: %w", err)
 	}
 	return outputJSON(options)
 }

@@ -9,10 +9,10 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"go.podman.io/common/internal/attributedstring"
 	"go.podman.io/common/libnetwork/cni"
 	"go.podman.io/common/libnetwork/types"
 	"go.podman.io/common/pkg/config"
+	"go.podman.io/storage/pkg/configfile"
 )
 
 var cniPluginDirs = []string{
@@ -32,7 +32,7 @@ func getNetworkInterface(cniConfDir string) (types.ContainerNetwork, error) {
 		CNIConfigDir: cniConfDir,
 		Config: &config.Config{
 			Network: config.NetworkConfig{
-				CNIPluginDirs: attributedstring.NewSlice(cniPluginDirs),
+				CNIPluginDirs: configfile.NewSlice(cniPluginDirs),
 			},
 		},
 	})

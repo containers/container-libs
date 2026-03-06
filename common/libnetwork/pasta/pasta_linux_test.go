@@ -4,14 +4,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"go.podman.io/common/internal/attributedstring"
 	"go.podman.io/common/libnetwork/types"
 	"go.podman.io/common/pkg/config"
+	"go.podman.io/storage/pkg/configfile"
 )
 
 func makeSetupOptions(configArgs, extraArgs []string, ports []types.PortMapping) *SetupOptions {
 	return &SetupOptions{
-		Config:       &config.Config{Network: config.NetworkConfig{PastaOptions: attributedstring.NewSlice(configArgs)}},
+		Config:       &config.Config{Network: config.NetworkConfig{PastaOptions: configfile.NewSlice(configArgs)}},
 		Netns:        "netns123",
 		ExtraOptions: extraArgs,
 		Ports:        ports,
