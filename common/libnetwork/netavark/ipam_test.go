@@ -35,7 +35,7 @@ var _ = Describe("IPAM", func() {
 			NetworkRunDir:    networkConfDir,
 		})
 		if err != nil {
-			Fail("Failed to create NewCNINetworkInterface")
+			Fail("Failed to create NewNetworkInterface")
 		}
 
 		networkInterface = libpodNet.(*netavarkNetwork) //nolint:errcheck // It is always *netavarkNetwork here.

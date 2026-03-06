@@ -272,7 +272,6 @@ image_copy_tmp_dir="storage"`
 			gomega.Expect(config.Containers.PidsLimit).To(gomega.BeEquivalentTo(2048))
 			gomega.Expect(config.Containers.Env.Get()).To(gomega.BeEquivalentTo(envs))
 			gomega.Expect(config.Containers.UserNS).To(gomega.BeEquivalentTo(""))
-			gomega.Expect(config.Network.CNIPluginDirs.Get()).To(gomega.Equal(DefaultCNIPluginDirs))
 			gomega.Expect(config.Network.NetavarkPluginDirs.Get()).To(gomega.Equal(DefaultNetavarkPluginDirs))
 			gomega.Expect(config.Engine.NumLocks).To(gomega.BeEquivalentTo(2048))
 			gomega.Expect(config.Engine.OCIRuntimes["runc"]).To(gomega.Equal(OCIRuntimeMap["runc"]))
