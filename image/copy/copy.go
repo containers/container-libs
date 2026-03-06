@@ -332,6 +332,18 @@ func Image(ctx context.Context, policyContext *signature.PolicyContext, destRef,
 			return nil, err
 		}
 		copiedManifest = single.manifest
+		// If the copied single image has zstd:chunked layers and the destination
+		// supports manifest lists, wrap it in an OCI index with a sentinel variant.
+		// Skip when digests must be preserved or destination is a digested reference.
+		if !options.PreserveDigests && supportsMultipleImages(c.dest) {
+			indexManifest, err := c.createSingleImageSentinelIndex(ctx, single)
+			if err != nil {
+				return nil, err
+			}
+			if indexManifest != nil {
+				copiedManifest = indexManifest
+			}
+		}
 	} else if c.options.ImageListSelection == CopySystemImage {
 		if len(options.EnsureCompressionVariantsExist) > 0 {
 			return nil, fmt.Errorf("EnsureCompressionVariantsExist is not implemented when not creating a multi-architecture image")
