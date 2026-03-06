@@ -185,6 +185,14 @@ func TestOverlayOptions(t *testing.T) {
 	if !searchOptions(doptions, s100) {
 		t.Fatalf("Expected to find size %q, got %v", s100, doptions)
 	}
+
+	// Make sure overlay sync option works
+	options = OptionsConfig{}
+	options.Overlay.Sync = "filesystem"
+	doptions = GetGraphDriverOptions("overlay", options)
+	if !searchOptions(doptions, "overlay.sync=filesystem") {
+		t.Fatalf("Expected to find overlay sync option in %v", doptions)
+	}
 }
 
 func TestVfsOptions(t *testing.T) {
@@ -212,6 +220,14 @@ func TestVfsOptions(t *testing.T) {
 	doptions = GetGraphDriverOptions("vfs", options)
 	if len(doptions) == 0 {
 		t.Fatalf("Expected 1 options, got %v", doptions)
+	}
+
+	// Make sure vfs sync option works
+	options = OptionsConfig{}
+	options.Vfs.Sync = "filesystem"
+	doptions = GetGraphDriverOptions("vfs", options)
+	if !searchOptions(doptions, "vfs.sync=filesystem") {
+		t.Fatalf("Expected to find vfs sync option in %v", doptions)
 	}
 }
 
