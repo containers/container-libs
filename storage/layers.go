@@ -1623,7 +1623,7 @@ func (r *layerStore) create(id string, parentLayer *Layer, names []string, mount
 			cleanupFailureContext = "creating tar-split parent directory for a copy from template"
 			return nil, -1, err
 		}
-		if err = ioutils.AtomicWriteFile(r.tspath(id), templateTSdata, 0o600); err != nil {
+		if err = os.WriteFile(r.tspath(id), templateTSdata, 0o600); err != nil {
 			cleanupFailureContext = "creating a tar-split copy from template"
 			return nil, -1, err
 		}
@@ -2729,10 +2729,6 @@ func (r *layerStore) applyDiffWithOptions(to string, layerOptions *LayerOptions,
 		return -1, err
 	}
 
-	if err := tarSplitFile.Sync(); err != nil {
-		return -1, fmt.Errorf("sync tar-split file: %w", err)
-	}
-
 	r.applyDiffResultToLayer(layer, result)
 
 	err = r.saveFor(layer)
@@ -2844,9 +2840,6 @@ func (r *layerStore) applyDiffFromStagingDirectory(id string, diffOutput *driver
 
 		if err := tarSplitWriter.Flush(); err != nil {
 			return fmt.Errorf("failed to flush tar-split writer buffer: %w", err)
-		}
-		if err := tarSplitFile.Sync(); err != nil {
-			return fmt.Errorf("sync tar-split file: %w", err)
 		}
 	}
 	for k, v := range diffOutput.BigData {
