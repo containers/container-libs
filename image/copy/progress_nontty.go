@@ -46,24 +46,23 @@ func newNonTTYProgressWriter(output io.Writer, interval time.Duration, pch chan 
 	}
 }
 
-// setupNonTTYProgressWriter configures text-based progress output for non-TTY
+// setupNonTTYProgress configures text-based progress output for non-TTY
 // environments unless the caller already provided a buffered Progress channel.
-// Returns a cleanup function that must be deferred by the caller.
-// It relies on the idea that options.Progress channel is only used once, to track progress with a progress bar
+// It relies on the idea that options. Progress channel is only used once, to track progress with a progress bar
 // Otherwise we must do some sort of fan-out
-func setupNonTTYProgressWriter(reportWriter io.Writer, options *Options) {
-	// Use user's interval if greater than our default, otherwise use default.
-	// This allows users to slow down output while maintaining a sensible minimum.
-	interval := max(options.ProgressInterval, nonTTYProgressInterval)
-	if options.ProgressInterval <= 0 {
-		options.ProgressInterval = nonTTYProgressInterval
-	}
+func setupNonTTYProgress(reportWriter io.Writer, options *Options) {
+	// // Use user's interval if greater than our default, otherwise use default.
+	// // This allows users to slow down output while maintaining a sensible minimum.
+	// interval := max(options.ProgressInterval, nonTTYProgressInterval)
+	// if options.ProgressInterval <= 0 {
+	// 	options.ProgressInterval = nonTTYProgressInterval
+	// }
 
-	if options.Progress == nil || cap(options.Progress) == 0 {
-		options.Progress = make(chan types.ProgressProperties, nonTTYProgressChannelSize)
-	}
+	// if options.Progress == nil || cap(options.Progress) == 0 {
+	// 	options.Progress = make(chan types.ProgressProperties, nonTTYProgressChannelSize)
+	// }
 
-	pw := newNonTTYProgressWriter(reportWriter, interval, options.Progress)
+	pw := newNonTTYProgressWriter(reportWriter, options.ProgressInterval, options.Progress)
 	go pw.Run()
 }
 

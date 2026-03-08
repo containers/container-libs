@@ -156,7 +156,7 @@ func TestSetupNonTTYProgressWriter(t *testing.T) {
 			}
 			originalProgress := opts.Progress
 
-			setupNonTTYProgressWriter(&buf, opts)
+			setupNonTTYProgress(&buf, opts)
 			if tt.wantProgressSet {
 				assert.NotNil(t, opts.Progress)
 				assert.Greater(t, cap(opts.Progress), 0)
