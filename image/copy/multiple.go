@@ -186,6 +186,12 @@ func prepareInstanceOps(list internalManifest.List, instanceDigests []digest.Dig
 	// Add delete operations in reverse order (highest to lowest index) to avoid shifting
 	slices.Reverse(deleteOps)
 	copyLen := len(res) // Count copy/clone operations before appending deletes
+
+	// Validate that we're not deleting all entries without copying any
+	if copyLen == 0 && len(deleteOps) == len(instanceDigests) {
+		return nil, -1, fmt.Errorf("cannot delete all instances from manifest list without copying any")
+	}
+
 	res = append(res, deleteOps...)
 
 	return res, copyLen, nil
