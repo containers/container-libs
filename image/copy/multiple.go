@@ -274,7 +274,6 @@ func (c *copier) copyMultipleImages(ctx context.Context) (copiedManifest []byte,
 	if len(sigs) > 0 {
 		// If RemoveListSignatures is set, we allow modification of the manifest list
 		// by stripping only the list-level signature while preserving per-instance signatures.
-		// This is handled below by setting sigs to empty (similar to RemoveSignatures).
 		if !c.options.RemoveListSignatures {
 			cannotModifyManifestListReason = "Would invalidate signatures; consider removing them from the multi-platform list"
 		}
