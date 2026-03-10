@@ -376,6 +376,9 @@ func Image(ctx context.Context, policyContext *signature.PolicyContext, destRef,
 		}
 		single, err := c.copySingleImage(ctx, singleInstance, nil, copySingleImageOptions{requireCompressionFormatMatch: requireCompressionFormatMatch})
 		if err != nil {
+			if multiImage && c.options.ImageListSelection == CopySystemImage {
+				return nil, fmt.Errorf("copying system image from manifest list: %w", err)
+			}
 			return nil, fmt.Errorf("copying single image: %w", err)
 		}
 		copiedManifest = single.manifest
