@@ -404,9 +404,6 @@ func (c *copier) copyMultipleImages(ctx context.Context) (copiedManifest []byte,
 		// If we can't just use the original value, but we have to change it, flag an error.
 		if !bytes.Equal(attemptedManifestList, originalManifestList) {
 			if cannotModifyManifestListReason != "" {
-				if cannotModifyManifestListReason == "Would invalidate signatures" {
-					return nil, fmt.Errorf("Manifest list was edited, but we cannot modify it: %q; consider removing only the list signature to allow modification while preserving per-instance signatures", cannotModifyManifestListReason)
-				}
 				return nil, fmt.Errorf("Manifest list was edited, but we cannot modify it: %q", cannotModifyManifestListReason)
 			}
 			logrus.Debugf("Manifest list has been updated")
