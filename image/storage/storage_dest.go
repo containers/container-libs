@@ -57,15 +57,20 @@ type storageImageDestination struct {
 	stubs.AlwaysSupportsSignatures
 
 	imageRef              storageReference
-	directory             string                   // Temporary directory where we store blobs until Commit() time
-	nextTempFileID        atomic.Int32             // A counter that we use for computing filenames to assign to blobs
-	manifest              []byte                   // (Per-instance) manifest contents, or nil if not yet known.
-	manifestMIMEType      string                   // Valid if manifest != nil
-	manifestDigest        digest.Digest            // Valid if manifest != nil
-	untrustedDiffIDValues []digest.Digest          // From config’s RootFS.DiffIDs (not even validated to be valid digest.Digest!); or nil if not read yet
-	signatures            []byte                   // Signature contents, temporary
-	signatureses          map[digest.Digest][]byte // Instance signature contents, temporary
-	metadata              storageImageMetadata     // Metadata contents being built
+	directory             string          // Temporary directory where we store blobs until Commit() time
+	nextTempFileID        atomic.Int32    // A counter that we use for computing filenames to assign to blobs
+	manifest              []byte          // (Per-instance) manifest contents, or nil if not yet known.
+	manifestMIMEType      string          // Valid if manifest != nil
+	manifestDigest        digest.Digest   // Valid if manifest != nil
+	untrustedDiffIDValues []digest.Digest // From config’s RootFS.DiffIDs (not even validated to be valid digest.Digest!); or nil if not read yet
+	// filteredLayerIndices are layer indices marked empty by FilterLayers.
+	// When set, the full-digest mitigation is skipped for remaining layers,
+	// and falling back from partial to ordinary layer download is refused
+	// (because the mitigation would be the only safety net for that path).
+	filteredLayerIndices []int
+	signatures           []byte                   // Signature contents, temporary
+	signatureses         map[digest.Digest][]byte // Instance signature contents, temporary
+	metadata             storageImageMetadata     // Metadata contents being built
 
 	// Mapping from layer (by index) to the associated ID in the storage.
 	// It's protected *implicitly* since `commitLayer()`, at any given
@@ -218,6 +223,17 @@ func (s *storageImageDestination) NoteOriginalOCIConfig(ociConfig *imgspecv1.Ima
 		return fmt.Errorf("writing to c/storage without a valid image config: %w", configErr)
 	}
 	s.setUntrustedDiffIDValuesFromOCIConfig(ociConfig)
+	return nil
+}
+
+// FilterLayers inspects the manifest layer infos and returns indices of layers
+// that should be skipped. For c/storage, this detects the zstd:chunked
+// sentinel layer and records that the full-digest mitigation can be skipped.
+func (s *storageImageDestination) FilterLayers(layerInfos []manifest.LayerInfo) []int {
+	if len(layerInfos) > 0 && layerInfos[0].Digest == toc.ZstdChunkedSentinelDigest {
+		s.filteredLayerIndices = []int{0}
+		return s.filteredLayerIndices
+	}
 	return nil
 }
 
@@ -396,6 +412,9 @@ func (s *storageImageDestination) PutBlobPartial(ctx context.Context, chunkAcces
 			return private.UploadedBlob{}, fmt.Errorf("internal error: in PutBlobPartial, untrustedLayerDiffID returned errUntrustedLayerDiffIDNotYetAvailable")
 		case errors.As(err, &diffIDUnknownErr):
 			if inputTOCDigest != nil {
+				if len(s.filteredLayerIndices) > 0 {
+					return private.UploadedBlob{}, fmt.Errorf("zstd:chunked sentinel present, refusing fallback to ordinary layer download: %w", err)
+				}
 				return private.UploadedBlob{}, private.NewErrFallbackToOrdinaryLayerDownload(err)
 			}
 			untrustedDiffID = "" // A schema1 image or a non-TOC layer with no ambiguity, let it through
@@ -415,6 +434,10 @@ func (s *storageImageDestination) PutBlobPartial(ctx context.Context, chunkAcces
 	defer func() {
 		var perr chunked.ErrFallbackToOrdinaryLayerDownload
 		if errors.As(retErr, &perr) {
+			if len(s.filteredLayerIndices) > 0 {
+				retErr = fmt.Errorf("zstd:chunked sentinel present, refusing fallback to ordinary layer download: %w", retErr)
+				return
+			}
 			retErr = private.NewErrFallbackToOrdinaryLayerDownload(retErr)
 		}
 	}()
@@ -424,6 +447,16 @@ func (s *storageImageDestination) PutBlobPartial(ctx context.Context, chunkAcces
 		return private.UploadedBlob{}, err
 	}
 	defer differ.Close()
+	if len(s.filteredLayerIndices) > 0 {
+		// Skipping the mitigation is safe because the sentinel layer guarantees
+		// that only TOC-aware clients will process this image. With the mitigation
+		// skipped, we also refuse any fallback to ordinary layer download (see the
+		// checks above and the deferred error handler).
+		logrus.Debugf("Sentinel detected for layer %s: skipping full-digest mitigation", srcInfo.Digest)
+		if err := chunked.SkipMitigation(differ); err != nil {
+			return private.UploadedBlob{}, err
+		}
+	}
 
 	out, err := s.imageRef.transport.store.PrepareStagedLayer(nil, differ)
 	if err != nil {
@@ -795,7 +828,7 @@ func (s *storageImageDestination) computeID(m manifest.Manifest) (string, error)
 	case *manifest.Schema1:
 		// Build a list of the diffIDs we've generated for the non-throwaway FS layers
 		for i, li := range layerInfos {
-			if li.EmptyLayer {
+			if li.EmptyLayer || slices.Contains(s.filteredLayerIndices, i) {
 				continue
 			}
 			trusted, ok := s.trustedLayerIdentityDataLocked(i, li.Digest)
@@ -839,6 +872,9 @@ func (s *storageImageDestination) computeID(m manifest.Manifest) (string, error)
 	tocIDInput := ""
 	hasLayerPulledByTOC := false
 	for i, li := range layerInfos {
+		if li.EmptyLayer || slices.Contains(s.filteredLayerIndices, i) {
+			continue
+		}
 		trusted, ok := s.trustedLayerIdentityDataLocked(i, li.Digest)
 		if !ok { // We have already committed all layers if we get to this point, so the data must have been available.
 			return "", fmt.Errorf("internal inconsistency: layer (%d, %q) not found", i, li.Digest)
@@ -1453,9 +1489,10 @@ func (s *storageImageDestination) CommitWithOptions(ctx context.Context, options
 
 	// Extract, commit, or find the layers.
 	for i, blob := range layerBlobs {
+		isFiltered := slices.Contains(s.filteredLayerIndices, i)
 		if stopQueue, err := s.commitLayer(i, addedLayerInfo{
 			digest:     blob.Digest,
-			emptyLayer: blob.EmptyLayer,
+			emptyLayer: blob.EmptyLayer || isFiltered,
 		}, blob.Size); err != nil {
 			return err
 		} else if stopQueue {
