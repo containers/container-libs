@@ -58,8 +58,7 @@ func readEstargzChunkedManifest(blobStream ImageSourceSeekable, blobSize int64, 
 	footer := make([]byte, footerSize)
 	streamsOrErrors, err := getBlobAt(blobStream, ImageSourceChunk{Offset: uint64(blobSize - footerSize), Length: uint64(footerSize)})
 	if err != nil {
-		var badRequestErr ErrBadRequest
-		if errors.As(err, &badRequestErr) {
+		if _, ok := errors.AsType[ErrBadRequest](err); ok {
 			err = errFallbackCanConvert{newErrFallbackToOrdinaryLayerDownload(err)}
 		}
 		return nil, 0, err
@@ -98,8 +97,7 @@ func readEstargzChunkedManifest(blobStream ImageSourceSeekable, blobSize int64, 
 
 	streamsOrErrors, err = getBlobAt(blobStream, ImageSourceChunk{Offset: uint64(tocOffset), Length: uint64(size)})
 	if err != nil {
-		var badRequestErr ErrBadRequest
-		if errors.As(err, &badRequestErr) {
+		if _, ok := errors.AsType[ErrBadRequest](err); ok {
 			err = errFallbackCanConvert{newErrFallbackToOrdinaryLayerDownload(err)}
 		}
 		return nil, 0, err
@@ -228,8 +226,7 @@ func readZstdChunkedManifest(tmpDir string, blobStream ImageSourceSeekable, tocD
 
 	streamsOrErrors, err := getBlobAt(blobStream, chunks...)
 	if err != nil {
-		var badRequestErr ErrBadRequest
-		if errors.As(err, &badRequestErr) {
+		if _, ok := errors.AsType[ErrBadRequest](err); ok {
 			err = errFallbackCanConvert{newErrFallbackToOrdinaryLayerDownload(err)}
 		}
 		return nil, nil, nil, 0, err

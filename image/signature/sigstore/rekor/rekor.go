@@ -106,8 +106,7 @@ func (r *rekorClient) uploadEntry(ctx context.Context, proposedEntry rekorPropos
 		// In ordinary operation, we should not get duplicate entries, because our payload contains a timestamp,
 		// so it is supposed to be unique; and the default key format, ECDSA p256, also contains a nonce.
 		// But conflicts can fairly easily happen during debugging and experimentation, so it pays to handle this.
-		var conflictErr *createLogEntryConflictError
-		if errors.As(err, &conflictErr) && conflictErr.location != "" {
+		if conflictErr, ok := errors.AsType[*createLogEntryConflictError](err); ok && conflictErr.location != "" {
 			location := conflictErr.location
 			logrus.Debugf("CreateLogEntry reported a conflict, location = %s", location)
 			// We might be able to just GET the returned Location, but let’s use the formal API method.
