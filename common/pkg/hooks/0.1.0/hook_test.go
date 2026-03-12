@@ -167,14 +167,13 @@ func TestHasBindMounts(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	hasBindMounts := true
 	assert.Equal(t, &current.Hook{
 		Version: current.Version,
 		Hook: rspec.Hook{
 			Path: "/a/b/c",
 		},
 		When: current.When{
-			HasBindMounts: &hasBindMounts,
+			HasBindMounts: new(true),
 			Or:            true, //nolint:staticcheck // SA1019: Or is deprecated in v1.0.0, but we must set it to represent the 0.1.0 behavior.
 		},
 		Stages: []string{"prestart"},

@@ -1191,9 +1191,8 @@ func (s *storageImageDestination) createNewLayer(index int, trusted trustedLayer
 		}
 
 		// Read the layer's contents.
-		noCompression := archive.Uncompressed
 		diffOptions := &storage.DiffOptions{
-			Compression: &noCompression,
+			Compression: new(archive.Uncompressed),
 		}
 		diff, err2 := s.imageRef.transport.store.Diff("", layer.ID, diffOptions)
 		if err2 != nil {
