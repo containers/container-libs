@@ -186,7 +186,6 @@ func prepareInstanceOps(list internalManifest.List, instanceDigests []digest.Dig
 	slices.Reverse(deleteOps)
 	copyLen := len(res) // Count copy/clone operations before appending deletes
 
-	// Validate that we're not deleting all entries without copying any
 	if copyLen == 0 && len(deleteOps) == len(instanceDigests) {
 		return nil, -1, fmt.Errorf("requested operation filtered out all platforms and would create an empty image")
 	}
