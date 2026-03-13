@@ -177,7 +177,6 @@ func prepareInstanceOps(list internalManifest.List, instanceDigests []digest.Dig
 					clonePlatform:           instanceDetails.ReadOnly.Platform,
 					cloneAnnotations:        maps.Clone(instanceDetails.ReadOnly.Annotations),
 				})
-				// add current compression to the list so that we don't create duplicate clones
 				compressionList.Add(compressionVariant.Algorithm.Name())
 			}
 		}
