@@ -188,7 +188,7 @@ func prepareInstanceOps(list internalManifest.List, instanceDigests []digest.Dig
 
 	// Validate that we're not deleting all entries without copying any
 	if copyLen == 0 && len(deleteOps) == len(instanceDigests) {
-		return nil, -1, fmt.Errorf("cannot delete all instances from manifest list without copying any")
+		return nil, -1, fmt.Errorf("requested operation filtered out all platforms and would create an empty image")
 	}
 
 	res = append(res, deleteOps...)
