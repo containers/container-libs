@@ -1017,7 +1017,7 @@ func (s *storageImageDestination) commitLayer(index int, info addedLayerInfo, si
 			var diffIDUnknownErr untrustedLayerDiffIDUnknownError
 			switch {
 			case errors.Is(err, errUntrustedLayerDiffIDNotYetAvailable):
-				logrus.Debugf("Skipping commit for layer %q, manifest not yet available for DiffID check", index)
+				logrus.Debugf("Skipping commit for layer %d, manifest not yet available for DiffID check", index)
 				return true, nil
 			case errors.As(err, &diffIDUnknownErr):
 				// If untrustedLayerDiffIDUnknownError, the input image is schema1, has no TOC annotations,
