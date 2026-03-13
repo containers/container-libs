@@ -189,8 +189,8 @@ github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/google/go-containerregistry v0.20.7
-## explicit; go 1.24.0
+# github.com/google/go-containerregistry v0.21.1
+## explicit; go 1.25.6
 github.com/google/go-containerregistry/pkg/name
 github.com/google/go-containerregistry/pkg/v1
 github.com/google/go-containerregistry/pkg/v1/types
@@ -453,8 +453,8 @@ github.com/stefanberger/go-pkcs11uri
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/assert/yaml
 github.com/stretchr/testify/require
-# github.com/sylabs/sif/v2 v2.22.0
-## explicit; go 1.24.0
+# github.com/sylabs/sif/v2 v2.24.0
+## explicit; go 1.25.6
 github.com/sylabs/sif/v2/pkg/sif
 # github.com/tchap/go-patricia/v2 v2.3.3
 ## explicit; go 1.16
@@ -526,7 +526,7 @@ go.opentelemetry.io/otel/trace/embedded
 go.opentelemetry.io/otel/trace/internal/telemetry
 go.opentelemetry.io/otel/trace/noop
 # go.podman.io/image/v5 v5.39.1
-## explicit; go 1.25.0
+## explicit; go 1.25.6
 # go.podman.io/storage v1.62.1-0.20260306124909-d48bc74146d6
 ## explicit; go 1.25.0
 # go.yaml.in/yaml/v2 v2.4.3
