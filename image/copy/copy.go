@@ -341,9 +341,11 @@ func Image(ctx context.Context, policyContext *signature.PolicyContext, destRef,
 	}
 
 	var singleInstance *image.UnparsedImage
+	var singleInstanceErrorWrapping string
 	if !multiImage {
 		// The simple case: just copy a single image.
 		singleInstance = c.unparsedToplevel
+		singleInstanceErrorWrapping = ""
 	} else if c.options.ImageListSelection == CopySystemImage {
 		// This is a manifest list, and we weren't asked to copy multiple images.
 		// Choose a single image that matches the current system to copy.
@@ -361,6 +363,7 @@ func Image(ctx context.Context, policyContext *signature.PolicyContext, destRef,
 		}
 		logrus.Debugf("Source is a manifest list; copying (only) instance %s for current system", instanceDigest)
 		singleInstance = image.UnparsedInstance(rawSource, &instanceDigest)
+		singleInstanceErrorWrapping = "copying system image from manifest list"
 	} // else: a multi-instance copy
 
 	if singleInstance != nil {
@@ -376,10 +379,10 @@ func Image(ctx context.Context, policyContext *signature.PolicyContext, destRef,
 		}
 		single, err := c.copySingleImage(ctx, singleInstance, nil, copySingleImageOptions{requireCompressionFormatMatch: requireCompressionFormatMatch})
 		if err != nil {
-			if multiImage && c.options.ImageListSelection == CopySystemImage {
-				return nil, fmt.Errorf("copying system image from manifest list: %w", err)
+			if singleInstanceErrorWrapping != "" {
+				return nil, fmt.Errorf("%s: %w", singleInstanceErrorWrapping, err)
 			}
-			return nil, fmt.Errorf("copying single image: %w", err)
+			return nil, err
 		}
 		copiedManifest = single.manifest
 	} else {
