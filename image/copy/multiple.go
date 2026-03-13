@@ -278,11 +278,7 @@ func (c *copier) copyMultipleImages(ctx context.Context) (copiedManifest []byte,
 	// Compare, and perhaps keep in sync with, the version in copySingleImage.
 	cannotModifyManifestListReason := ""
 	if len(sigs) > 0 {
-		// If RemoveListSignatures is set, we allow modification of the manifest list
-		// by stripping only the list-level signature while preserving per-instance signatures.
-		if !c.options.RemoveListSignatures {
-			cannotModifyManifestListReason = "Would invalidate signatures; consider removing them from the multi-platform list"
-		}
+		cannotModifyManifestListReason = "Would invalidate signatures; consider removing them from the multi-platform list"
 	}
 	if destIsDigestedReference {
 		cannotModifyManifestListReason = "Destination specifies a digest"
