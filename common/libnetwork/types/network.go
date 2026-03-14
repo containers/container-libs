@@ -136,6 +136,34 @@ func (n *IPNet) MarshalText() ([]byte, error) {
 	return []byte(n.String()), nil
 }
 
+func (n IPNet) MarshalJSON() ([]byte, error) {
+	// Check if IPNet is empty (zero value)
+	if n.IP == nil || len(n.IP) == 0 || n.Mask == nil {
+		return []byte("null"), nil
+	}
+	// Use MarshalText for non-empty values
+	text, err := n.MarshalText()
+	if err != nil {
+		return nil, err
+	}
+	// JSON-encode the text as a string
+	return json.Marshal(string(text))
+}
+
+func (n *IPNet) UnmarshalJSON(data []byte) error {
+	// Handle null values
+	if string(data) == "null" {
+		*n = IPNet{}
+		return nil
+	}
+	// Unmarshal as a JSON string and then parse as CIDR
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	return n.UnmarshalText([]byte(s))
+}
+
 func (n *IPNet) UnmarshalText(text []byte) error {
 	subnet, err := ParseCIDR(string(text))
 	if err != nil {
