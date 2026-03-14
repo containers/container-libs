@@ -3499,6 +3499,12 @@ func (s *store) LookupAdditionalLayer(tocDigest digest.Digest, imageref string) 
 		}
 		return nil, err
 	}
+	succeeded := false
+	defer func() {
+		if !succeeded {
+			al.Release()
+		}
+	}()
 	info, err := al.Info()
 	if err != nil {
 		return nil, err
@@ -3508,6 +3514,7 @@ func (s *store) LookupAdditionalLayer(tocDigest digest.Digest, imageref string) 
 	if err := json.NewDecoder(info).Decode(&layer); err != nil {
 		return nil, err
 	}
+	succeeded = true
 	return &additionalLayer{&layer, al, s}, nil
 }
 
