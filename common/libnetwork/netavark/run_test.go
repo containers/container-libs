@@ -21,7 +21,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containernetworking/plugins/pkg/ns"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/sirupsen/logrus"
@@ -37,14 +36,14 @@ var _ = Describe("run netavark", func() {
 	var (
 		libpodNet      types.ContainerNetwork
 		confDir        string
-		netNSTest      ns.NetNS
-		netNSContainer ns.NetNS
+		netNSTest      netns.NetNS
+		netNSContainer netns.NetNS
 	)
 
 	// runTest is a helper function to run a test. It ensures that each test
-	// is run in its own netns. It also creates a mounts to mount a tmpfs to /var/lib/cni.
+	// is run in its own netns.
 	runTest := func(run func()) {
-		_ = netNSTest.Do(func(_ ns.NetNS) error {
+		_ = netNSTest.Do(func(_ netns.NetNS) error {
 			defer GinkgoRecover()
 			// we have to setup the loopback adapter in this netns to use port forwarding
 			link, err := netlink.LinkByName("lo")
@@ -63,7 +62,7 @@ var _ = Describe("run netavark", func() {
 
 		// The tests need root privileges.
 		// Technically we could work around that by using user namespaces and
-		// the rootless cni code but this is to much work to get it right for a unit test.
+		// the rootless netns code but this is too much work to get it right for a unit test.
 		if unshare.IsRootless() {
 			Skip("this test needs to be run as root")
 		}
@@ -108,7 +107,7 @@ var _ = Describe("run netavark", func() {
 		var err error
 		libpodNet, err = getNetworkInterface(confDir)
 		if err != nil {
-			Fail("Failed to create NewCNINetworkInterface")
+			Fail("Failed to create NewNetworkInterface")
 		}
 	})
 
@@ -152,7 +151,7 @@ var _ = Describe("run netavark", func() {
 			Expect(res[defNet].DNSSearchDomains).To(BeEmpty())
 
 			// check in the container namespace if the settings are applied
-			err = netNSContainer.Do(func(_ ns.NetNS) error {
+			err = netNSContainer.Do(func(_ netns.NetNS) error {
 				defer GinkgoRecover()
 				i, err := net.InterfaceByName(intName)
 				Expect(err).ToNot(HaveOccurred())
@@ -194,7 +193,7 @@ var _ = Describe("run netavark", func() {
 			wg := &sync.WaitGroup{}
 			expected := stringid.GenerateNonCryptoID()
 			// now check ip connectivity
-			err = netNSContainer.Do(func(_ ns.NetNS) error {
+			err = netNSContainer.Do(func(_ netns.NetNS) error {
 				runNetListener(wg, "tcp", "0.0.0.0", 5000, expected)
 				return nil
 			})
@@ -240,7 +239,7 @@ var _ = Describe("run netavark", func() {
 			Expect(macAddress).To(Equal(mac))
 
 			// check in the container namespace if the settings are applied
-			err = netNSContainer.Do(func(_ ns.NetNS) error {
+			err = netNSContainer.Do(func(_ netns.NetNS) error {
 				defer GinkgoRecover()
 				i, err := net.InterfaceByName(intName)
 				Expect(err).ToNot(HaveOccurred())
@@ -348,7 +347,7 @@ var _ = Describe("run netavark", func() {
 			Expect(res[netName].Interfaces[intName].MacAddress).To(HaveLen(6))
 
 			// check in the container namespace if the settings are applied
-			err = netNSContainer.Do(func(_ ns.NetNS) error {
+			err = netNSContainer.Do(func(_ netns.NetNS) error {
 				defer GinkgoRecover()
 				i, err := net.InterfaceByName(intName)
 				Expect(err).ToNot(HaveOccurred())
@@ -451,7 +450,7 @@ var _ = Describe("run netavark", func() {
 			Expect(mac2).To(HaveLen(6))
 
 			// check in the container namespace if the settings are applied
-			err = netNSContainer.Do(func(_ ns.NetNS) error {
+			err = netNSContainer.Do(func(_ netns.NetNS) error {
 				defer GinkgoRecover()
 				i, err := net.InterfaceByName(intName1)
 				Expect(err).ToNot(HaveOccurred())
@@ -545,7 +544,7 @@ var _ = Describe("run netavark", func() {
 				Expect(res[defNet].DNSSearchDomains).To(BeEmpty())
 				var wg sync.WaitGroup
 				// start a listener in the container ns
-				err = netNSContainer.Do(func(_ ns.NetNS) error {
+				err = netNSContainer.Do(func(_ netns.NetNS) error {
 					defer GinkgoRecover()
 					runNetListener(&wg, protocol, "0.0.0.0", 5000, testdata)
 					return nil
@@ -604,7 +603,7 @@ var _ = Describe("run netavark", func() {
 					var wg sync.WaitGroup
 					testdata := stringid.GenerateNonCryptoID()
 					// start a listener in the container ns
-					err = netNSContainer.Do(func(_ ns.NetNS) error {
+					err = netNSContainer.Do(func(_ netns.NetNS) error {
 						defer GinkgoRecover()
 						runNetListener(&wg, protocol, containerIP, port-1, testdata)
 						return nil
@@ -657,7 +656,7 @@ var _ = Describe("run netavark", func() {
 
 			err = libpodNet.Teardown(netNSContainer.Path(), types.TeardownOptions(opts))
 			Expect(err).ToNot(HaveOccurred())
-			err = netNSContainer.Do(func(_ ns.NetNS) error {
+			err = netNSContainer.Do(func(_ netns.NetNS) error {
 				defer GinkgoRecover()
 				// check that the container interface is removed
 				_, err := net.InterfaceByName(intName)
@@ -677,7 +676,7 @@ var _ = Describe("run netavark", func() {
 	It("test netavark error", func() {
 		runTest(func() {
 			intName := "eth0"
-			err := netNSContainer.Do(func(_ ns.NetNS) error {
+			err := netNSContainer.Do(func(_ netns.NetNS) error {
 				defer GinkgoRecover()
 
 				attr := netlink.NewLinkAttrs()
@@ -741,7 +740,7 @@ var _ = Describe("run netavark", func() {
 			Expect(macInt1).To(HaveLen(6))
 
 			// check in the container namespace if the settings are applied
-			err = netNSContainer.Do(func(_ ns.NetNS) error {
+			err = netNSContainer.Do(func(_ netns.NetNS) error {
 				defer GinkgoRecover()
 				i, err := net.InterfaceByName(intName1)
 				Expect(err).ToNot(HaveOccurred())
@@ -770,7 +769,7 @@ var _ = Describe("run netavark", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			// check in the container namespace that the interface is removed
-			err = netNSContainer.Do(func(_ ns.NetNS) error {
+			err = netNSContainer.Do(func(_ netns.NetNS) error {
 				defer GinkgoRecover()
 				_, err := net.InterfaceByName(intName1)
 				Expect(err).To(HaveOccurred())

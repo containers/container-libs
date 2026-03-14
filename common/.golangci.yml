@@ -9,7 +9,6 @@ run:
     - systemd
     - exclude_graphdriver_btrfs
     - containers_image_openpgp
-    - cni
 
 formatters:
   enable:
