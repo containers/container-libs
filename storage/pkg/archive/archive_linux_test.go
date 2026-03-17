@@ -2,12 +2,15 @@ package archive
 
 import (
 	"archive/tar"
+	"bytes"
 	"io"
 	"os"
 	"path/filepath"
 	"syscall"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.podman.io/storage/pkg/system"
 	"golang.org/x/sys/unix"
@@ -200,4 +203,128 @@ func TestNestedOverlayWhiteouts(t *testing.T) {
 	})
 	require.NoError(t, err)
 	checkFileMode(t, filepath.Join(dst, "foo"), os.ModeDevice|os.ModeCharDevice)
+}
+
+func checkDirmetaDelegate(t *testing.T, path string, expected string) {
+	t.Helper()
+	xattrName := GetOverlayXattrName("dirmeta_delegate")
+	val, err := system.Lgetxattr(path, xattrName)
+	require.NoError(t, err)
+	assert.Equal(t, expected, string(val), "unexpected dirmeta_delegate xattr value for %s", path)
+}
+
+// makeTarBuf creates a tar archive in memory from a list of headers and
+// optional content.  For TypeReg entries, content is the file data; for
+// other types content is ignored.
+func makeTarBuf(t *testing.T, entries []tar.Header, contents map[string][]byte) *bytes.Buffer {
+	t.Helper()
+	var buf bytes.Buffer
+	tw := tar.NewWriter(&buf)
+	for _, hdr := range entries {
+		hdr := hdr
+		if hdr.Typeflag == tar.TypeReg {
+			data := contents[hdr.Name]
+			hdr.Size = int64(len(data))
+			require.NoError(t, tw.WriteHeader(&hdr))
+			if len(data) > 0 {
+				_, err := tw.Write(data)
+				require.NoError(t, err)
+			}
+		} else {
+			require.NoError(t, tw.WriteHeader(&hdr))
+		}
+	}
+	require.NoError(t, tw.Close())
+	return &buf
+}
+
+func TestDirmetaDelegate(t *testing.T) {
+	epoch := time.Unix(0, 0)
+
+	t.Run("implicit dirs get xattr", func(t *testing.T) {
+		// Tar contains only a file at foo/bar/file with no directory
+		// entries.  UnpackLayer must create foo/ and foo/bar/ implicitly.
+		buf := makeTarBuf(t, []tar.Header{
+			{Typeflag: tar.TypeReg, Name: "foo/bar/file", Mode: 0o644},
+		}, map[string][]byte{
+			"foo/bar/file": []byte("hello"),
+		})
+
+		dst := t.TempDir()
+		_, err := UnpackLayer(dst, buf, &TarOptions{DirmetaDelegate: true, IgnoreChownErrors: true})
+		require.NoError(t, err)
+
+		// The file should exist.
+		_, err = os.Lstat(filepath.Join(dst, "foo/bar/file"))
+		require.NoError(t, err)
+
+		// Both implicit parent dirs should have the xattr.
+		checkDirmetaDelegate(t, filepath.Join(dst, "foo"), "y")
+		checkDirmetaDelegate(t, filepath.Join(dst, "foo/bar"), "y")
+	})
+
+	t.Run("explicit dirs do not get xattr", func(t *testing.T) {
+		// Tar contains an explicit directory entry for foo/ with a
+		// specific mtime, followed by a file foo/file.
+		buf := makeTarBuf(t, []tar.Header{
+			{Typeflag: tar.TypeDir, Name: "foo/", Mode: 0o755, ModTime: epoch},
+			{Typeflag: tar.TypeReg, Name: "foo/file", Mode: 0o644},
+		}, map[string][]byte{
+			"foo/file": []byte("world"),
+		})
+
+		dst := t.TempDir()
+		_, err := UnpackLayer(dst, buf, &TarOptions{DirmetaDelegate: true, IgnoreChownErrors: true})
+		require.NoError(t, err)
+
+		// The file should exist.
+		_, err = os.Lstat(filepath.Join(dst, "foo/file"))
+		require.NoError(t, err)
+
+		// The explicit directory should NOT have the xattr.
+		checkDirmetaDelegate(t, filepath.Join(dst, "foo"), "")
+	})
+
+	t.Run("mixed explicit and implicit", func(t *testing.T) {
+		// Tar contains an explicit dir explicit/, but the file beneath
+		// it is at explicit/implicit-child/file — so implicit-child/
+		// must be created implicitly.
+		buf := makeTarBuf(t, []tar.Header{
+			{Typeflag: tar.TypeDir, Name: "explicit/", Mode: 0o755, ModTime: epoch},
+			{Typeflag: tar.TypeReg, Name: "explicit/implicit-child/file", Mode: 0o644},
+		}, map[string][]byte{
+			"explicit/implicit-child/file": []byte("data"),
+		})
+
+		dst := t.TempDir()
+		_, err := UnpackLayer(dst, buf, &TarOptions{DirmetaDelegate: true, IgnoreChownErrors: true})
+		require.NoError(t, err)
+
+		// explicit/ was in the tar stream — no xattr.
+		checkDirmetaDelegate(t, filepath.Join(dst, "explicit"), "")
+
+		// implicit-child/ was NOT in the tar stream — should have xattr.
+		checkDirmetaDelegate(t, filepath.Join(dst, "explicit/implicit-child"), "y")
+	})
+
+	t.Run("disabled does not set xattr", func(t *testing.T) {
+		// Same tar as "implicit dirs get xattr" but with DirmetaDelegate
+		// disabled.
+		buf := makeTarBuf(t, []tar.Header{
+			{Typeflag: tar.TypeReg, Name: "foo/file", Mode: 0o644},
+		}, map[string][]byte{
+			"foo/file": []byte("hello"),
+		})
+
+		dst := t.TempDir()
+		_, err := UnpackLayer(dst, buf, &TarOptions{DirmetaDelegate: false, IgnoreChownErrors: true})
+		require.NoError(t, err)
+
+		// The file should exist.
+		_, err = os.Lstat(filepath.Join(dst, "foo/file"))
+		require.NoError(t, err)
+
+		// No xattr should be set when the feature is off.
+		checkDirmetaDelegate(t, filepath.Join(dst, "foo"), "")
+	})
 }

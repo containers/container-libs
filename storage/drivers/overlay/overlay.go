@@ -112,6 +112,7 @@ type overlayOptions struct {
 	mountOptions      string
 	ignoreChownErrors bool
 	forceMask         *os.FileMode
+	dirmetaDelegate   bool
 	useComposefs      bool
 }
 
@@ -465,7 +466,9 @@ func Init(home string, options graphdriver.Options) (graphdriver.Driver, error) 
 }
 
 func parseOptions(options []string) (*overlayOptions, error) {
-	o := &overlayOptions{}
+	o := &overlayOptions{
+		dirmetaDelegate: true, // default on
+	}
 	for _, option := range options {
 		key, val, err := parsers.ParseKeyValueOpt(option)
 		if err != nil {
@@ -574,6 +577,12 @@ func parseOptions(options []string) (*overlayOptions, error) {
 		case "ignore_chown_errors":
 			logrus.Debugf("overlay: ignore_chown_errors=%s", val)
 			o.ignoreChownErrors, err = strconv.ParseBool(val)
+			if err != nil {
+				return nil, err
+			}
+		case "dirmeta_delegate":
+			logrus.Debugf("overlay: dirmeta_delegate=%s", val)
+			o.dirmetaDelegate, err = strconv.ParseBool(val)
 			if err != nil {
 				return nil, err
 			}
@@ -2485,6 +2494,7 @@ func (d *Driver) applyDiff(target string, options graphdriver.ApplyDiffOpts) (si
 		ForceMask:         d.options.forceMask,
 		WhiteoutFormat:    d.getWhiteoutFormat(),
 		InUserNS:          unshare.IsRootless(),
+		DirmetaDelegate:   d.options.dirmetaDelegate,
 	}); err != nil {
 		return 0, err
 	}
