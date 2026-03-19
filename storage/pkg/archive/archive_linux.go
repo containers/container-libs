@@ -176,6 +176,83 @@ func isWhiteOut(stat os.FileInfo) bool {
 	return major(uint64(s.Rdev)) == 0 && minor(uint64(s.Rdev)) == 0 //nolint:unconvert
 }
 
+// setDirmetaDelegateXattr sets the overlay dirmeta_delegate xattr on a directory,
+// telling overlayfs to delegate metadata lookups to a lower layer.
+func setDirmetaDelegateXattr(path string) error {
+	xattrName := GetOverlayXattrName("dirmeta_delegate")
+	return system.Lsetxattr(path, xattrName, []byte("y"), 0)
+}
+
+// mkdirAllWithDirmetaDelegate creates all directories in path that don't exist,
+// and sets the overlay dirmeta_delegate xattr on each newly-created directory.
+// This marks them as structural directories whose metadata should be delegated
+// to a lower overlayfs layer.
+func mkdirAllWithDirmetaDelegate(path string, mode os.FileMode) error {
+	// Find the deepest existing ancestor so we know which dirs are new
+	existing := path
+	var toCreate []string
+	for {
+		if fi, err := os.Lstat(existing); err == nil && fi.IsDir() {
+			break
+		}
+		toCreate = append(toCreate, filepath.Base(existing))
+		parent := filepath.Dir(existing)
+		if parent == existing {
+			break
+		}
+		existing = parent
+	}
+
+	// Create each missing component and set the xattr
+	current := existing
+	for i := len(toCreate) - 1; i >= 0; i-- {
+		current = filepath.Join(current, toCreate[i])
+		if err := os.Mkdir(current, mode); err != nil && !os.IsExist(err) {
+			return err
+		}
+		if err := setDirmetaDelegateXattr(current); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// mkdirAllAndChownWithDirmetaDelegate creates all directories in path that don't
+// exist, chowns newly-created directories, and sets the overlay dirmeta_delegate
+// xattr on each newly-created directory.
+func mkdirAllAndChownWithDirmetaDelegate(path string, mode os.FileMode, ids idtools.IDPair) error {
+	// Find the deepest existing ancestor
+	existing := path
+	var toCreate []string
+	for {
+		if fi, err := os.Lstat(existing); err == nil && fi.IsDir() {
+			break
+		}
+		toCreate = append(toCreate, filepath.Base(existing))
+		parent := filepath.Dir(existing)
+		if parent == existing {
+			break
+		}
+		existing = parent
+	}
+
+	// Create each missing component, chown it, and set the xattr
+	current := existing
+	for i := len(toCreate) - 1; i >= 0; i-- {
+		current = filepath.Join(current, toCreate[i])
+		if err := os.Mkdir(current, mode); err != nil && !os.IsExist(err) {
+			return err
+		}
+		if err := idtools.SafeChown(current, ids.UID, ids.GID); err != nil {
+			return err
+		}
+		if err := setDirmetaDelegateXattr(current); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func GetFileOwner(path string) (uint32, uint32, uint32, error) {
 	f, err := os.Stat(path)
 	if err != nil {

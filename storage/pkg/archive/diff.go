@@ -83,7 +83,11 @@ func UnpackLayer(dest string, layer io.Reader, options *TarOptions) (size int64,
 			parentPath := filepath.Join(dest, parent)
 
 			if err := fileutils.Lexists(parentPath); err != nil && os.IsNotExist(err) {
-				err = os.MkdirAll(parentPath, 0o755)
+				if options.DirmetaDelegate {
+					err = mkdirAllWithDirmetaDelegate(parentPath, 0o755)
+				} else {
+					err = os.MkdirAll(parentPath, 0o755)
+				}
 				if err != nil {
 					return 0, err
 				}

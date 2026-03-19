@@ -70,6 +70,12 @@ type (
 		ForceMask *os.FileMode
 		// Timestamp, if set, will be set in each header as create/mod/access time
 		Timestamp *time.Time
+		// DirmetaDelegate, if set, causes implicitly-created parent directories
+		// (structural directories not present as entries in the tar stream) to be
+		// marked with the overlay dirmeta_delegate xattr.  This tells overlayfs to
+		// delegate metadata (timestamps, ownership, mode) for these directories to
+		// a lower layer, preserving the meaningful metadata from base image layers.
+		DirmetaDelegate bool
 	}
 )
 
@@ -1135,7 +1141,11 @@ loop:
 			parent := filepath.Dir(hdr.Name)
 			parentPath := filepath.Join(dest, parent)
 			if err := fileutils.Lexists(parentPath); err != nil && os.IsNotExist(err) {
-				err = idtools.MkdirAllAndChownNew(parentPath, 0o777, rootIDs)
+				if options.DirmetaDelegate {
+					err = mkdirAllAndChownWithDirmetaDelegate(parentPath, 0o777, rootIDs)
+				} else {
+					err = idtools.MkdirAllAndChownNew(parentPath, 0o777, rootIDs)
+				}
 				if err != nil {
 					return err
 				}
