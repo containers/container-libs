@@ -1027,6 +1027,13 @@ is interpreted as the default provider for the current host OS.
 Rosetta supports running x86_64 Linux binaries on a Podman machine on Apple silicon.
 The default value is `true`. Supported on AppleHV(arm64) machines only.
 
+**import_native_ca**="false"
+
+Import the host's trusted CA certificates into the machine.
+When set to true, the certificates from the host system are imported during machine startup.
+This allows containers running in the machine to trust the same Certificate Authorities
+as the host OS. The default value is `false`.
+
 ## FARMS TABLE
 The `farms` table contains configuration options used to group up remote connections into farms that will be used when sending out builds to different machines in a farm via `podman buildfarm`.
 

@@ -579,6 +579,17 @@ var _ = Describe("Config Local", func() {
 		gomega.Expect(err).ToNot(gomega.HaveOccurred())
 		gomega.Expect(config2.Machine.Rosetta).To(gomega.BeFalse())
 	})
+	It("Get ImportNativeCA value", func() {
+		// Given
+		config, err := newLocked(&Options{}, testConfigPath(""))
+		gomega.Expect(err).ToNot(gomega.HaveOccurred())
+		gomega.Expect(config.Machine.ImportNativeCA).To(gomega.BeFalse())
+		// When
+		config2, err := newLocked(&Options{}, testConfigPath("testdata/containers_default.conf"))
+		// Then
+		gomega.Expect(err).ToNot(gomega.HaveOccurred())
+		gomega.Expect(config2.Machine.ImportNativeCA).To(gomega.BeTrue())
+	})
 	It("should validate log_path correctly", func() {
 		defConf, err := defaultConfig()
 		gomega.Expect(err).ToNot(gomega.HaveOccurred())
