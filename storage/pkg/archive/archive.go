@@ -70,6 +70,9 @@ type (
 		ForceMask *os.FileMode
 		// Timestamp, if set, will be set in each header as create/mod/access time
 		Timestamp *time.Time
+		// StripSUIDSGID, if set SUID & SGID bits will be stripped from
+		// the permissions of extracted files, directories, etc.
+		StripSUIDSGID bool
 	}
 )
 

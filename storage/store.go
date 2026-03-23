@@ -774,6 +774,7 @@ type store struct {
 	digestLockRoot  string
 	disableVolatile bool
 	transientStore  bool
+	stripSUIDSGID   bool
 
 	// The following fields can only be accessed with graphLock held.
 	graphLockLastWrite lockfile.LastWrite
@@ -897,12 +898,17 @@ func GetStore(options types.StoreOptions) (Store, error) {
 		autoNsMaxSize:       autoNsMaxSize,
 		disableVolatile:     options.DisableVolatile,
 		transientStore:      options.TransientStore,
+		stripSUIDSGID:       options.StripSUIDSGID,
 
 		additionalUIDs: nil,
 		additionalGIDs: nil,
 	}
 	if err := s.load(); err != nil {
 		return nil, err
+	}
+
+	if s.stripSUIDSGID {
+		logrus.Debugf("Stripping SUID/SGID bits from files extracted to %s", s.graphRoot)
 	}
 
 	stores = append(stores, s)
