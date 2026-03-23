@@ -224,7 +224,7 @@ func Read(conf *File) iter.Seq2[*Item, error] {
 			conf.Modules = resolvedModules
 		}
 
-		if conf.EnvironmentName != "" {
+		if conf.EnvironmentName != "" && !conf.DoNotLoadDropInFiles {
 			// The _OVERRIDE env must be appended after loading all files, even modules.
 			if path := os.Getenv(conf.EnvironmentName + "_OVERRIDE"); path != "" {
 				f, err := os.Open(path)

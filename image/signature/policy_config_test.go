@@ -127,12 +127,9 @@ func TestInvalidPolicyFormatError(t *testing.T) {
 }
 
 func TestDefaultPolicy(t *testing.T) {
-	// We can't test the actual systemDefaultPolicyPath, so override.
-	// TestDefaultPolicyPath below tests that we handle the overrides and defaults
-	// correctly.
-
-	// Success
-	policy, err := DefaultPolicy(&types.SystemContext{SignaturePolicyPath: "./fixtures/policy.json"})
+	// Success via environment override.
+	t.Setenv("CONTAINERS_POLICY_CONF", "./fixtures/policy.json")
+	policy, err := DefaultPolicy(nil)
 	require.NoError(t, err)
 	assert.Equal(t, policyFixtureContents, policy)
 
@@ -140,118 +137,122 @@ func TestDefaultPolicy(t *testing.T) {
 		"/this/does/not/exist", // Error reading file
 		"/dev/null",            // A failure case; most are tested in the individual method unit tests.
 	} {
-		policy, err := DefaultPolicy(&types.SystemContext{SignaturePolicyPath: path})
+		t.Setenv("CONTAINERS_POLICY_CONF", path)
+		policy, err := DefaultPolicy(nil)
 		assert.Error(t, err)
 		assert.Nil(t, policy)
 	}
 }
 
-func TestDefaultPolicyPath(t *testing.T) {
-	const nondefaultPath = "/this/is/not/the/default/path.json"
-	const variableReference = "$HOME"
-	const rootPrefix = "/root/prefix"
-	tempHome := t.TempDir()
-	userDefaultPolicyPath := filepath.Join(tempHome, userPolicyFile)
-	tempsystemdefaultpath := filepath.Join(tempHome, systemDefaultPolicyPath)
-	for _, c := range []struct {
-		sys               *types.SystemContext
-		userfilePresent   bool
-		systemfilePresent bool
-		expected          string
-		expectedError     string
+func TestDefaultPolicyLookupOrder(t *testing.T) {
+	const rejectJSON = `{"default":[{"type":"reject"}]}`
+	const insecureJSON = `{"default":[{"type":"insecureAcceptAnything"}]}`
+
+	for _, tc := range []struct {
+		name           string
+		userPresent    bool
+		etcPresent     bool
+		usrPresent     bool
+		expectedPolicy any // *prInsecureAcceptAnything or *prReject
 	}{
-		// The common case
-		{nil, false, true, tempsystemdefaultpath, ""},
-		// There is a context, but it does not override the path.
-		{&types.SystemContext{}, false, true, tempsystemdefaultpath, ""},
-		// Path overridden
-		{&types.SystemContext{SignaturePolicyPath: nondefaultPath}, false, true, nondefaultPath, ""},
-		// Root overridden
 		{
-			&types.SystemContext{RootForImplicitAbsolutePaths: rootPrefix},
-			false,
-			true,
-			filepath.Join(rootPrefix, tempsystemdefaultpath),
-			"",
+			name:           "user wins",
+			userPresent:    true,
+			etcPresent:     true,
+			usrPresent:     true,
+			expectedPolicy: &prInsecureAcceptAnything{},
 		},
-		// Empty context and user policy present
-		{&types.SystemContext{}, true, true, userDefaultPolicyPath, ""},
-		// Only user policy present
-		{nil, true, true, userDefaultPolicyPath, ""},
-		// Context signature path and user policy present
 		{
-			&types.SystemContext{
-				SignaturePolicyPath: nondefaultPath,
-			},
-			true,
-			true,
-			nondefaultPath,
-			"",
+			name:           "etc fallback",
+			userPresent:    false,
+			etcPresent:     true,
+			usrPresent:     true,
+			expectedPolicy: &prReject{},
 		},
-		// Root and user policy present
 		{
-			&types.SystemContext{
-				RootForImplicitAbsolutePaths: rootPrefix,
-			},
-			true,
-			true,
-			userDefaultPolicyPath,
-			"",
+			name:           "usr fallback",
+			userPresent:    false,
+			etcPresent:     false,
+			usrPresent:     true,
+			expectedPolicy: &prInsecureAcceptAnything{},
 		},
-		// Context and user policy file preset simultaneously
-		{
-			&types.SystemContext{
-				RootForImplicitAbsolutePaths: rootPrefix,
-				SignaturePolicyPath:          nondefaultPath,
-			},
-			true,
-			true,
-			nondefaultPath,
-			"",
-		},
-		// Root and path overrides present simultaneously,
-		{
-			&types.SystemContext{
-				RootForImplicitAbsolutePaths: rootPrefix,
-				SignaturePolicyPath:          nondefaultPath,
-			},
-			false,
-			true,
-			nondefaultPath,
-			"",
-		},
-		// No environment expansion happens in the overridden paths
-		{&types.SystemContext{SignaturePolicyPath: variableReference}, false, true, variableReference, ""},
-		// No policy.json file is present in userfilePath and systemfilePath
-		{nil, false, false, "", fmt.Sprintf("no policy.json file found at any of the following: %q, %q", userDefaultPolicyPath, tempsystemdefaultpath)},
 	} {
-		paths := []struct {
-			condition bool
-			path      string
-		}{
-			{c.userfilePresent, userDefaultPolicyPath},
-			{c.systemfilePresent, tempsystemdefaultpath},
-		}
-		for _, p := range paths {
-			if p.condition {
-				err := os.MkdirAll(filepath.Dir(p.path), os.ModePerm)
-				require.NoError(t, err)
-				f, err := os.Create(p.path)
-				require.NoError(t, err)
-				f.Close()
-			} else {
-				os.Remove(p.path)
+		t.Run(tc.name, func(t *testing.T) {
+			tempHome := t.TempDir()
+			t.Setenv("XDG_CONFIG_HOME", tempHome)
+			userPolicyPath := filepath.Join(tempHome, "containers", "policy.json")
+
+			rootPrefix := t.TempDir()
+			systemEtcPolicyPath := filepath.Join(rootPrefix, "etc", "containers", "policy.json")
+			systemUsrPolicyPath := filepath.Join(rootPrefix, "usr", "share", "containers", "policy.json")
+
+			mustWritePolicy := func(path string, contents string) {
+				require.NoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
+				require.NoError(t, os.WriteFile(path, []byte(contents), 0o600))
 			}
-		}
-		path, err := defaultPolicyPathWithHomeDir(c.sys, tempHome, tempsystemdefaultpath)
-		if c.expectedError != "" {
-			assert.Empty(t, path)
-			assert.EqualError(t, err, c.expectedError)
-		} else {
+
+			if tc.userPresent {
+				mustWritePolicy(userPolicyPath, insecureJSON)
+			}
+			if tc.etcPresent {
+				mustWritePolicy(systemEtcPolicyPath, rejectJSON)
+			}
+			if tc.usrPresent {
+				mustWritePolicy(systemUsrPolicyPath, insecureJSON)
+			}
+
+			policy, err := DefaultPolicy(&types.SystemContext{
+				RootForImplicitAbsolutePaths: rootPrefix,
+			})
 			require.NoError(t, err)
-			assert.Equal(t, c.expected, path)
-		}
+			require.NotEmpty(t, policy.Default)
+
+			switch tc.expectedPolicy.(type) {
+			case *prInsecureAcceptAnything:
+				_, ok := policy.Default[0].(*prInsecureAcceptAnything)
+				assert.True(t, ok, "expected insecureAcceptAnything policy requirement")
+			case *prReject:
+				_, ok := policy.Default[0].(*prReject)
+				assert.True(t, ok, "expected reject policy requirement")
+			default:
+				t.Fatalf("unexpected expectedPolicy type %T", tc.expectedPolicy)
+			}
+		})
 	}
+}
+
+func TestDefaultPolicyEnvOverride(t *testing.T) {
+	const rejectJSON = `{"default":[{"type":"reject"}]}`
+	const insecureJSON = `{"default":[{"type":"insecureAcceptAnything"}]}`
+
+	tempHome := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", tempHome)
+
+	rootPrefix := t.TempDir()
+	systemEtcPolicyPath := filepath.Join(rootPrefix, "etc", "containers", "policy.json")
+	systemUsrPolicyPath := filepath.Join(rootPrefix, "usr", "share", "containers", "policy.json")
+	require.NoError(t, os.MkdirAll(filepath.Dir(systemEtcPolicyPath), 0o755))
+	require.NoError(t, os.WriteFile(systemEtcPolicyPath, []byte(rejectJSON), 0o600))
+	require.NoError(t, os.MkdirAll(filepath.Dir(systemUsrPolicyPath), 0o755))
+	require.NoError(t, os.WriteFile(systemUsrPolicyPath, []byte(rejectJSON), 0o600))
+
+	envBasePath := filepath.Join(t.TempDir(), "env-base.json")
+	envOverridePath := filepath.Join(t.TempDir(), "env-override.json")
+	require.NoError(t, os.WriteFile(envBasePath, []byte(insecureJSON), 0o600))
+	require.NoError(t, os.WriteFile(envOverridePath, []byte(rejectJSON), 0o600))
+
+	t.Setenv("CONTAINERS_POLICY_CONF", envBasePath)
+	t.Setenv("CONTAINERS_POLICY_CONF_OVERRIDE", envOverridePath)
+
+	policy, err := DefaultPolicy(&types.SystemContext{
+		RootForImplicitAbsolutePaths: rootPrefix,
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, policy.Default)
+
+	// _OVERRIDE is appended after all other selected policy files, so it wins.
+	_, ok := policy.Default[0].(*prReject)
+	assert.True(t, ok, "expected override policy requirement")
 }
 
 func TestNewPolicyFromFile(t *testing.T) {
