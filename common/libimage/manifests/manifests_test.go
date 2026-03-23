@@ -40,12 +40,23 @@ var (
 
 	sys = &types.SystemContext{
 		SystemRegistriesConfPath: "../../tests/registries.conf",
-		SignaturePolicyPath:      "../../tests/policy.json",
 	}
 	amd64sys = &types.SystemContext{ArchitectureChoice: "amd64"}
 	arm64sys = &types.SystemContext{ArchitectureChoice: "arm64"}
 	ppc64sys = &types.SystemContext{ArchitectureChoice: "ppc64le"}
 )
+
+func TestMain(m *testing.M) {
+	oldPolicy, hadOldPolicy := os.LookupEnv("CONTAINERS_POLICY_CONF")
+	_ = os.Setenv("CONTAINERS_POLICY_CONF", "../../tests/policy.json")
+	code := m.Run()
+	if hadOldPolicy {
+		_ = os.Setenv("CONTAINERS_POLICY_CONF", oldPolicy)
+	} else {
+		_ = os.Unsetenv("CONTAINERS_POLICY_CONF")
+	}
+	os.Exit(code)
+}
 
 type listPtr = *list
 
@@ -477,8 +488,8 @@ func TestReference(t *testing.T) {
 		}
 	}()
 
-	policy, err := signature.NewPolicyFromFile(sys.SignaturePolicyPath)
-	assert.NoErrorf(t, err, "NewPolicyFromFile()")
+	policy, err := signature.DefaultPolicy(sys)
+	assert.NoErrorf(t, err, "DefaultPolicy()")
 	policyContext, err := signature.NewPolicyContext(policy)
 	assert.NoErrorf(t, err, "NewPolicyContext()")
 	destRef, err := directory.NewReference(filepath.Join(dir, "directory"))

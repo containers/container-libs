@@ -147,9 +147,8 @@ func TestSupplemented(t *testing.T) {
 	arch2 := "foo"
 	arch3 := "bar"
 
-	sys := &types.SystemContext{
-		SignaturePolicyPath: "../../tests/policy.json",
-	}
+	t.Setenv("CONTAINERS_POLICY_CONF", "../../tests/policy.json")
+	sys := &types.SystemContext{}
 	defaultPolicy, err := signature.DefaultPolicy(sys)
 	assert.Nilf(t, err, "error obtaining default policy")
 	policyContext, err := signature.NewPolicyContext(defaultPolicy)

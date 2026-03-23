@@ -103,11 +103,8 @@ type CopyOptions struct {
 	// Reported to when ProgressInterval has arrived for a single
 	// artifact+offset.
 	Progress chan types.ProgressProperties
-	// If set, allow using the storage transport even if it's disabled by
-	// the specified SignaturePolicyPath.
+	// If set, allow using the storage transport even if disabled by policy.
 	PolicyAllowStorage bool
-	// SignaturePolicyPath to overwrite the default one.
-	SignaturePolicyPath string
 	// If non-empty, asks for signatures to be added during the copy
 	// using the provided signers.
 	Signers []*signer.Signer
@@ -251,10 +248,6 @@ func NewCopier(options *CopyOptions, sc *types.SystemContext) (*Copier, error) {
 	c.systemContext.DockerArchiveAdditionalTags = options.dockerArchiveAdditionalTags
 
 	c.systemContext.OSChoice, c.systemContext.ArchitectureChoice, c.systemContext.VariantChoice = platform.Normalize(options.OS, options.Architecture, options.Variant)
-
-	if options.SignaturePolicyPath != "" {
-		c.systemContext.SignaturePolicyPath = options.SignaturePolicyPath
-	}
 
 	dockerAuthConfig, err := getDockerAuthConfig(options.Username, options.Password, options.Credentials, options.IdentityToken)
 	if err != nil {
