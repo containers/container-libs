@@ -42,6 +42,9 @@ func (err InvalidPolicyFormatError) Error() string {
 // NOTE: When this function returns an error, report it to the user and abort.
 // DO NOT hard-code fallback policies in your application.
 func DefaultPolicy(sys *types.SystemContext) (*Policy, error) {
+	if sys != nil && sys.SignaturePolicyPath != "" {
+		return NewPolicyFromFile(sys.SignaturePolicyPath)
+	}
 	var rootForImplicitAbsPaths string
 	if sys != nil {
 		rootForImplicitAbsPaths = sys.RootForImplicitAbsolutePaths
