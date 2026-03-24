@@ -73,6 +73,11 @@ type (
 		// StripSUIDSGID, if set SUID & SGID bits will be stripped from
 		// the permissions of extracted files, directories, etc.
 		StripSUIDSGID bool
+		// InSubprocess indicates whether or not extractTarFileEntry()
+		// is running in a storage-untar subprocess.  If set, modified
+		// file mode messages (because of stripped SUIG/SGID bits) are
+		// printed to stderr, rather than logged with logrus.
+		InSubprocess bool
 	}
 )
 
@@ -705,7 +710,7 @@ func (ta *tarWriter) addFile(headers *addFileData) error {
 	return nil
 }
 
-func extractTarFileEntry(path, extractDir string, hdr *tar.Header, reader io.Reader, Lchown bool, chownOpts *idtools.IDPair, inUserns, ignoreChownErrors bool, forceMask *os.FileMode, buffer []byte) error {
+func extractTarFileEntry(path, extractDir string, hdr *tar.Header, reader io.Reader, Lchown bool, chownOpts *idtools.IDPair, tarOpts *TarOptions, buffer []byte) error {
 	// hdr.Mode is in linux format, which we can use for sycalls,
 	// but for os.Foo() calls we need the mode converted to os.FileMode,
 	// so use hdrInfo.Mode() (they differ for e.g. setuid bits)
@@ -713,11 +718,21 @@ func extractTarFileEntry(path, extractDir string, hdr *tar.Header, reader io.Rea
 
 	typeFlag := hdr.Typeflag
 	mask := hdrInfo.Mode()
+	const setUIDGIDMask = os.ModeSetuid | os.ModeSetgid
+	if tarOpts.StripSUIDSGID && mask&setUIDGIDMask != 0 {
+		mask &^= setUIDGIDMask
+		msg := fmt.Sprintf("Stripped SUID/SGID permission from %s", hdr.Name)
+		if tarOpts.InSubprocess {
+			fmt.Fprintf(os.Stderr, "%s\n", msg)
+		} else {
+			logrus.Info(msg)
+		}
+	}
 
 	// update also the implementation of ForceMask in pkg/chunked
-	if forceMask != nil {
-		mask = *forceMask
-		// If we have a forceMask, force the real type to either be a directory,
+	if tarOpts.ForceMask != nil {
+		mask = *tarOpts.ForceMask
+		// If we have a ForceMask, force the real type to either be a directory,
 		// a link, or a regular file.
 		if typeFlag != tar.TypeDir && typeFlag != tar.TypeSymlink && typeFlag != tar.TypeLink {
 			typeFlag = tar.TypeReg
@@ -751,7 +766,7 @@ func extractTarFileEntry(path, extractDir string, hdr *tar.Header, reader io.Rea
 		}
 
 	case tar.TypeBlock, tar.TypeChar:
-		if inUserns { // cannot create devices in a userns
+		if tarOpts.InUserNS { // cannot create devices in a userns
 			logrus.Debugf("Tar: Can't create device %v while running in user namespace", path)
 			return nil
 		}
@@ -801,8 +816,8 @@ func extractTarFileEntry(path, extractDir string, hdr *tar.Header, reader io.Rea
 		}
 		err := idtools.SafeLchown(path, chownOpts.UID, chownOpts.GID)
 		if err != nil {
-			if ignoreChownErrors {
-				fmt.Fprintf(os.Stderr, "Chown error detected. Ignoring due to ignoreChownErrors flag: %v\n", err)
+			if tarOpts.IgnoreChownErrors {
+				fmt.Fprintf(os.Stderr, "Chown error detected. Ignoring due to IgnoreChownErrors flag: %v\n", err)
 			} else {
 				return err
 			}
@@ -811,7 +826,7 @@ func extractTarFileEntry(path, extractDir string, hdr *tar.Header, reader io.Rea
 
 	// There is no LChmod, so ignore mode for symlink. Also, this
 	// must happen after chown, as that can modify the file mode
-	if err := handleLChmod(hdr, path, hdrInfo, forceMask); err != nil {
+	if err := handleLChmod(hdr, path, mask); err != nil {
 		return err
 	}
 
@@ -849,7 +864,7 @@ func extractTarFileEntry(path, extractDir string, hdr *tar.Header, reader io.Rea
 			continue
 		}
 		if err := system.Lsetxattr(path, xattrKey, []byte(value), 0); err != nil {
-			if errors.Is(err, system.ENOTSUP) || (inUserns && errors.Is(err, syscall.EPERM)) {
+			if errors.Is(err, system.ENOTSUP) || (tarOpts.InUserNS && errors.Is(err, syscall.EPERM)) {
 				// Ignore specific error cases:
 				// - ENOTSUP: Expected for graphdrivers lacking extended attribute support:
 				//   - Legacy AUFS versions
@@ -863,7 +878,7 @@ func extractTarFileEntry(path, extractDir string, hdr *tar.Header, reader io.Rea
 		}
 	}
 
-	if forceMask != nil && (typeFlag == tar.TypeReg || typeFlag == tar.TypeDir || runtime.GOOS == "darwin") {
+	if tarOpts.ForceMask != nil && (typeFlag == tar.TypeReg || typeFlag == tar.TypeDir || runtime.GOOS == "darwin") {
 		value := idtools.Stat{
 			IDs:   idtools.IDPair{UID: hdr.Uid, GID: hdr.Gid},
 			Mode:  hdrInfo.Mode(),
@@ -1205,7 +1220,7 @@ loop:
 			chownOpts = &idtools.IDPair{UID: hdr.Uid, GID: hdr.Gid}
 		}
 
-		if err = extractTarFileEntry(path, dest, hdr, trBuf, doChown, chownOpts, options.InUserNS, options.IgnoreChownErrors, options.ForceMask, buffer); err != nil {
+		if err = extractTarFileEntry(path, dest, hdr, trBuf, doChown, chownOpts, options, buffer); err != nil {
 			return err
 		}
 

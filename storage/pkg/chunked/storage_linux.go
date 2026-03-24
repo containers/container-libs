@@ -836,6 +836,9 @@ func (d *destinationFile) Close() (Err error) {
 	}
 
 	mode := os.FileMode(d.metadata.Mode)
+	if d.options.StripSUIDSGID {
+		mode &^= 0o6000
+	}
 	if d.options.ForceMask != nil {
 		mode = *d.options.ForceMask
 	}
@@ -1629,6 +1632,10 @@ func (c *chunkedDiffer) ApplyDiff(dest string, options *archive.TarOptions, diff
 		r := &mergedEntries[i]
 
 		mode := os.FileMode(r.Mode)
+		if options.StripSUIDSGID && mode&0o6000 != 0 {
+			mode &^= 0o6000
+			logrus.Infof("Stripped SUID/SGID permission from %s", r.Name)
+		}
 
 		t, err := typeToTarType(r.Type)
 		if err != nil {
