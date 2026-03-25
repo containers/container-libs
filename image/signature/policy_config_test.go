@@ -227,7 +227,7 @@ func TestDefaultPolicy(t *testing.T) {
 				mustWritePolicy(t, filepath.Join(rootPrefix, "etc", "containers", "policy.json"), rejectJSON)
 				base := filepath.Join(t.TempDir(), "env-base.json")
 				mustWritePolicy(t, base, insecureJSON)
-				t.Setenv("CONTAINERS_POLICY_CONF", base)
+				t.Setenv("CONTAINERS_POLICY_JSON", base)
 			},
 			sys:          &types.SystemContext{},
 			expectPolicy: &prInsecureAcceptAnything{},
@@ -237,7 +237,7 @@ func TestDefaultPolicy(t *testing.T) {
 			setup: func(t *testing.T, _ string) {
 				tempHome := t.TempDir()
 				t.Setenv("XDG_CONFIG_HOME", tempHome)
-				t.Setenv("CONTAINERS_POLICY_CONF", "/this/does/not/exist")
+				t.Setenv("CONTAINERS_POLICY_JSON", "/this/does/not/exist")
 			},
 			sys:       &types.SystemContext{},
 			expectErr: true,
@@ -247,7 +247,7 @@ func TestDefaultPolicy(t *testing.T) {
 			setup: func(t *testing.T, _ string) {
 				tempHome := t.TempDir()
 				t.Setenv("XDG_CONFIG_HOME", tempHome)
-				t.Setenv("CONTAINERS_POLICY_CONF", "/dev/null")
+				t.Setenv("CONTAINERS_POLICY_JSON", "/dev/null")
 			},
 			sys:       &types.SystemContext{},
 			expectErr: true,

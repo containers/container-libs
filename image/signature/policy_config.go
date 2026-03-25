@@ -45,6 +45,7 @@ func DefaultPolicy(sys *types.SystemContext) (*Policy, error) {
 	if sys != nil && sys.SignaturePolicyPath != "" {
 		return NewPolicyFromFile(sys.SignaturePolicyPath)
 	}
+
 	var rootForImplicitAbsPaths string
 	if sys != nil {
 		rootForImplicitAbsPaths = sys.RootForImplicitAbsolutePaths
@@ -54,17 +55,15 @@ func DefaultPolicy(sys *types.SystemContext) (*Policy, error) {
 		Name:                         "policy",
 		Extension:                    "json",
 		DoNotLoadDropInFiles:         true,
-		EnvironmentName:              "CONTAINERS_POLICY_CONF",
+		EnvironmentName:              "CONTAINERS_POLICY_JSON",
 		RootForImplicitAbsolutePaths: rootForImplicitAbsPaths,
 	}
 
 	var policy *Policy
-	found := false
 	for item, err := range configfile.Read(&policyFiles) {
 		if err != nil {
 			return nil, err
 		}
-		found = true
 
 		contents, err := io.ReadAll(item.Reader)
 		if err != nil {
@@ -76,7 +75,7 @@ func DefaultPolicy(sys *types.SystemContext) (*Policy, error) {
 		}
 	}
 
-	if !found {
+	if policy == nil {
 		return nil, fmt.Errorf("no policy.json file found")
 	}
 

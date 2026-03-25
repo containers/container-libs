@@ -12,7 +12,7 @@ applicable when deciding whether to accept an image, or individual signatures of
 
 By default, the policy is read from `$XDG_CONFIG_HOME/containers/policy.json` (or from `$HOME/.config/containers/policy.json` if `$XDG_CONFIG_HOME` is unset), if it exists; otherwise from `/etc/containers/policy.json`;  otherwise from `/usr/share/containers/policy.json`. Applications performing verification may allow using a different policy instead.
 
-If `CONTAINERS_POLICY_CONF` is set, it specifies the only policy file to use.
+If `CONTAINERS_POLICY_JSON` is set, it specifies the only policy file to use.
 
 ## FORMAT
 
