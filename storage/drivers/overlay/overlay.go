@@ -2291,10 +2291,8 @@ func (d *Driver) ApplyDiffWithDiffer(options *graphdriver.ApplyDiffWithDifferOpt
 	var idMappings *idtools.IDMappings
 	var forceMask *os.FileMode
 
-	if options != nil {
-		idMappings = options.Mappings
-		forceMask = options.ForceMask
-	}
+	idMappings = options.Mappings
+	forceMask = options.ForceMask
 	if d.options.forceMask != nil {
 		forceMask = d.options.forceMask
 	}
@@ -2343,14 +2341,18 @@ func (d *Driver) ApplyDiffWithDiffer(options *graphdriver.ApplyDiffWithDifferOpt
 		differOptions.Format = graphdriver.DifferOutputFormatFlat
 		differOptions.UseFsVerity = graphdriver.DifferFsVerityIfAvailable
 	}
-	out, err := differ.ApplyDiff(applyDir, &archive.TarOptions{
+	tarOpts := &archive.TarOptions{
 		UIDMaps:           idMappings.UIDs(),
 		GIDMaps:           idMappings.GIDs(),
 		IgnoreChownErrors: d.options.ignoreChownErrors,
 		WhiteoutFormat:    d.getWhiteoutFormat(),
 		InUserNS:          unshare.IsRootless(),
 		ForceMask:         forceMask,
-	}, &differOptions)
+	}
+	if options.StripSUIDSGID != nil {
+		tarOpts.StripSUIDSGID = *options.StripSUIDSGID
+	}
+	out, err := differ.ApplyDiff(applyDir, tarOpts, &differOptions)
 
 	out.Target = applyDir
 
@@ -2498,15 +2500,19 @@ func (d *Driver) applyDiff(target string, options graphdriver.ApplyDiffOpts) (si
 	}
 
 	logrus.Debugf("Applying tar in %s", target)
-	// Overlay doesn't need the parent id to apply the diff
-	if err := untar(options.Diff, target, &archive.TarOptions{
+	tarOpts := &archive.TarOptions{
 		UIDMaps:           idMappings.UIDs(),
 		GIDMaps:           idMappings.GIDs(),
 		IgnoreChownErrors: d.options.ignoreChownErrors,
 		ForceMask:         d.options.forceMask,
 		WhiteoutFormat:    d.getWhiteoutFormat(),
 		InUserNS:          unshare.IsRootless(),
-	}); err != nil {
+	}
+	if options.StripSUIDSGID != nil {
+		tarOpts.StripSUIDSGID = *options.StripSUIDSGID
+	}
+	// Overlay doesn't need the parent id to apply the diff
+	if err := untar(options.Diff, target, tarOpts); err != nil {
 		return 0, err
 	}
 

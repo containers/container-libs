@@ -90,6 +90,13 @@ The `storage.options` table supports the following options:
 **disable-volatile**=true
   If disable-volatile is set, then the "volatile" mount optimization is disabled for all the containers.
 
+**strip_suid_sgid**=false
+  If strip_suid_sgid is enabled, the SUID and SGID bits are removed (set to zero) from the permission bits (mode) of files, directories, etc., as they are extracted from image layers.  This allows such image layers to be extracted and used when creation of SUID or SGID files is restricted (such as within a systemd service with `RestrictSUIDSGID=yes`).
+
+  Many containerized applications inherit these bits from base images but don't actually need them.  If an application runs as root or does not use these utilities, stripping the bits has no negative impact.  However, some workloads do rely on these privileges, so stripping them can cause failures.  Always test and audit entry point scripts and application behavior to determine whether an application runs correctly with this option set.
+
+  Note that this option only affects image layer **extraction** (such as when pulling images).  Other operations, such as layer copying, are not affected.  Also, this option has no effect on Windows.
+
 ### STORAGE PULL OPTIONS TABLE
 
 The `storage.options.pull_options` table supports the following keys:

@@ -179,6 +179,9 @@ func (gdw *NaiveDiffDriver) ApplyDiff(id string, options ApplyDiffOpts) (int64, 
 		IgnoreChownErrors: options.IgnoreChownErrors,
 		ForceMask:         forceMask,
 	}
+	if options.StripSUIDSGID != nil {
+		tarOptions.StripSUIDSGID = *options.StripSUIDSGID
+	}
 	if options.Mappings != nil {
 		tarOptions.UIDMaps = options.Mappings.UIDs()
 		tarOptions.GIDMaps = options.Mappings.GIDs()

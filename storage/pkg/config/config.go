@@ -87,6 +87,10 @@ type OptionsConfig struct {
 	// files and directories.
 	ForceMask os.FileMode `toml:"force_mask,omitempty"`
 
+	// If set, SUID and SGID bits are stripped from the mode of all files,
+	// directories, etc., when image layers are extracted.
+	StripSUIDSGID bool `toml:"strip_suid_sgid,omitempty"`
+
 	// RootAutoUsernsUser is the name of one or more entries in /etc/subuid and
 	// /etc/subgid which should be used to set up automatically a userns.
 	RootAutoUsernsUser string `toml:"root-auto-userns-user,omitempty"`

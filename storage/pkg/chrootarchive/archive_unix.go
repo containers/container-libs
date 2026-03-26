@@ -16,6 +16,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
+	"github.com/sirupsen/logrus"
 	"go.podman.io/storage/pkg/archive"
 	"go.podman.io/storage/pkg/reexec"
 )
@@ -148,6 +149,7 @@ func invokeUnpack(decompressedArchive io.Reader, dest *unpackDestination, option
 	}
 
 	// write the options to the pipe for the untar exec to read
+	options.InSubprocess = true
 	if err := json.NewEncoder(w).Encode(options); err != nil {
 		w.Close()
 		return fmt.Errorf("untar json encode to pipe failed: %w", err)
@@ -164,6 +166,12 @@ func invokeUnpack(decompressedArchive io.Reader, dest *unpackDestination, option
 		}
 
 		return errorOut
+	} else if output.Len() > 0 {
+		for _, line := range strings.Split(strings.TrimRight(output.String(), "\n"), "\n") {
+			if line != "" {
+				logrus.Info(line)
+			}
+		}
 	}
 	return nil
 }

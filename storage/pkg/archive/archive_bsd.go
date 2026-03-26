@@ -9,10 +9,6 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func handleLChmod(_ *tar.Header, path string, hdrInfo os.FileInfo, forceMask *os.FileMode) error {
-	permissionsMask := hdrInfo.Mode()
-	if forceMask != nil {
-		permissionsMask = *forceMask
-	}
-	return unix.Fchmodat(unix.AT_FDCWD, path, uint32(permissionsMask), unix.AT_SYMLINK_NOFOLLOW)
+func handleLChmod(_ *tar.Header, path string, mode os.FileMode) error {
+	return unix.Fchmodat(unix.AT_FDCWD, path, uint32(mode), unix.AT_SYMLINK_NOFOLLOW)
 }

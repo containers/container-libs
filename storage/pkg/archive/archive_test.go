@@ -752,7 +752,7 @@ func TestTypeXGlobalHeaderDoesNotFail(t *testing.T) {
 	hdr := tar.Header{Typeflag: tar.TypeXGlobalHeader}
 	tmpDir := t.TempDir()
 	buffer := make([]byte, 1<<20)
-	err := extractTarFileEntry(filepath.Join(tmpDir, "pax_global_header"), tmpDir, &hdr, nil, true, nil, false, false, nil, buffer)
+	err := extractTarFileEntry(filepath.Join(tmpDir, "pax_global_header"), tmpDir, &hdr, nil, true, nil, &TarOptions{}, buffer)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1288,6 +1288,126 @@ func (b *errorBuf) Write(d []byte) (int, error) {
 
 func (b *errorBuf) Close() error {
 	return nil
+}
+
+func TestStripSUIDSGID(t *testing.T) {
+	if runtime.GOOS == windows {
+		t.Skip("Skipping on Windows")
+	}
+
+	origin := t.TempDir()
+
+	// Create files with various SUID/SGID combinations.
+	// Use Go's os.FileMode constants (not raw octal like 0o4755,
+	// which has a different bit layout than os.ModeSetuid).
+	files := []struct {
+		name string
+		mode os.FileMode
+	}{
+		{"suid_file", os.ModeSetuid | 0o755},
+		{"sgid_file", os.ModeSetgid | 0o755},
+		{"suid_sgid_file", os.ModeSetuid | os.ModeSetgid | 0o755},
+		{"normal_file", 0o755},
+	}
+
+	for _, f := range files {
+		path := filepath.Join(origin, f.name)
+		err := os.WriteFile(path, []byte("hello"), 0o755)
+		require.NoError(t, err)
+		err = os.Chmod(path, f.mode)
+		require.NoError(t, err)
+		// Verify the bits were actually set on the source file.
+		info, err := os.Stat(path)
+		require.NoError(t, err)
+		require.Equal(t, f.mode, info.Mode()&(os.ModeSetuid|os.ModeSetgid|os.ModePerm),
+			"%s: source file mode not set correctly", f.name)
+	}
+
+	// Create a directory with SGID.
+	sgidDir := filepath.Join(origin, "sgid_dir")
+	err := os.Mkdir(sgidDir, 0o755)
+	require.NoError(t, err)
+	err = os.Chmod(sgidDir, os.ModeSetgid|0o755)
+	require.NoError(t, err)
+
+	// Tar the origin directory.
+	archive, err := TarWithOptions(origin, &TarOptions{Compression: Uncompressed})
+	require.NoError(t, err)
+	defer archive.Close()
+
+	// Extract with StripSUIDSGID enabled.
+	dst := t.TempDir()
+	err = UntarUncompressed(archive, dst, &TarOptions{StripSUIDSGID: true})
+	require.NoError(t, err)
+
+	// Verify SUID/SGID bits are stripped, base permissions preserved.
+	for _, f := range files {
+		info, err := os.Stat(filepath.Join(dst, f.name))
+		require.NoError(t, err)
+		mode := info.Mode()
+		assert.Zero(t, mode&os.ModeSetuid, "%s: SUID bit should be stripped", f.name)
+		assert.Zero(t, mode&os.ModeSetgid, "%s: SGID bit should be stripped", f.name)
+		assert.Equal(t, os.FileMode(0o755), mode.Perm(), "%s: base permissions should be preserved", f.name)
+	}
+
+	// Verify directory SGID is stripped.
+	info, err := os.Stat(filepath.Join(dst, "sgid_dir"))
+	require.NoError(t, err)
+	assert.Zero(t, info.Mode()&os.ModeSetgid, "sgid_dir: SGID bit should be stripped")
+	assert.Equal(t, os.FileMode(0o755), info.Mode().Perm(), "sgid_dir: base permissions should be preserved")
+}
+
+func TestStripSUIDSGIDDisabled(t *testing.T) {
+	if runtime.GOOS == windows {
+		t.Skip("Skipping on Windows")
+	}
+
+	origin := t.TempDir()
+
+	// Create files with SUID/SGID bits using Go os.FileMode constants.
+	files := []struct {
+		name string
+		mode os.FileMode
+	}{
+		{"suid_file", os.ModeSetuid | 0o755},
+		{"sgid_file", os.ModeSetgid | 0o755},
+		{"suid_sgid_file", os.ModeSetuid | os.ModeSetgid | 0o755},
+	}
+
+	for _, f := range files {
+		path := filepath.Join(origin, f.name)
+		err := os.WriteFile(path, []byte("hello"), 0o755)
+		require.NoError(t, err)
+		err = os.Chmod(path, f.mode)
+		require.NoError(t, err)
+	}
+
+	// Tar the origin directory.
+	archive, err := TarWithOptions(origin, &TarOptions{Compression: Uncompressed})
+	require.NoError(t, err)
+	defer archive.Close()
+
+	// Extract with StripSUIDSGID disabled.
+	dst := t.TempDir()
+	err = UntarUncompressed(archive, dst, &TarOptions{StripSUIDSGID: false})
+	require.NoError(t, err)
+
+	// Verify SUID/SGID bits are preserved.
+	expected := map[string]os.FileMode{
+		"suid_file":      os.ModeSetuid,
+		"sgid_file":      os.ModeSetgid,
+		"suid_sgid_file": os.ModeSetuid | os.ModeSetgid,
+	}
+
+	for _, f := range files {
+		info, err := os.Stat(filepath.Join(dst, f.name))
+		require.NoError(t, err)
+		mode := info.Mode()
+		assert.Equal(t, expected[f.name], mode&(os.ModeSetuid|os.ModeSetgid),
+			"%s: SUID/SGID bits should be preserved", f.name)
+		assert.Equal(t, os.FileMode(0o755), mode.Perm(),
+			"%s: base permissions should be preserved", f.name)
+	}
 }
 
 func TestTarErrorHandling(t *testing.T) {
