@@ -33,6 +33,9 @@ github.com/acarl005/stripansi
 # github.com/cespare/xxhash/v2 v2.3.0
 ## explicit; go 1.11
 github.com/cespare/xxhash/v2
+# github.com/cgwalters/jsonrpc-fdpass-go v0.0.0-20260126203148-2bca851a3863
+## explicit; go 1.21
+github.com/cgwalters/jsonrpc-fdpass-go
 # github.com/checkpoint-restore/checkpointctl v1.5.0
 ## explicit; go 1.24.6
 github.com/checkpoint-restore/checkpointctl/lib
