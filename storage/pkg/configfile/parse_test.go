@@ -722,3 +722,108 @@ func Test_ParseTOML(t *testing.T) {
 		})
 	}
 }
+
+func TestFileSearchPaths(t *testing.T) {
+	t.Run("main candidates only when drop-ins disabled", func(t *testing.T) {
+		tmp := t.TempDir()
+		tempHome := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", tempHome)
+
+		conf := File{
+			Name:                         "policy",
+			Extension:                    "json",
+			DoNotLoadDropInFiles:         true,
+			EnvironmentName:              "CONTAINERS_POLICY_JSON",
+			RootForImplicitAbsolutePaths: tmp,
+		}
+
+		tried, err := conf.SearchPaths()
+		require.NoError(t, err)
+		require.NotEmpty(t, tried)
+
+		assert.Contains(t, tried, filepath.Join(tempHome, "containers", "policy.json"))
+		assert.Contains(t, tried, filepath.Join(tmp, "etc", "containers", "policy.json"))
+		assert.Contains(t, tried, filepath.Join(tmp, "usr", "share", "containers", "policy.json"))
+		// Drop-in dirs should not be included when DoNotLoadDropInFiles is set.
+		for _, p := range tried {
+			assert.NotContains(t, p, ".d")
+		}
+	})
+
+	t.Run("drop-ins when main disabled", func(t *testing.T) {
+		tmp := t.TempDir()
+		tempHome := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", tempHome)
+
+		conf := File{
+			Name:                         "containers",
+			Extension:                    "conf",
+			DoNotLoadMainFiles:           true,
+			UserId:                       1000,
+			RootForImplicitAbsolutePaths: tmp,
+		}
+
+		tried, err := conf.SearchPaths()
+		require.NoError(t, err)
+		require.NotEmpty(t, tried)
+
+		// Main config file candidates should not be included.
+		assert.NotContains(t, tried, filepath.Join(tempHome, "containers", "containers.conf"))
+		assert.NotContains(t, tried, filepath.Join(tmp, "etc", "containers", "containers.conf"))
+		assert.NotContains(t, tried, filepath.Join(tmp, "usr", "share", "containers", "containers.conf"))
+
+		// But drop-in directories should still be included.
+		assert.Contains(t, tried, filepath.Join(tempHome, "containers", "containers.conf.d"))
+	})
+
+	t.Run("env config skips main/drop-ins and still includes override env", func(t *testing.T) {
+		tmp := t.TempDir()
+
+		base := filepath.Join(t.TempDir(), "base.json")
+		require.NoError(t, os.WriteFile(base, []byte("{}"), 0o600))
+		override := filepath.Join(t.TempDir(), "override.json")
+		require.NoError(t, os.WriteFile(override, []byte("{}"), 0o600))
+
+		t.Setenv("CONTAINERS_POLICY_JSON", base)
+		t.Setenv("CONTAINERS_POLICY_JSON_OVERRIDE", override)
+
+		conf := File{
+			Name:                         "policy",
+			Extension:                    "json",
+			EnvironmentName:              "CONTAINERS_POLICY_JSON",
+			RootForImplicitAbsolutePaths: tmp,
+		}
+
+		tried, err := conf.SearchPaths()
+		require.NoError(t, err)
+
+		assert.Equal(t, []string{base, override}, tried)
+	})
+
+	t.Run("includes drop-in dirs and module candidates", func(t *testing.T) {
+		tmp := t.TempDir()
+		tempHome := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", tempHome)
+
+		conf := File{
+			Name:                         "containers",
+			Extension:                    "conf",
+			EnvironmentName:              "CONTAINERS_CONF",
+			UserId:                       1000,
+			Modules:                      []string{"module.conf", filepath.Join(tmp, "absmod.conf")},
+			RootForImplicitAbsolutePaths: tmp,
+		}
+
+		tried, err := conf.SearchPaths()
+		require.NoError(t, err)
+
+		// Drop-in directories should be present (at least the home .d path).
+		assert.Contains(t, tried, filepath.Join(tempHome, "containers", "containers.conf.d"))
+
+		// Module candidates should include both relative (searched in module dirs) and absolute.
+		assert.Contains(t, tried, filepath.Join(tempHome, "containers", "containers.conf.modules", "module.conf"))
+		assert.Contains(t, tried, filepath.Join(tmp, "etc", "containers", "containers.conf.modules", "module.conf"))
+		assert.Contains(t, tried, filepath.Join(tmp, "usr", "share", "containers", "containers.conf.modules", "module.conf"))
+		assert.Contains(t, tried, filepath.Join(tmp, "absmod.conf"))
+	})
+}
