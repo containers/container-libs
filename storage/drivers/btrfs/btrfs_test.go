@@ -11,6 +11,16 @@ import (
 	"go.podman.io/storage/drivers/graphtest"
 )
 
+func TestParseOptionsBtrfsSize(t *testing.T) {
+	opts, wantQuota, err := parseOptions([]string{"btrfs.size=10m"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !wantQuota || opts.size == 0 {
+		t.Fatalf("expected size and quota, got size=%d quota=%v", opts.size, wantQuota)
+	}
+}
+
 // This avoids creating a new driver for each test if all tests are run
 // Make sure to put new tests between TestBtrfsSetup and TestBtrfsTeardown
 func TestBtrfsSetup(t *testing.T) {
