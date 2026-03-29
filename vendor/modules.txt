@@ -408,6 +408,8 @@ github.com/sigstore/fulcio/pkg/certificate
 github.com/sigstore/protobuf-specs/gen/pb-go/common/v1
 # github.com/sigstore/sigstore v1.10.4
 ## explicit; go 1.25.0
+# github.com/sigstore/sigstore v1.10.5
+## explicit; go 1.25.0
 github.com/sigstore/sigstore/pkg/cryptoutils
 github.com/sigstore/sigstore/pkg/oauth
 github.com/sigstore/sigstore/pkg/oauthflow
