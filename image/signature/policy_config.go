@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/signature/internal"
@@ -60,7 +61,8 @@ func DefaultPolicy(sys *types.SystemContext) (*Policy, error) {
 	}
 
 	var policy *Policy
-	for item, err := range configfile.Read(&policyFiles) {
+	var usedPaths []string
+	for item, err := range configfile.ReadWithPaths(&policyFiles, &usedPaths) {
 		if err != nil {
 			return nil, err
 		}
@@ -76,6 +78,9 @@ func DefaultPolicy(sys *types.SystemContext) (*Policy, error) {
 	}
 
 	if policy == nil {
+		if len(usedPaths) > 0 {
+			return nil, fmt.Errorf("no policy.json file found; searched paths: %s", strings.Join(usedPaths, ", "))
+		}
 		return nil, fmt.Errorf("no policy.json file found")
 	}
 

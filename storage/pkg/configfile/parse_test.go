@@ -580,6 +580,148 @@ func Test_Read(t *testing.T) {
 	}
 }
 
+func Test_ReadWithPaths(t *testing.T) {
+	t.Run("main stop after first existing main file", func(t *testing.T) {
+		rootPrefix := t.TempDir()
+
+		writeTestFiles(t, rootPrefix, testfiles{
+			etc: map[string]string{
+				"policy.json": "etc-policy",
+			},
+		})
+
+		conf := File{
+			Name:                         "policy",
+			Extension:                    "json",
+			DoNotLoadDropInFiles:         true,
+			RootForImplicitAbsolutePaths: rootPrefix,
+		}
+
+		var usedPaths []string
+		seq := ReadWithPaths(&conf, &usedPaths)
+		_ = collectConfigs(t, seq)
+
+		configFileName := getConfName(conf.Name, conf.Extension, conf.DoNotUseExtensionForConfigName)
+
+		userBase, err := UserConfigPath()
+		require.NoError(t, err)
+		expectedUserConfig := ""
+		if userBase != "" {
+			expectedUserConfig = filepath.Join(userBase, configFileName)
+		}
+
+		expectedOverrideConfig := ""
+		if adminOverrideConfigPath != "" {
+			expectedOverrideConfig = filepath.Join(adminOverrideConfigPath, configFileName)
+			expectedOverrideConfig = filepath.Join(rootPrefix, expectedOverrideConfig)
+		}
+
+		expectedDefaultConfig := ""
+		if systemConfigPath != "" {
+			expectedDefaultConfig = filepath.Join(systemConfigPath, configFileName)
+			expectedDefaultConfig = filepath.Join(rootPrefix, expectedDefaultConfig)
+		}
+
+		require.NotEmpty(t, expectedUserConfig)
+		require.NotEmpty(t, expectedOverrideConfig)
+		assert.Equal(t, []string{expectedUserConfig, expectedOverrideConfig}, usedPaths)
+		if expectedDefaultConfig != "" {
+			assert.NotContains(t, usedPaths, expectedDefaultConfig)
+		}
+	})
+
+	t.Run("partial iteration only records attempted paths so far", func(t *testing.T) {
+		rootPrefix := t.TempDir()
+		tempHome := t.TempDir()
+		t.Setenv("XDG_CONFIG_HOME", tempHome)
+
+		etcBase := filepath.Join(rootPrefix, adminOverrideConfigPath)
+		require.NoError(t, os.MkdirAll(etcBase, 0o755))
+		require.NoError(t, os.WriteFile(filepath.Join(etcBase, "containers.conf"), []byte("etc-main"), 0o600))
+
+		usrBase := filepath.Join(rootPrefix, systemConfigPath)
+		require.NoError(t, os.MkdirAll(filepath.Join(usrBase, "containers.conf.d"), 0o755))
+		require.NoError(t, os.WriteFile(filepath.Join(usrBase, "containers.conf.d", "01.conf"), []byte("drop-in"), 0o600))
+
+		conf := File{
+			Name:                         "containers",
+			Extension:                    "conf",
+			RootForImplicitAbsolutePaths: rootPrefix,
+		}
+
+		var usedPaths []string
+		seq := ReadWithPaths(&conf, &usedPaths)
+
+		// Stop iteration immediately after the first yielded item (the main file).
+		seq(func(item *Item, err error) bool {
+			require.NoError(t, err)
+			require.NotNil(t, item)
+			return false
+		})
+
+		// The main candidates are attempted in order; since /etc exists it stops before consulting /usr.
+		userConfig := filepath.Join(tempHome, "containers", "containers.conf")
+		etcConfig := filepath.Join(etcBase, "containers.conf")
+		usrConfig := filepath.Join(usrBase, "containers.conf")
+
+		assert.Equal(t, []string{userConfig, etcConfig}, usedPaths)
+		assert.NotContains(t, usedPaths, usrConfig)
+		assert.NotContains(t, usedPaths, filepath.Join(usrBase, "containers.conf.d", "01.conf"))
+	})
+
+	t.Run("env config skips main/drop-ins; ignores _OVERRIDE when drop-ins disabled", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+
+		envPath := filepath.Join(t.TempDir(), "env.json")
+		require.NoError(t, os.WriteFile(envPath, []byte("{}"), 0o600))
+
+		overridePath := filepath.Join(t.TempDir(), "override.json")
+		require.NoError(t, os.WriteFile(overridePath, []byte("{}"), 0o600))
+
+		t.Setenv("CONTAINERS_POLICY_JSON", envPath)
+		t.Setenv("CONTAINERS_POLICY_JSON_OVERRIDE", overridePath)
+
+		conf := File{
+			Name:                 "policy",
+			Extension:            "json",
+			EnvironmentName:      "CONTAINERS_POLICY_JSON",
+			DoNotLoadDropInFiles: true,
+		}
+
+		var usedPaths []string
+		seq := ReadWithPaths(&conf, &usedPaths)
+		_ = collectConfigs(t, seq)
+
+		assert.Equal(t, []string{envPath}, usedPaths)
+	})
+
+	t.Run("env config includes _OVERRIDE when drop-ins enabled", func(t *testing.T) {
+		t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+
+		envPath := filepath.Join(t.TempDir(), "env.json")
+		require.NoError(t, os.WriteFile(envPath, []byte("{}"), 0o600))
+
+		overridePath := filepath.Join(t.TempDir(), "override.json")
+		require.NoError(t, os.WriteFile(overridePath, []byte("{}"), 0o600))
+
+		t.Setenv("CONTAINERS_POLICY_JSON", envPath)
+		t.Setenv("CONTAINERS_POLICY_JSON_OVERRIDE", overridePath)
+
+		conf := File{
+			Name:                 "policy",
+			Extension:            "json",
+			EnvironmentName:      "CONTAINERS_POLICY_JSON",
+			DoNotLoadDropInFiles: false,
+		}
+
+		var usedPaths []string
+		seq := ReadWithPaths(&conf, &usedPaths)
+		_ = collectConfigs(t, seq)
+
+		assert.Equal(t, []string{envPath, overridePath}, usedPaths)
+	})
+}
+
 func writeTestFiles(t *testing.T, tmpdir string, files testfiles) {
 	t.Helper()
 	usr := filepath.Join(tmpdir, systemConfigPath)

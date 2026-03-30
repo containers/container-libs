@@ -281,6 +281,13 @@ func TestDefaultPolicy(t *testing.T) {
 				if test.expectErrMatch != "" {
 					assert.Contains(t, err.Error(), test.expectErrMatch)
 				}
+				if test.name == "no policy file found" {
+					assert.Contains(t, err.Error(), "; searched paths:")
+					// The search paths include user config (XDG_CONFIG_HOME), etc and usr.
+					assert.Contains(t, err.Error(), filepath.Join(os.Getenv("XDG_CONFIG_HOME"), "containers", "policy.json"))
+					assert.Contains(t, err.Error(), filepath.Join(rootPrefix, "etc", "containers", "policy.json"))
+					assert.Contains(t, err.Error(), filepath.Join(rootPrefix, "usr", "share", "containers", "policy.json"))
+				}
 				return
 			}
 

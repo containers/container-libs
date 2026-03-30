@@ -92,6 +92,13 @@ func getConfName(name, extension string, noExtension bool) string {
 // Expected ENOENT errors are already ignored in this function and must not be handled again by callers.
 // The given File options must not be nil and populated with valid options.
 func Read(conf *File) iter.Seq2[*Item, error] {
+	return ReadWithPaths(conf, nil)
+}
+
+// ReadWithPaths behaves like [Read] but also records every file path it tried to open.
+//
+// usedPaths is populated during iteration (if not nil).
+func ReadWithPaths(conf *File, usedPaths *[]string) iter.Seq2[*Item, error] {
 	configFileName := getConfName(conf.Name, conf.Extension, conf.DoNotUseExtensionForConfigName)
 
 	// Note this can be empty which is a valid case and should be simply ignored then.
@@ -134,6 +141,9 @@ func Read(conf *File) iter.Seq2[*Item, error] {
 
 		if conf.EnvironmentName != "" {
 			if path := os.Getenv(conf.EnvironmentName); path != "" {
+				if usedPaths != nil {
+					*usedPaths = append(*usedPaths, path)
+				}
 				f, err := os.Open(path)
 				// Do not ignore ErrNotExist here, we want to hard error if users set a wrong path here.
 				if err != nil {
@@ -165,6 +175,9 @@ func Read(conf *File) iter.Seq2[*Item, error] {
 				if path == "" {
 					continue
 				}
+				if usedPaths != nil {
+					*usedPaths = append(*usedPaths, path)
+				}
 				f, err := os.Open(path)
 				// only ignore ErrNotExist, all other errors get return to the caller via yield
 				if err != nil {
@@ -191,6 +204,9 @@ func Read(conf *File) iter.Seq2[*Item, error] {
 				return
 			}
 			for _, file := range files {
+				if usedPaths != nil {
+					*usedPaths = append(*usedPaths, file)
+				}
 				f, err := os.Open(file)
 				// only ignore ErrNotExist, all other errors get return to the caller via yield
 				if err != nil {
@@ -211,7 +227,7 @@ func Read(conf *File) iter.Seq2[*Item, error] {
 			dirs := moduleDirectories(defaultConfig, overrideConfig, userConfig)
 			resolvedModules := make([]string, 0, len(conf.Modules))
 			for _, module := range conf.Modules {
-				f, err := resolveModule(module, dirs)
+				f, err := resolveModule(module, dirs, usedPaths)
 				if err != nil {
 					yield(nil, fmt.Errorf("could not resolve module: %w", err))
 					return
@@ -227,6 +243,9 @@ func Read(conf *File) iter.Seq2[*Item, error] {
 		if conf.EnvironmentName != "" && !conf.DoNotLoadDropInFiles {
 			// The _OVERRIDE env must be appended after loading all files, even modules.
 			if path := os.Getenv(conf.EnvironmentName + "_OVERRIDE"); path != "" {
+				if usedPaths != nil {
+					*usedPaths = append(*usedPaths, path)
+				}
 				f, err := os.Open(path)
 				// Do not ignore ErrNotExist here, we want to hard error if users set a wrong path here.
 				if err != nil {
@@ -324,8 +343,11 @@ func moduleDirectories(defaultConfig, overrideConfig, userConfig string) []strin
 }
 
 // Resolve the specified path to a module.
-func resolveModule(path string, dirs []string) (*os.File, error) {
+func resolveModule(path string, dirs []string, usedPaths *[]string) (*os.File, error) {
 	if filepath.IsAbs(path) {
+		if usedPaths != nil {
+			*usedPaths = append(*usedPaths, path)
+		}
 		return os.Open(path)
 	}
 
@@ -334,6 +356,9 @@ func resolveModule(path string, dirs []string) (*os.File, error) {
 	var multiErr error
 	for _, d := range dirs {
 		candidate := filepath.Join(d, path)
+		if usedPaths != nil {
+			*usedPaths = append(*usedPaths, candidate)
+		}
 
 		f, err := os.Open(candidate)
 		if err == nil {
