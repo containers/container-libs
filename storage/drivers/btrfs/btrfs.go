@@ -523,22 +523,12 @@ func (d *Driver) create(id, parent string, opts *graphdriver.CreateOpts, readOnl
 		storageOpt = opts.StorageOpt
 	}
 
-	var quota layerQuota
-	var needQuota bool
-	if _, ok := storageOpt["size"]; ok {
-		q, err := d.parseStorageOpt(storageOpt)
-		if err != nil {
-			return err
-		}
-		quota = q
-		needQuota = true
+	quota, err := d.parseStorageOpt(storageOpt, readOnly)
+	if err != nil {
+		return err
 	}
-	if !needQuota && !readOnly && d.options.size > 0 {
-		quota.size = d.options.size
-		needQuota = true
-	}
-	if needQuota {
-		if err := d.setStorageSize(path.Join(subvolumes, id), quota); err != nil {
+	if quota != nil {
+		if err := d.setStorageSize(path.Join(subvolumes, id), *quota); err != nil {
 			return err
 		}
 		if err := os.MkdirAll(quotas, 0o700); err != nil {
@@ -562,9 +552,17 @@ type layerQuota struct {
 	size uint64
 }
 
-// Parse btrfs storage options
-func (d *Driver) parseStorageOpt(storageOpt map[string]string) (layerQuota, error) {
+// parseStorageOpt parses CreateOpts.StorageOpt.
+// Returns a *layerQuota if a quota should be applied, nil otherwise.
+func (d *Driver) parseStorageOpt(storageOpt map[string]string, readOnly bool) (*layerQuota, error) {
 	res := layerQuota{}
+	needQuota := false
+
+	if !readOnly && d.options.size > 0 {
+		res.size = d.options.size
+		needQuota = true
+	}
+
 	// Read size to change the subvolume disk quota per container
 	for key, val := range storageOpt {
 		key := strings.ToLower(key)
@@ -572,15 +570,19 @@ func (d *Driver) parseStorageOpt(storageOpt map[string]string) (layerQuota, erro
 		case "size":
 			size, err := units.RAMInBytes(val)
 			if err != nil {
-				return layerQuota{}, err
+				return nil, err
 			}
 			res.size = uint64(size)
+			needQuota = true
 		default:
-			return layerQuota{}, fmt.Errorf("unknown option %s (%q)", key, storageOpt)
+			return nil, fmt.Errorf("unknown option %s (%q)", key, storageOpt)
 		}
 	}
 
-	return res, nil
+	if needQuota {
+		return &res, nil
+	}
+	return nil, nil
 }
 
 // Set btrfs storage size
