@@ -986,16 +986,6 @@ func (d *Driver) CreateReadWrite(id, parent string, opts *graphdriver.CreateOpts
 // Create is used to create the upper, lower, and merge directories required for overlay fs for a given id.
 // The parent filesystem is used to configure these directories for the overlay.
 func (d *Driver) Create(id, parent string, opts *graphdriver.CreateOpts) (retErr error) {
-	if opts != nil && len(opts.StorageOpt) != 0 {
-		if _, ok := opts.StorageOpt["size"]; ok {
-			return fmt.Errorf("--storage-opt size is only supported for ReadWrite Layers")
-		}
-
-		if _, ok := opts.StorageOpt["inodes"]; ok {
-			return fmt.Errorf("--storage-opt inodes is only supported for ReadWrite Layers")
-		}
-	}
-
 	return d.create(id, parent, opts, true)
 }
 
@@ -1043,6 +1033,11 @@ func (d *Driver) getLayerPermissions(parent string, uidMaps, gidMaps []idtools.I
 }
 
 func (d *Driver) create(id, parent string, opts *graphdriver.CreateOpts, readOnly bool) (retErr error) {
+	quota, err := d.parseStorageOpt(opts, readOnly) // Do this even for read-only layers, to allow rejecting quota options
+	if err != nil {
+		return err
+	}
+
 	dir, homedir, _ := d.dir2(id, readOnly)
 
 	disableQuota := readOnly
@@ -1092,10 +1087,6 @@ func (d *Driver) create(id, parent string, opts *graphdriver.CreateOpts, readOnl
 	}()
 
 	if d.quotaCtl != nil && !disableQuota {
-		quota, err := d.parseStorageOpt(opts, readOnly)
-		if err != nil {
-			return err
-		}
 		// Set container disk quota limit
 		// If it is set to 0, we will track the disk usage, but not enforce a limit
 		if err := d.quotaCtl.SetQuota(dir, quota); err != nil {
@@ -1171,12 +1162,18 @@ func (d *Driver) parseStorageOpt(opts *graphdriver.CreateOpts, readOnly bool) (q
 		key := strings.ToLower(key)
 		switch key {
 		case "size":
+			if readOnly {
+				return quota.Quota{}, fmt.Errorf("--storage-opt size is only supported for ReadWrite Layers")
+			}
 			size, err := units.RAMInBytes(val)
 			if err != nil {
 				return quota.Quota{}, err
 			}
 			res.Size = uint64(size)
 		case "inodes":
+			if readOnly {
+				return quota.Quota{}, fmt.Errorf("--storage-opt inodes is only supported for ReadWrite Layers")
+			}
 			inodes, err := strconv.ParseUint(val, 10, 64)
 			if err != nil {
 				return quota.Quota{}, err
