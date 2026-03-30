@@ -483,15 +483,15 @@ func (d *Driver) CreateFromTemplate(id, template string, templateIDMappings *idt
 // CreateReadWrite creates a layer that is writable for use as a container
 // file system.
 func (d *Driver) CreateReadWrite(id, parent string, opts *graphdriver.CreateOpts) error {
-	return d.create(id, parent, opts, true)
+	return d.create(id, parent, opts, false)
 }
 
 // Create the filesystem with given id.
 func (d *Driver) Create(id, parent string, opts *graphdriver.CreateOpts) error {
-	return d.create(id, parent, opts, false)
+	return d.create(id, parent, opts, true)
 }
 
-func (d *Driver) create(id, parent string, opts *graphdriver.CreateOpts, applyDriverDefaultQuota bool) error {
+func (d *Driver) create(id, parent string, opts *graphdriver.CreateOpts, readOnly bool) error {
 	quotas := d.quotasDir()
 	subvolumes := d.subvolumesDir()
 	if err := os.MkdirAll(subvolumes, 0o700); err != nil {
@@ -533,7 +533,7 @@ func (d *Driver) create(id, parent string, opts *graphdriver.CreateOpts, applyDr
 		quotaSize = driver.options.size
 		needQuota = true
 	}
-	if !needQuota && applyDriverDefaultQuota && d.options.size > 0 {
+	if !needQuota && !readOnly && d.options.size > 0 {
 		quotaSize = d.options.size
 		needQuota = true
 	}
