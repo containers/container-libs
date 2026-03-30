@@ -492,6 +492,11 @@ func (d *Driver) Create(id, parent string, opts *graphdriver.CreateOpts) error {
 }
 
 func (d *Driver) create(id, parent string, opts *graphdriver.CreateOpts, readOnly bool) error {
+	quota, err := d.parseStorageOpt(opts, readOnly)
+	if err != nil {
+		return err
+	}
+
 	quotas := d.quotasDir()
 	subvolumes := d.subvolumesDir()
 	if err := os.MkdirAll(subvolumes, 0o700); err != nil {
@@ -518,15 +523,6 @@ func (d *Driver) create(id, parent string, opts *graphdriver.CreateOpts, readOnl
 		}
 	}
 
-	var storageOpt map[string]string
-	if opts != nil {
-		storageOpt = opts.StorageOpt
-	}
-
-	quota, err := d.parseStorageOpt(storageOpt, readOnly)
-	if err != nil {
-		return err
-	}
 	if quota != nil {
 		if err := d.setStorageSize(path.Join(subvolumes, id), *quota); err != nil {
 			return err
@@ -554,7 +550,12 @@ type layerQuota struct {
 
 // parseStorageOpt parses CreateOpts.StorageOpt.
 // Returns a *layerQuota if a quota should be applied, nil otherwise.
-func (d *Driver) parseStorageOpt(storageOpt map[string]string, readOnly bool) (*layerQuota, error) {
+func (d *Driver) parseStorageOpt(opts *graphdriver.CreateOpts, readOnly bool) (*layerQuota, error) {
+	var storageOpt map[string]string = nil // Iterating over a nil map is safe
+	if opts != nil {
+		storageOpt = opts.StorageOpt
+	}
+
 	res := layerQuota{}
 	needQuota := false
 
