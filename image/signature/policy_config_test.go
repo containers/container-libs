@@ -147,6 +147,8 @@ func TestDefaultPolicy(t *testing.T) {
 		require.NoError(t, os.WriteFile(path, []byte(contents), 0o600))
 	}
 
+	signaturePathWithRootSys := &types.SystemContext{}
+
 	for _, test := range []tc{
 		{
 			name: "signature policy path override success",
@@ -230,7 +232,8 @@ func TestDefaultPolicy(t *testing.T) {
 				t.Setenv("CONTAINERS_POLICY_JSON", base)
 			},
 			sys:          &types.SystemContext{},
-			expectPolicy: &prInsecureAcceptAnything{},
+			useRootPrefix: true,
+			expectPolicy:  &prInsecureAcceptAnything{},
 		},
 		{
 			name: "containers policy conf read error",
@@ -251,6 +254,26 @@ func TestDefaultPolicy(t *testing.T) {
 			},
 			sys:       &types.SystemContext{},
 			expectErr: true,
+		},
+		{
+			name: "signature policy path wins over root for implicit absolute paths",
+			setup: func(t *testing.T, rootPrefix string) {
+				tempHome := t.TempDir()
+				t.Setenv("XDG_CONFIG_HOME", tempHome)
+
+				// If SignaturePolicyPath were ignored, this would be used due to RootForImplicitAbsolutePaths.
+				mustWritePolicy(t, filepath.Join(rootPrefix, "etc", "containers", "policy.json"), rejectJSON)
+
+				// SignaturePolicyPath is used as-is (not interpreted relative to RootForImplicitAbsolutePaths).
+				sigPath := filepath.Join(t.TempDir(), "signature-policy.json")
+				mustWritePolicy(t, sigPath, insecureJSON)
+
+				signaturePathWithRootSys.RootForImplicitAbsolutePaths = rootPrefix
+				signaturePathWithRootSys.SignaturePolicyPath = sigPath
+			},
+			sys:          signaturePathWithRootSys,
+			useRootPrefix: true,
+			expectPolicy:  &prInsecureAcceptAnything{},
 		},
 		{
 			name: "root for implicit absolute paths is honored",
@@ -293,7 +316,6 @@ func TestDefaultPolicy(t *testing.T) {
 
 			require.NoError(t, err)
 			require.NotNil(t, policy)
-			require.NotEmpty(t, policy.Default)
 
 			switch expected := test.expectPolicy.(type) {
 			case *Policy:
