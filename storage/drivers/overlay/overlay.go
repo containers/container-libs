@@ -976,28 +976,8 @@ func (d *Driver) CreateReadWrite(id, parent string, opts *graphdriver.CreateOpts
 		return fmt.Errorf("--storage-opt is supported only for overlay over xfs with 'pquota' mount option")
 	}
 
-	if opts == nil {
-		opts = &graphdriver.CreateOpts{
-			StorageOpt: map[string]string{},
-		}
-	}
-
 	if d.options.forceMask != nil && d.options.mountProgram == "" {
 		return fmt.Errorf("overlay: force_mask option for writeable layers is only supported with a mount_program")
-	}
-
-	if _, ok := opts.StorageOpt["size"]; !ok {
-		if opts.StorageOpt == nil {
-			opts.StorageOpt = map[string]string{}
-		}
-		opts.StorageOpt["size"] = strconv.FormatUint(d.options.quota.Size, 10)
-	}
-
-	if _, ok := opts.StorageOpt["inodes"]; !ok {
-		if opts.StorageOpt == nil {
-			opts.StorageOpt = map[string]string{}
-		}
-		opts.StorageOpt["inodes"] = strconv.FormatUint(d.options.quota.Inodes, 10)
 	}
 
 	return d.create(id, parent, opts, false)
@@ -1112,18 +1092,9 @@ func (d *Driver) create(id, parent string, opts *graphdriver.CreateOpts, readOnl
 	}()
 
 	if d.quotaCtl != nil && !disableQuota {
-		quota := quota.Quota{}
-		if opts != nil && len(opts.StorageOpt) > 0 {
-			q, err := d.parseStorageOpt(opts.StorageOpt)
-			if err != nil {
-				return err
-			}
-			if q.Size > 0 {
-				quota.Size = q.Size
-			}
-			if q.Inodes > 0 {
-				quota.Inodes = q.Inodes
-			}
+		quota, err := d.parseStorageOpt(opts, readOnly)
+		if err != nil {
+			return err
 		}
 		// Set container disk quota limit
 		// If it is set to 0, we will track the disk usage, but not enforce a limit
@@ -1182,8 +1153,19 @@ func (d *Driver) create(id, parent string, opts *graphdriver.CreateOpts, readOnl
 }
 
 // Parse overlay storage options
-func (d *Driver) parseStorageOpt(storageOpt map[string]string) (quota.Quota, error) {
+func (d *Driver) parseStorageOpt(opts *graphdriver.CreateOpts, readOnly bool) (quota.Quota, error) {
+	var storageOpt map[string]string = nil // Iterating over a nil map is safe
+	if opts != nil {
+		storageOpt = opts.StorageOpt
+	}
+
 	res := quota.Quota{}
+
+	if !readOnly {
+		res.Size = d.options.quota.Size
+		res.Inodes = d.options.quota.Inodes
+	}
+
 	// Read size to set the disk project quota per container
 	for key, val := range storageOpt {
 		key := strings.ToLower(key)
