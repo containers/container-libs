@@ -55,6 +55,7 @@ type File struct {
 	DoNotLoadMainFiles bool
 
 	// DoNotLoadDropInFiles should be set if only the main files should be loaded.
+	// If DoNotLoadDropInFiles is set, the _OVERRIDE environment variable is ignored.
 	DoNotLoadDropInFiles bool
 
 	// DoNotUseExtensionForConfigName makes it so that the extension is only consulted for the drop in
@@ -91,6 +92,8 @@ func getConfName(name, extension string, noExtension bool) string {
 // If an error is returned by the iterator then this must be treated as fatal error and must fail the config file parsing.
 // Expected ENOENT errors are already ignored in this function and must not be handled again by callers.
 // The given File options must not be nil and populated with valid options.
+//
+// The _OVERRIDE environment is ignored if DoNotLoadDropInFiles is set.
 func Read(conf *File) iter.Seq2[*Item, error] {
 	return ReadWithPaths(conf, nil)
 }

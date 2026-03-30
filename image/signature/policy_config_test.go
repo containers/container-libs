@@ -231,7 +231,7 @@ func TestDefaultPolicy(t *testing.T) {
 				mustWritePolicy(t, base, insecureJSON)
 				t.Setenv("CONTAINERS_POLICY_JSON", base)
 			},
-			sys:          &types.SystemContext{},
+			sys:           &types.SystemContext{},
 			useRootPrefix: true,
 			expectPolicy:  &prInsecureAcceptAnything{},
 		},
@@ -271,7 +271,7 @@ func TestDefaultPolicy(t *testing.T) {
 				signaturePathWithRootSys.RootForImplicitAbsolutePaths = rootPrefix
 				signaturePathWithRootSys.SignaturePolicyPath = sigPath
 			},
-			sys:          signaturePathWithRootSys,
+			sys:           signaturePathWithRootSys,
 			useRootPrefix: true,
 			expectPolicy:  &prInsecureAcceptAnything{},
 		},
