@@ -1114,15 +1114,15 @@ func (d *Driver) create(id, parent string, opts *graphdriver.CreateOpts, readOnl
 	if d.quotaCtl != nil && !disableQuota {
 		quota := quota.Quota{}
 		if opts != nil && len(opts.StorageOpt) > 0 {
-			driver := &Driver{}
-			if err := d.parseStorageOpt(opts.StorageOpt, driver); err != nil {
+			q, err := d.parseStorageOpt(opts.StorageOpt)
+			if err != nil {
 				return err
 			}
-			if driver.options.quota.Size > 0 {
-				quota.Size = driver.options.quota.Size
+			if q.Size > 0 {
+				quota.Size = q.Size
 			}
-			if driver.options.quota.Inodes > 0 {
-				quota.Inodes = driver.options.quota.Inodes
+			if q.Inodes > 0 {
+				quota.Inodes = q.Inodes
 			}
 		}
 		// Set container disk quota limit
@@ -1182,7 +1182,8 @@ func (d *Driver) create(id, parent string, opts *graphdriver.CreateOpts, readOnl
 }
 
 // Parse overlay storage options
-func (d *Driver) parseStorageOpt(storageOpt map[string]string, driver *Driver) error {
+func (d *Driver) parseStorageOpt(storageOpt map[string]string) (quota.Quota, error) {
+	res := quota.Quota{}
 	// Read size to set the disk project quota per container
 	for key, val := range storageOpt {
 		key := strings.ToLower(key)
@@ -1190,21 +1191,21 @@ func (d *Driver) parseStorageOpt(storageOpt map[string]string, driver *Driver) e
 		case "size":
 			size, err := units.RAMInBytes(val)
 			if err != nil {
-				return err
+				return quota.Quota{}, err
 			}
-			driver.options.quota.Size = uint64(size)
+			res.Size = uint64(size)
 		case "inodes":
 			inodes, err := strconv.ParseUint(val, 10, 64)
 			if err != nil {
-				return err
+				return quota.Quota{}, err
 			}
-			driver.options.quota.Inodes = inodes
+			res.Inodes = inodes
 		default:
-			return fmt.Errorf("unknown option %s", key)
+			return quota.Quota{}, fmt.Errorf("unknown option %s", key)
 		}
 	}
 
-	return nil
+	return res, nil
 }
 
 func (d *Driver) getLower(parent string) (string, error) {
