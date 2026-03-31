@@ -256,6 +256,18 @@ func TestDefaultPolicy(t *testing.T) {
 			expectErr: true,
 		},
 		{
+			name: "containers policy conf readall error",
+			setup: func(t *testing.T, _ string) {
+				tempHome := t.TempDir()
+				t.Setenv("XDG_CONFIG_HOME", tempHome)
+				// Point the env to a directory so io.ReadAll fails when reading it.
+				dir := t.TempDir()
+				t.Setenv("CONTAINERS_POLICY_JSON", dir)
+			},
+			sys:       &types.SystemContext{},
+			expectErr: true,
+		},
+		{
 			name: "signature policy path wins over root for implicit absolute paths",
 			setup: func(t *testing.T, rootPrefix string) {
 				tempHome := t.TempDir()
@@ -315,7 +327,6 @@ func TestDefaultPolicy(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			require.NotNil(t, policy)
 
 			switch expected := test.expectPolicy.(type) {
 			case *Policy:

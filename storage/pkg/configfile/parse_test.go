@@ -662,11 +662,8 @@ func Test_ReadWithPaths(t *testing.T) {
 		// The main candidates are attempted in order; since /etc exists it stops before consulting /usr.
 		userConfig := filepath.Join(tempHome, "containers", "containers.conf")
 		etcConfig := filepath.Join(etcBase, "containers.conf")
-		usrConfig := filepath.Join(usrBase, "containers.conf")
 
 		assert.Equal(t, []string{userConfig, etcConfig}, usedPaths)
-		assert.NotContains(t, usedPaths, usrConfig)
-		assert.NotContains(t, usedPaths, filepath.Join(usrBase, "containers.conf.d", "01.conf"))
 	})
 
 	t.Run("env config skips main/drop-ins; ignores _OVERRIDE when drop-ins disabled", func(t *testing.T) {
