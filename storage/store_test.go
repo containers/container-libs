@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"archive/tar"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -628,4 +630,101 @@ func TestStoreDelete(t *testing.T) {
 	require.Nil(t, err)
 
 	store.Free()
+}
+
+// TestCreateContainerShifting verifies that when the overlay driver supports
+// shifting (idmapped mounts), CreateContainer stores the UID/GID maps on the
+// container layer so that Diff() can reverse-map host UIDs back to container
+// UIDs.  It also verifies that UpdateLayerIDMap is not called (no diff1
+// directory is created).
+func TestCreateContainerShifting(t *testing.T) {
+	reexec.Init()
+
+	if os.Getuid() != 0 {
+		t.Skip("test requires root")
+	}
+
+	uidMap := []idtools.IDMap{{ContainerID: 0, HostID: 1000000, Size: 65536}}
+	gidMap := []idtools.IDMap{{ContainerID: 0, HostID: 1000000, Size: 65536}}
+
+	store := newTestStore(t, StoreOptions{
+		GraphDriverName: "overlay",
+		UIDMap:          uidMap,
+		GIDMap:          gidMap,
+	})
+	defer func() {
+		_, _ = store.Shutdown(true)
+		store.Free()
+	}()
+
+	driver, err := store.GraphDriver()
+	require.NoError(t, err)
+	if !driver.SupportsShifting(uidMap, gidMap) {
+		t.Skip("overlay driver does not support shifting on this kernel")
+	}
+
+	// Create a base layer with a file owned by container UID 0.
+	baseLayer, err := store.CreateLayer("", "", nil, "", false, nil)
+	require.NoError(t, err)
+
+	image, err := store.CreateImage("", nil, baseLayer.ID, "", nil)
+	require.NoError(t, err)
+
+	// Create a container from the image with UID mappings.
+	// Pass the maps via ContainerOptions, as buildah does.
+	container, err := store.CreateContainer("", nil, image.ID, "", "", &ContainerOptions{
+		IDMappingOptions: IDMappingOptions{
+			UIDMap: uidMap,
+			GIDMap: gidMap,
+		},
+	})
+	require.NoError(t, err)
+
+	// Verify the container layer has the UID/GID maps stored.
+	containerLayer, err := store.Layer(container.LayerID)
+	require.NoError(t, err)
+	assert.Equal(t, uidMap, containerLayer.UIDMap, "container layer should have UID maps stored")
+	assert.Equal(t, gidMap, containerLayer.GIDMap, "container layer should have GID maps stored")
+
+	// Verify that UpdateLayerIDMap was NOT called: the overlay driver creates
+	// a "diff1" directory when rotating diff dirs during UpdateLayerIDMap.
+	graphRoot := store.GraphRoot()
+	diff1Path := filepath.Join(graphRoot, "overlay", containerLayer.ID, "diff1")
+	_, err = os.Stat(diff1Path)
+	assert.True(t, os.IsNotExist(err), "diff1 should not exist (UpdateLayerIDMap should not have been called)")
+
+	// Mount the container, write a file with host UID, unmount.
+	mountPoint, err := store.Mount(container.ID, "")
+	require.NoError(t, err)
+
+	testFile := filepath.Join(mountPoint, "testfile")
+	require.NoError(t, os.WriteFile(testFile, []byte("hello"), 0o644))
+	// Simulate what happens in a user namespace: the file gets the host UID.
+	require.NoError(t, os.Chown(testFile, 1000000, 1000000))
+
+	_, err = store.Unmount(container.ID, false)
+	require.NoError(t, err)
+
+	// Generate a diff and verify that Diff() maps host UIDs back to
+	// container UIDs using the stored maps (ToContainer translation).
+	rc, err := store.Diff("", containerLayer.ID, nil)
+	require.NoError(t, err)
+	defer rc.Close()
+
+	tr := tar.NewReader(rc)
+	found := false
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		require.NoError(t, err)
+		if hdr.Name == "testfile" {
+			found = true
+			assert.Equal(t, 0, hdr.Uid, "Diff() should translate host UID back to container UID 0")
+			assert.Equal(t, 0, hdr.Gid, "Diff() should translate host GID back to container GID 0")
+			break
+		}
+	}
+	assert.True(t, found, "testfile should be present in the diff")
 }
