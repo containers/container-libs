@@ -43,6 +43,8 @@ type File struct {
 	Extension string
 
 	// EnvironmentName is the name of environment variable that can be set to specify the override.
+	// If EnvironmentName is set, the variable with _OVERRIDE suffix is also checked for an override
+	// unless DoNotLoadDropInFiles is set.
 	// Optional.
 	EnvironmentName string
 
