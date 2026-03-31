@@ -1674,9 +1674,13 @@ func (r *layerStore) create(id string, parentLayer *Layer, names []string, mount
 		}
 	}
 
+	targetMappings := idMappings
+	if r.driver.SupportsShifting(moreOptions.UIDMap, moreOptions.GIDMap) {
+		targetMappings = &idtools.IDMappings{}
+	}
 	if oldMappings != nil &&
-		(!reflect.DeepEqual(oldMappings.UIDs(), idMappings.UIDs()) || !reflect.DeepEqual(oldMappings.GIDs(), idMappings.GIDs())) {
-		if err = r.driver.UpdateLayerIDMap(id, oldMappings, idMappings, mountLabel); err != nil {
+		(!reflect.DeepEqual(oldMappings.UIDs(), targetMappings.UIDs()) || !reflect.DeepEqual(oldMappings.GIDs(), targetMappings.GIDs())) {
+		if err = r.driver.UpdateLayerIDMap(id, oldMappings, targetMappings, mountLabel); err != nil {
 			cleanupFailureContext = "in UpdateLayerIDMap"
 			return nil, -1, err
 		}
