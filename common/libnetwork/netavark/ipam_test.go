@@ -49,16 +49,17 @@ var _ = Describe("IPAM", func() {
 		for i := 2; i < 100; i++ {
 			opts := &types.NetworkOptions{
 				ContainerID: "someContainerID",
-				Networks: map[string]types.PerNetworkOptions{
-					netName: {},
-				},
+				Networks: []types.NamedPerNetworkOptions{{
+					Name: netName,
+				}},
 			}
 
 			err := networkInterface.allocIPs(opts)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(opts.Networks).To(HaveKey(netName))
-			Expect(opts.Networks[netName].StaticIPs).To(HaveLen(1))
-			Expect(opts.Networks[netName].StaticIPs[0]).To(Equal(net.ParseIP(fmt.Sprintf("10.88.0.%d", i)).To4()))
+			Expect(opts.Networks).To(HaveLen(1))
+			Expect(opts.Networks[0].Name).To(Equal(netName))
+			Expect(opts.Networks[0].StaticIPs).To(HaveLen(1))
+			Expect(opts.Networks[0].StaticIPs[0]).To(Equal(net.ParseIP(fmt.Sprintf("10.88.0.%d", i)).To4()))
 		}
 	})
 
@@ -66,22 +67,26 @@ var _ = Describe("IPAM", func() {
 		netName := types.DefaultNetworkName
 		opts := &types.NetworkOptions{
 			ContainerID: "someContainerID",
-			Networks: map[string]types.PerNetworkOptions{
-				netName: {},
-			},
+			Networks: []types.NamedPerNetworkOptions{{
+				Name: netName,
+			}},
 		}
 
 		err := networkInterface.allocIPs(opts)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(opts.Networks).To(HaveKey(netName))
-		Expect(opts.Networks[netName].StaticIPs).To(HaveLen(1))
-		Expect(opts.Networks[netName].StaticIPs[0]).To(Equal(net.ParseIP("10.88.0.2").To4()))
+		Expect(opts.Networks).To(HaveLen(1))
+		Expect(opts.Networks[0].Name).To(Equal(netName))
+		Expect(opts.Networks[0].StaticIPs).To(HaveLen(1))
+		Expect(opts.Networks[0].StaticIPs[0]).To(Equal(net.ParseIP("10.88.0.2").To4()))
 
 		opts = &types.NetworkOptions{
 			ContainerID: "otherID",
-			Networks: map[string]types.PerNetworkOptions{
-				netName: {StaticIPs: []net.IP{net.ParseIP("10.88.0.2")}},
-			},
+			Networks: []types.NamedPerNetworkOptions{{
+				Name: netName,
+				PerNetworkOptions: types.PerNetworkOptions{
+					StaticIPs: []net.IP{net.ParseIP("10.88.0.2")},
+				},
+			}},
 		}
 		err = networkInterface.allocIPs(opts)
 		Expect(err).To(HaveOccurred())
@@ -111,23 +116,24 @@ var _ = Describe("IPAM", func() {
 		for i := 10; i < 21; i++ {
 			opts := &types.NetworkOptions{
 				ContainerID: fmt.Sprintf("someContainerID-%d", i),
-				Networks: map[string]types.PerNetworkOptions{
-					netName: {},
-				},
+				Networks: []types.NamedPerNetworkOptions{{
+					Name: netName,
+				}},
 			}
 
 			err = networkInterface.allocIPs(opts)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(opts.Networks).To(HaveKey(netName))
-			Expect(opts.Networks[netName].StaticIPs).To(HaveLen(1))
-			Expect(opts.Networks[netName].StaticIPs[0]).To(Equal(net.ParseIP(fmt.Sprintf("10.0.0.%d", i)).To4()))
+			Expect(opts.Networks).To(HaveLen(1))
+			Expect(opts.Networks[0].Name).To(Equal(netName))
+			Expect(opts.Networks[0].StaticIPs).To(HaveLen(1))
+			Expect(opts.Networks[0].StaticIPs[0]).To(Equal(net.ParseIP(fmt.Sprintf("10.0.0.%d", i)).To4()))
 		}
 
 		opts := &types.NetworkOptions{
 			ContainerID: "someContainerID-22",
-			Networks: map[string]types.PerNetworkOptions{
-				netName: {},
-			},
+			Networks: []types.NamedPerNetworkOptions{{
+				Name: netName,
+			}},
 		}
 
 		// now this should fail because all free ips are already assigned
@@ -140,29 +146,31 @@ var _ = Describe("IPAM", func() {
 		netName := types.DefaultNetworkName
 		opts := &types.NetworkOptions{
 			ContainerID: "someContainerID",
-			Networks: map[string]types.PerNetworkOptions{
-				netName: {},
-			},
+			Networks: []types.NamedPerNetworkOptions{{
+				Name: netName,
+			}},
 		}
 
 		expectedIP := net.ParseIP("10.88.0.2").To4()
 
 		err := networkInterface.allocIPs(opts)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(opts.Networks).To(HaveKey(netName))
-		Expect(opts.Networks[netName].StaticIPs).To(HaveLen(1))
-		Expect(opts.Networks[netName].StaticIPs[0]).To(Equal(expectedIP))
+		Expect(opts.Networks).To(HaveLen(1))
+		Expect(opts.Networks[0].Name).To(Equal(netName))
+		Expect(opts.Networks[0].StaticIPs).To(HaveLen(1))
+		Expect(opts.Networks[0].StaticIPs[0]).To(Equal(expectedIP))
 
 		// remove static ips from opts
-		netOpts := opts.Networks[netName]
-		netOpts.StaticIPs = nil
-		opts.Networks[netName] = netOpts
+		netPerNetworkOptions := opts.Networks[0].PerNetworkOptions
+		netPerNetworkOptions.StaticIPs = nil
+		opts.Networks[0].PerNetworkOptions = netPerNetworkOptions
 
 		err = networkInterface.getAssignedIPs(opts)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(opts.Networks).To(HaveKey(netName))
-		Expect(opts.Networks[netName].StaticIPs).To(HaveLen(1))
-		Expect(opts.Networks[netName].StaticIPs[0]).To(Equal(expectedIP))
+		Expect(opts.Networks).To(HaveLen(1))
+		Expect(opts.Networks[0].Name).To(Equal(netName))
+		Expect(opts.Networks[0].StaticIPs).To(HaveLen(1))
+		Expect(opts.Networks[0].StaticIPs[0]).To(Equal(expectedIP))
 
 		err = networkInterface.allocIPs(opts)
 		Expect(err).To(HaveOccurred())
@@ -174,9 +182,10 @@ var _ = Describe("IPAM", func() {
 
 		err = networkInterface.allocIPs(opts)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(opts.Networks).To(HaveKey(netName))
-		Expect(opts.Networks[netName].StaticIPs).To(HaveLen(1))
-		Expect(opts.Networks[netName].StaticIPs[0]).To(Equal(expectedIP))
+		Expect(opts.Networks).To(HaveLen(1))
+		Expect(opts.Networks[0].Name).To(Equal(netName))
+		Expect(opts.Networks[0].StaticIPs).To(HaveLen(1))
+		Expect(opts.Networks[0].StaticIPs[0]).To(Equal(expectedIP))
 	})
 
 	It("ipam dual stack", func() {
@@ -201,29 +210,31 @@ var _ = Describe("IPAM", func() {
 
 		opts := &types.NetworkOptions{
 			ContainerID: "someContainerID",
-			Networks: map[string]types.PerNetworkOptions{
-				netName: {},
-			},
+			Networks: []types.NamedPerNetworkOptions{{
+				Name: netName,
+			}},
 		}
 
 		err = networkInterface.allocIPs(opts)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(opts.Networks).To(HaveKey(netName))
-		Expect(opts.Networks[netName].StaticIPs).To(HaveLen(2))
-		Expect(opts.Networks[netName].StaticIPs[0]).To(Equal(net.ParseIP("10.0.0.2").To4()))
-		Expect(opts.Networks[netName].StaticIPs[1]).To(Equal(net.ParseIP("fd80::2")))
+		Expect(opts.Networks).To(HaveLen(1))
+		Expect(opts.Networks[0].Name).To(Equal(netName))
+		Expect(opts.Networks[0].StaticIPs).To(HaveLen(2))
+		Expect(opts.Networks[0].StaticIPs[0]).To(Equal(net.ParseIP("10.0.0.2").To4()))
+		Expect(opts.Networks[0].StaticIPs[1]).To(Equal(net.ParseIP("fd80::2")))
 
 		// remove static ips from opts
-		netOpts := opts.Networks[netName]
-		netOpts.StaticIPs = nil
-		opts.Networks[netName] = netOpts
+		netPerNetworkOptions := opts.Networks[0].PerNetworkOptions
+		netPerNetworkOptions.StaticIPs = nil
+		opts.Networks[0].PerNetworkOptions = netPerNetworkOptions
 
 		err = networkInterface.getAssignedIPs(opts)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(opts.Networks).To(HaveKey(netName))
-		Expect(opts.Networks[netName].StaticIPs).To(HaveLen(2))
-		Expect(opts.Networks[netName].StaticIPs[0]).To(Equal(net.ParseIP("10.0.0.2").To4()))
-		Expect(opts.Networks[netName].StaticIPs[1]).To(Equal(net.ParseIP("fd80::2")))
+		Expect(opts.Networks).To(HaveLen(1))
+		Expect(opts.Networks[0].Name).To(Equal(netName))
+		Expect(opts.Networks[0].StaticIPs).To(HaveLen(2))
+		Expect(opts.Networks[0].StaticIPs[0]).To(Equal(net.ParseIP("10.0.0.2").To4()))
+		Expect(opts.Networks[0].StaticIPs[1]).To(Equal(net.ParseIP("fd80::2")))
 
 		err = networkInterface.deallocIPs(opts)
 		Expect(err).ToNot(HaveOccurred())
@@ -231,10 +242,11 @@ var _ = Describe("IPAM", func() {
 		// try to alloc the same again
 		err = networkInterface.allocIPs(opts)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(opts.Networks).To(HaveKey(netName))
-		Expect(opts.Networks[netName].StaticIPs).To(HaveLen(2))
-		Expect(opts.Networks[netName].StaticIPs[0]).To(Equal(net.ParseIP("10.0.0.2").To4()))
-		Expect(opts.Networks[netName].StaticIPs[1]).To(Equal(net.ParseIP("fd80::2")))
+		Expect(opts.Networks).To(HaveLen(1))
+		Expect(opts.Networks[0].Name).To(Equal(netName))
+		Expect(opts.Networks[0].StaticIPs).To(HaveLen(2))
+		Expect(opts.Networks[0].StaticIPs[0]).To(Equal(net.ParseIP("10.0.0.2").To4()))
+		Expect(opts.Networks[0].StaticIPs[1]).To(Equal(net.ParseIP("fd80::2")))
 	})
 
 	It("ipam with two networks", func() {
@@ -270,37 +282,43 @@ var _ = Describe("IPAM", func() {
 
 		opts := &types.NetworkOptions{
 			ContainerID: "someContainerID",
-			Networks: map[string]types.PerNetworkOptions{
-				netName1: {},
-				netName2: {},
+			Networks: []types.NamedPerNetworkOptions{
+				{
+					Name: netName1,
+				},
+				{
+					Name: netName2,
+				},
 			},
 		}
 
 		err = networkInterface.allocIPs(opts)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(opts.Networks).To(HaveKey(netName1))
-		Expect(opts.Networks[netName1].StaticIPs).To(HaveLen(1))
-		Expect(opts.Networks[netName1].StaticIPs[0]).To(Equal(net.ParseIP("10.0.0.2").To4()))
-		Expect(opts.Networks).To(HaveKey(netName2))
-		Expect(opts.Networks[netName2].StaticIPs).To(HaveLen(1))
-		Expect(opts.Networks[netName2].StaticIPs[0]).To(Equal(net.ParseIP("10.0.1.2").To4()))
+		Expect(opts.Networks).To(HaveLen(2))
+		Expect(opts.Networks[0].Name).To(Equal(netName1))
+		Expect(opts.Networks[0].StaticIPs).To(HaveLen(1))
+		Expect(opts.Networks[0].StaticIPs[0]).To(Equal(net.ParseIP("10.0.0.2").To4()))
+		Expect(opts.Networks[1].Name).To(Equal(netName2))
+		Expect(opts.Networks[1].StaticIPs).To(HaveLen(1))
+		Expect(opts.Networks[1].StaticIPs[0]).To(Equal(net.ParseIP("10.0.1.2").To4()))
 
 		// remove static ips from opts
-		netOpts := opts.Networks[netName1]
-		netOpts.StaticIPs = nil
-		opts.Networks[netName1] = netOpts
-		netOpts = opts.Networks[netName2]
-		netOpts.StaticIPs = nil
-		opts.Networks[netName2] = netOpts
+		netPerNetworkOptions := opts.Networks[0].PerNetworkOptions
+		netPerNetworkOptions.StaticIPs = nil
+		opts.Networks[0].PerNetworkOptions = netPerNetworkOptions
+		netPerNetworkOptions = opts.Networks[1].PerNetworkOptions
+		netPerNetworkOptions.StaticIPs = nil
+		opts.Networks[1].PerNetworkOptions = netPerNetworkOptions
 
 		err = networkInterface.getAssignedIPs(opts)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(opts.Networks).To(HaveKey(netName1))
-		Expect(opts.Networks[netName1].StaticIPs).To(HaveLen(1))
-		Expect(opts.Networks[netName1].StaticIPs[0]).To(Equal(net.ParseIP("10.0.0.2").To4()))
-		Expect(opts.Networks).To(HaveKey(netName2))
-		Expect(opts.Networks[netName2].StaticIPs).To(HaveLen(1))
-		Expect(opts.Networks[netName2].StaticIPs[0]).To(Equal(net.ParseIP("10.0.1.2").To4()))
+		Expect(opts.Networks).To(HaveLen(2))
+		Expect(opts.Networks[0].Name).To(Equal(netName1))
+		Expect(opts.Networks[0].StaticIPs).To(HaveLen(1))
+		Expect(opts.Networks[0].StaticIPs[0]).To(Equal(net.ParseIP("10.0.0.2").To4()))
+		Expect(opts.Networks[1].Name).To(Equal(netName2))
+		Expect(opts.Networks[1].StaticIPs).To(HaveLen(1))
+		Expect(opts.Networks[1].StaticIPs[0]).To(Equal(net.ParseIP("10.0.1.2").To4()))
 
 		err = networkInterface.deallocIPs(opts)
 		Expect(err).ToNot(HaveOccurred())
@@ -308,12 +326,13 @@ var _ = Describe("IPAM", func() {
 		// try to alloc the same again
 		err = networkInterface.allocIPs(opts)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(opts.Networks).To(HaveKey(netName1))
-		Expect(opts.Networks[netName1].StaticIPs).To(HaveLen(1))
-		Expect(opts.Networks[netName1].StaticIPs[0]).To(Equal(net.ParseIP("10.0.0.2").To4()))
-		Expect(opts.Networks).To(HaveKey(netName2))
-		Expect(opts.Networks[netName2].StaticIPs).To(HaveLen(1))
-		Expect(opts.Networks[netName2].StaticIPs[0]).To(Equal(net.ParseIP("10.0.1.2").To4()))
+		Expect(opts.Networks).To(HaveLen(2))
+		Expect(opts.Networks[0].Name).To(Equal(netName1))
+		Expect(opts.Networks[0].StaticIPs).To(HaveLen(1))
+		Expect(opts.Networks[0].StaticIPs[0]).To(Equal(net.ParseIP("10.0.0.2").To4()))
+		Expect(opts.Networks[1].Name).To(Equal(netName2))
+		Expect(opts.Networks[1].StaticIPs).To(HaveLen(1))
+		Expect(opts.Networks[1].StaticIPs[0]).To(Equal(net.ParseIP("10.0.1.2").To4()))
 	})
 
 	It("ipam alloc more ips as in subnet", func() {
@@ -335,16 +354,17 @@ var _ = Describe("IPAM", func() {
 		for i := 2; i < 64; i++ {
 			opts := &types.NetworkOptions{
 				ContainerID: fmt.Sprintf("id-%d", i),
-				Networks: map[string]types.PerNetworkOptions{
-					netName: {},
-				},
+				Networks: []types.NamedPerNetworkOptions{{
+					Name: netName,
+				}},
 			}
 			err = networkInterface.allocIPs(opts)
 			if i < 63 {
 				Expect(err).ToNot(HaveOccurred())
-				Expect(opts.Networks).To(HaveKey(netName))
-				Expect(opts.Networks[netName].StaticIPs).To(HaveLen(1))
-				Expect(opts.Networks[netName].StaticIPs[0]).To(Equal(net.ParseIP(fmt.Sprintf("10.0.0.%d", i)).To4()))
+				Expect(opts.Networks).To(HaveLen(1))
+				Expect(opts.Networks[0].Name).To(Equal(netName))
+				Expect(opts.Networks[0].StaticIPs).To(HaveLen(1))
+				Expect(opts.Networks[0].StaticIPs[0]).To(Equal(net.ParseIP(fmt.Sprintf("10.0.0.%d", i)).To4()))
 			} else {
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(Equal("IPAM error: failed to find free IP in range: 10.0.0.1 - 10.0.0.62"))
@@ -371,15 +391,16 @@ var _ = Describe("IPAM", func() {
 		for i := 2; i < 10; i++ {
 			opts := types.NetworkOptions{
 				ContainerID: fmt.Sprintf("id-%d", i),
-				Networks: map[string]types.PerNetworkOptions{
-					netName: {},
-				},
+				Networks: []types.NamedPerNetworkOptions{{
+					Name: netName,
+				}},
 			}
 			err = networkInterface.allocIPs(&opts)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(opts.Networks).To(HaveKey(netName))
-			Expect(opts.Networks[netName].StaticIPs).To(HaveLen(1))
-			Expect(opts.Networks[netName].StaticIPs[0]).To(Equal(net.ParseIP(fmt.Sprintf("10.0.0.%d", i)).To4()))
+			Expect(opts.Networks).To(HaveLen(1))
+			Expect(opts.Networks[0].Name).To(Equal(netName))
+			Expect(opts.Networks[0].StaticIPs).To(HaveLen(1))
+			Expect(opts.Networks[0].StaticIPs[0]).To(Equal(net.ParseIP(fmt.Sprintf("10.0.0.%d", i)).To4()))
 
 			err = networkInterface.deallocIPs(&opts)
 			Expect(err).ToNot(HaveOccurred())
@@ -388,20 +409,21 @@ var _ = Describe("IPAM", func() {
 		for i := range 30 {
 			opts := types.NetworkOptions{
 				ContainerID: fmt.Sprintf("id-%d", i),
-				Networks: map[string]types.PerNetworkOptions{
-					netName: {},
-				},
+				Networks: []types.NamedPerNetworkOptions{{
+					Name: netName,
+				}},
 			}
 			err = networkInterface.allocIPs(&opts)
 			if i < 29 {
 				Expect(err).ToNot(HaveOccurred())
-				Expect(opts.Networks).To(HaveKey(netName))
-				Expect(opts.Networks[netName].StaticIPs).To(HaveLen(1))
+				Expect(opts.Networks).To(HaveLen(1))
+				Expect(opts.Networks[0].Name).To(Equal(netName))
+				Expect(opts.Networks[0].StaticIPs).To(HaveLen(1))
 				// The (i+8)%29+2 part looks cryptic but it is actually simple, we already have 8 ips allocated above
 				// so we expect the 8 available ip. We have 29 assignable ip addresses in this subnet because "i"+8 can
 				// be greater than 30 we have to modulo by 29 to go back to the beginning. Also the first free ip is
 				// network address + 2, so we have to add 2 to the result
-				Expect(opts.Networks[netName].StaticIPs[0]).To(Equal(net.ParseIP(fmt.Sprintf("10.0.0.%d", (i+8)%29+2)).To4()))
+				Expect(opts.Networks[0].StaticIPs[0]).To(Equal(net.ParseIP(fmt.Sprintf("10.0.0.%d", (i+8)%29+2)).To4()))
 			} else {
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(Equal("IPAM error: failed to find free IP in range: 10.0.0.1 - 10.0.0.30"))
@@ -424,20 +446,22 @@ var _ = Describe("IPAM", func() {
 
 		opts := &types.NetworkOptions{
 			ContainerID: "someContainerID",
-			Networks: map[string]types.PerNetworkOptions{
-				netName: {},
-			},
+			Networks: []types.NamedPerNetworkOptions{{
+				Name: netName,
+			}},
 		}
 
 		err = networkInterface.allocIPs(opts)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(opts.Networks).To(HaveKey(netName))
-		Expect(opts.Networks[netName].StaticIPs).To(BeEmpty())
+		Expect(opts.Networks).To(HaveLen(1))
+		Expect(opts.Networks[0].Name).To(Equal(netName))
+		Expect(opts.Networks[0].StaticIPs).To(BeEmpty())
 
 		err = networkInterface.getAssignedIPs(opts)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(opts.Networks).To(HaveKey(netName))
-		Expect(opts.Networks[netName].StaticIPs).To(BeEmpty())
+		Expect(opts.Networks).To(HaveLen(1))
+		Expect(opts.Networks[0].Name).To(Equal(netName))
+		Expect(opts.Networks[0].StaticIPs).To(BeEmpty())
 
 		// dealloc the ip
 		err = networkInterface.deallocIPs(opts)
@@ -473,16 +497,17 @@ var _ = Describe("IPAM", func() {
 			for i := 2; i < 64; i++ {
 				opts := &types.NetworkOptions{
 					ContainerID: fmt.Sprintf("id-%d", i),
-					Networks: map[string]types.PerNetworkOptions{
-						netName: {},
-					},
+					Networks: []types.NamedPerNetworkOptions{{
+						Name: netName,
+					}},
 				}
 				err = networkInterface.allocIPs(opts)
 				if i < 63 {
 					Expect(err).ToNot(HaveOccurred())
-					Expect(opts.Networks).To(HaveKey(netName))
-					Expect(opts.Networks[netName].StaticIPs).To(HaveLen(1))
-					Expect(opts.Networks[netName].StaticIPs[0]).To(Equal(net.ParseIP(fmt.Sprintf("10.0.0.%d", i)).To4()))
+					Expect(opts.Networks).To(HaveLen(1))
+					Expect(opts.Networks[0].Name).To(Equal(netName))
+					Expect(opts.Networks[0].StaticIPs).To(HaveLen(1))
+					Expect(opts.Networks[0].StaticIPs[0]).To(Equal(net.ParseIP(fmt.Sprintf("10.0.0.%d", i)).To4()))
 				} else {
 					Expect(err).To(HaveOccurred())
 					Expect(err.Error()).To(Equal("IPAM error: failed to find free IP in range: 10.0.0.1 - 10.0.0.62"))
@@ -509,16 +534,17 @@ var _ = Describe("IPAM", func() {
 
 		opts := &types.NetworkOptions{
 			ContainerID: "someContainerID",
-			Networks: map[string]types.PerNetworkOptions{
-				netName: {},
-			},
+			Networks: []types.NamedPerNetworkOptions{{
+				Name: netName,
+			}},
 		}
 
 		err = networkInterface.allocIPs(opts)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(opts.Networks).To(HaveKey(netName))
-		Expect(opts.Networks[netName].StaticIPs).To(HaveLen(1))
-		Expect(opts.Networks[netName].StaticIPs[0]).To(Equal(net.ParseIP("10.0.0.2").To4()))
+		Expect(opts.Networks).To(HaveLen(1))
+		Expect(opts.Networks[0].Name).To(Equal(netName))
+		Expect(opts.Networks[0].StaticIPs).To(HaveLen(1))
+		Expect(opts.Networks[0].StaticIPs[0]).To(Equal(net.ParseIP("10.0.0.2").To4()))
 
 		// dealloc the ip
 		err = networkInterface.deallocIPs(opts)
@@ -547,16 +573,17 @@ var _ = Describe("IPAM", func() {
 
 		opts = &types.NetworkOptions{
 			ContainerID: "someContainerID",
-			Networks: map[string]types.PerNetworkOptions{
-				netName: {},
-			},
+			Networks: []types.NamedPerNetworkOptions{{
+				Name: netName,
+			}},
 		}
 
 		err = networkInterface.allocIPs(opts)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(opts.Networks).To(HaveKey(netName))
-		Expect(opts.Networks[netName].StaticIPs).To(HaveLen(1))
-		Expect(opts.Networks[netName].StaticIPs[0]).To(Equal(net.ParseIP("10.0.0.10").To4()))
+		Expect(opts.Networks).To(HaveLen(1))
+		Expect(opts.Networks[0].Name).To(Equal(netName))
+		Expect(opts.Networks[0].StaticIPs).To(HaveLen(1))
+		Expect(opts.Networks[0].StaticIPs[0]).To(Equal(net.ParseIP("10.0.0.10").To4()))
 	})
 
 	DescribeTable("ipam alloc and dealloc multiple static IPs",
@@ -582,17 +609,19 @@ var _ = Describe("IPAM", func() {
 
 			opts := &types.NetworkOptions{
 				ContainerID: "someContainerID",
-				Networks: map[string]types.PerNetworkOptions{
-					netName: {StaticIPs: staticIPs},
-				},
+				Networks: []types.NamedPerNetworkOptions{{
+					Name:              netName,
+					PerNetworkOptions: types.PerNetworkOptions{StaticIPs: staticIPs},
+				}},
 			}
 
 			err = networkInterface.allocIPs(opts)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(opts.Networks).To(HaveKey(netName))
-			Expect(opts.Networks[netName].StaticIPs).To(HaveLen(expectedTotal))
+			Expect(opts.Networks).To(HaveLen(1))
+			Expect(opts.Networks[0].Name).To(Equal(netName))
+			Expect(opts.Networks[0].StaticIPs).To(HaveLen(expectedTotal))
 			for _, ip := range staticIPs {
-				Expect(opts.Networks[netName].StaticIPs).To(ContainElement(WithTransform(func(i net.IP) string { return i.String() }, Equal(ip.String()))))
+				Expect(opts.Networks[0].StaticIPs).To(ContainElement(WithTransform(func(i net.IP) string { return i.String() }, Equal(ip.String()))))
 			}
 
 			err = networkInterface.deallocIPs(opts)
