@@ -104,7 +104,7 @@ func UnpackLayer(dest string, layer io.Reader, options *TarOptions) (size int64,
 					}
 					defer os.RemoveAll(aufsTempdir)
 				}
-				if err := extractTarFileEntry(filepath.Join(aufsTempdir, basename), dest, hdr, tr, true, nil, options.InUserNS, options.IgnoreChownErrors, options.ForceMask, buffer); err != nil {
+				if err := extractTarFileEntry(filepath.Join(aufsTempdir, basename), dest, hdr, tr, true, nil, options, buffer); err != nil {
 					return 0, err
 				}
 			}
@@ -209,7 +209,7 @@ func UnpackLayer(dest string, layer io.Reader, options *TarOptions) (size int64,
 				return 0, err
 			}
 
-			if err := extractTarFileEntry(path, dest, srcHdr, srcData, true, nil, options.InUserNS, options.IgnoreChownErrors, options.ForceMask, buffer); err != nil {
+			if err := extractTarFileEntry(path, dest, srcHdr, srcData, true, nil, options, buffer); err != nil {
 				return 0, err
 			}
 

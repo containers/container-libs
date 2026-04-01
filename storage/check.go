@@ -145,6 +145,9 @@ func (s *store) Check(options *CheckOptions) (CheckReport, error) {
 			ignore.filetype = true
 		}
 	}
+	if s.stripSUIDSGID {
+		ignore.permissions = true
+	}
 	for o := range s.pullOptions {
 		if strings.Contains(o, "use_hard_links") {
 			if s.pullOptions[o] == "true" {

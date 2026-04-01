@@ -101,6 +101,9 @@ type StoreOptions struct {
 	DisableVolatile bool `json:"disable-volatile,omitempty"`
 	// If transient, don't persist containers over boot (stores db in runroot)
 	TransientStore bool `json:"transient_store,omitempty"`
+	// If set, SUID and SGID bits are stripped from the mode of all files,
+	// directories, etc., when image layers are extracted.
+	StripSUIDSGID bool `json:"strip_suid_sgid,omitempty"`
 }
 
 // setDefaultRootlessStoreOptions sets the storage opts for containers running as non root
@@ -211,6 +214,7 @@ func LoadStoreOptions(opts LoadOptions) (StoreOptions, error) {
 
 	storeOptions.DisableVolatile = config.Storage.Options.DisableVolatile
 	storeOptions.TransientStore = config.Storage.TransientStore
+	storeOptions.StripSUIDSGID = config.Storage.Options.StripSUIDSGID
 
 	storeOptions.GraphDriverOptions = append(storeOptions.GraphDriverOptions, cfg.GetGraphDriverOptions(config.Storage.Options)...)
 

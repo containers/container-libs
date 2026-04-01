@@ -10,7 +10,16 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.podman.io/storage/pkg/idtools"
 	"go.podman.io/storage/pkg/reexec"
+	"go.podman.io/storage/pkg/unshare"
 )
+
+func TestMain(m *testing.M) {
+	if reexec.Init() {
+		return
+	}
+	unshare.MaybeReexecUsingUserNamespace(false)
+	os.Exit(m.Run())
+}
 
 func newTestStore(t *testing.T, testOptions StoreOptions) Store {
 	wd := t.TempDir()

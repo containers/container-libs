@@ -107,6 +107,7 @@ type ApplyDiffOpts struct {
 	MountLabel        string
 	IgnoreChownErrors bool
 	ForceMask         *os.FileMode
+	StripSUIDSGID     *bool
 }
 
 // ApplyDiffWithDifferOpts contains optional arguments for ApplyDiffWithDiffer methods.
@@ -325,6 +326,7 @@ type DriverWithDiffer interface {
 	Driver
 	// ApplyDiffWithDiffer applies the changes using the callback function.
 	// The staging directory created by this function is guaranteed to be usable with ApplyDiffFromStagingDirectory.
+	// options must not be nil.
 	ApplyDiffWithDiffer(options *ApplyDiffWithDifferOpts, differ Differ) (output DriverWithDifferOutput, err error)
 	// ApplyDiffFromStagingDirectory applies the changes using the diffOutput target directory.
 	ApplyDiffFromStagingDirectory(id, parent string, diffOutput *DriverWithDifferOutput, options *ApplyDiffWithDifferOpts) error

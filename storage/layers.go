@@ -481,6 +481,7 @@ type layerStore struct {
 	rundir         string
 	jsonPath       [numLayerLocationIndex]string
 	layerdir       string
+	stripSUIDSGID  bool
 
 	inProcessLock sync.RWMutex // Can _only_ be obtained with lockfile held.
 	// The following fields can only be read/written with read/write ownership of inProcessLock, respectively.
@@ -1309,7 +1310,8 @@ func (s *store) newLayerStore(rundir, layerdir, imagedir string, driver drivers.
 		byname:  make(map[string]*Layer),
 		bymount: make(map[string]*Layer),
 
-		driver: driver,
+		driver:        driver,
+		stripSUIDSGID: s.stripSUIDSGID,
 	}
 	if err := rlstore.startWritingWithReload(false); err != nil {
 		return nil, err
@@ -2597,7 +2599,8 @@ func (r *layerStore) stageWithUnlockedStore(sl *maybeStagedLayerExtraction, pare
 			Diff:     payload,
 			Mappings: idtools.NewIDMappingsFromMaps(layerOptions.UIDMap, layerOptions.GIDMap),
 			// MountLabel is not supported for the unlocked extraction, see the comment in (*store).PutLayer()
-			MountLabel: "",
+			MountLabel:    "",
+			StripSUIDSGID: &r.stripSUIDSGID,
 		})
 		sl.cleanupFuncs = append(sl.cleanupFuncs, cleanup)
 		sl.stagedLayer = stagedLayer
@@ -2782,9 +2785,10 @@ func (r *layerStore) applyDiffWithOptions(to string, layerOptions *LayerOptions,
 
 	result, err := applyDiff(layerOptions, diff, tarSplitFile, func(payload io.Reader) (int64, error) {
 		options := drivers.ApplyDiffOpts{
-			Diff:       payload,
-			Mappings:   r.layerMappings(layer),
-			MountLabel: layer.MountLabel,
+			Diff:          payload,
+			Mappings:      r.layerMappings(layer),
+			MountLabel:    layer.MountLabel,
+			StripSUIDSGID: &r.stripSUIDSGID,
 		}
 		return r.driver.ApplyDiff(layer.ID, options)
 	})
@@ -2843,11 +2847,14 @@ func (r *layerStore) applyDiffFromStagingDirectory(id string, diffOutput *driver
 	if options == nil {
 		options = &drivers.ApplyDiffWithDifferOpts{
 			ApplyDiffOpts: drivers.ApplyDiffOpts{
-				Mappings:   r.layerMappings(layer),
-				MountLabel: layer.MountLabel,
+				Mappings:      r.layerMappings(layer),
+				MountLabel:    layer.MountLabel,
+				StripSUIDSGID: &r.stripSUIDSGID,
 			},
 			Flags: nil,
 		}
+	} else if options.StripSUIDSGID == nil {
+		options.StripSUIDSGID = &r.stripSUIDSGID
 	}
 
 	err := ddriver.ApplyDiffFromStagingDirectory(layer.ID, layer.Parent, diffOutput, options)
@@ -2931,6 +2938,15 @@ func (r *layerStore) applyDiffWithDifferNoLock(options *drivers.ApplyDiffWithDif
 	ddriver, ok := r.driver.(drivers.DriverWithDiffer)
 	if !ok {
 		return nil, ErrNotSupported
+	}
+	if options == nil {
+		options = &drivers.ApplyDiffWithDifferOpts{
+			ApplyDiffOpts: drivers.ApplyDiffOpts{
+				StripSUIDSGID: &r.stripSUIDSGID,
+			},
+		}
+	} else if options.StripSUIDSGID == nil {
+		options.StripSUIDSGID = &r.stripSUIDSGID
 	}
 
 	output, err := ddriver.ApplyDiffWithDiffer(options, differ)

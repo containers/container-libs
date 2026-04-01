@@ -47,6 +47,10 @@
 # Auto-userns-max-size is the maximum size for a user namespace created automatically.
 # auto-userns-max-size=65536
 
+# If set to true, the SUID and SGID bits of all filesystem object modes are set
+# to zero when they are extracted from image layers.
+# strip_suid_sgid = false
+
 [storage.options.overlay]
 # ignore_chown_errors can be set to allow a non privileged user running with
 # a single UID within a user namespace to run containers. The user can pull
