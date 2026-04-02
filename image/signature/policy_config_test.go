@@ -127,130 +127,204 @@ func TestInvalidPolicyFormatError(t *testing.T) {
 }
 
 func TestDefaultPolicy(t *testing.T) {
-	// We can't test the actual systemDefaultPolicyPath, so override.
-	// TestDefaultPolicyPath below tests that we handle the overrides and defaults
-	// correctly.
+	// prReject
+	const rejectJSON = `{"default":[{"type":"reject"}]}`
+	// prInsecureAcceptAnything
+	const insecureJSON = `{"default":[{"type":"insecureAcceptAnything"}]}`
 
-	// Success
-	policy, err := DefaultPolicy(&types.SystemContext{SignaturePolicyPath: "./fixtures/policy.json"})
-	require.NoError(t, err)
-	assert.Equal(t, policyFixtureContents, policy)
-
-	for _, path := range []string{
-		"/this/does/not/exist", // Error reading file
-		"/dev/null",            // A failure case; most are tested in the individual method unit tests.
-	} {
-		policy, err := DefaultPolicy(&types.SystemContext{SignaturePolicyPath: path})
-		assert.Error(t, err)
-		assert.Nil(t, policy)
+	type tc struct {
+		name           string
+		setup          func(t *testing.T, rootPrefix string) *types.SystemContext
+		expectPolicy   any // *Policy, *prReject, *prInsecureAcceptAnything
+		expectErr      bool
+		expectErrMatch string
 	}
-}
 
-func TestDefaultPolicyPath(t *testing.T) {
-	const nondefaultPath = "/this/is/not/the/default/path.json"
-	const variableReference = "$HOME"
-	const rootPrefix = "/root/prefix"
-	tempHome := t.TempDir()
-	userDefaultPolicyPath := filepath.Join(tempHome, userPolicyFile)
-	tempsystemdefaultpath := filepath.Join(tempHome, systemDefaultPolicyPath)
-	for _, c := range []struct {
-		sys               *types.SystemContext
-		userfilePresent   bool
-		systemfilePresent bool
-		expected          string
-		expectedError     string
-	}{
-		// The common case
-		{nil, false, true, tempsystemdefaultpath, ""},
-		// There is a context, but it does not override the path.
-		{&types.SystemContext{}, false, true, tempsystemdefaultpath, ""},
-		// Path overridden
-		{&types.SystemContext{SignaturePolicyPath: nondefaultPath}, false, true, nondefaultPath, ""},
-		// Root overridden
+	mustWritePolicy := func(t *testing.T, path, contents string) {
+		require.NoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
+		require.NoError(t, os.WriteFile(path, []byte(contents), 0o600))
+	}
+
+	for _, test := range []tc{
 		{
-			&types.SystemContext{RootForImplicitAbsolutePaths: rootPrefix},
-			false,
-			true,
-			filepath.Join(rootPrefix, tempsystemdefaultpath),
-			"",
-		},
-		// Empty context and user policy present
-		{&types.SystemContext{}, true, true, userDefaultPolicyPath, ""},
-		// Only user policy present
-		{nil, true, true, userDefaultPolicyPath, ""},
-		// Context signature path and user policy present
-		{
-			&types.SystemContext{
-				SignaturePolicyPath: nondefaultPath,
+			name: "signature policy path override success",
+			setup: func(t *testing.T, _ string) *types.SystemContext {
+				return &types.SystemContext{SignaturePolicyPath: "./fixtures/policy.json"}
 			},
-			true,
-			true,
-			nondefaultPath,
-			"",
+			expectPolicy: policyFixtureContents,
 		},
-		// Root and user policy present
 		{
-			&types.SystemContext{
-				RootForImplicitAbsolutePaths: rootPrefix,
+			name: "signature policy path override read error",
+			setup: func(t *testing.T, _ string) *types.SystemContext {
+				return &types.SystemContext{SignaturePolicyPath: "/this/does/not/exist"}
 			},
-			true,
-			true,
-			userDefaultPolicyPath,
-			"",
+			expectErr: true,
 		},
-		// Context and user policy file preset simultaneously
 		{
-			&types.SystemContext{
-				RootForImplicitAbsolutePaths: rootPrefix,
-				SignaturePolicyPath:          nondefaultPath,
+			name: "signature policy path override parse error",
+			setup: func(t *testing.T, _ string) *types.SystemContext {
+				return &types.SystemContext{SignaturePolicyPath: "/dev/null"}
 			},
-			true,
-			true,
-			nondefaultPath,
-			"",
+			expectErr: true,
 		},
-		// Root and path overrides present simultaneously,
 		{
-			&types.SystemContext{
-				RootForImplicitAbsolutePaths: rootPrefix,
-				SignaturePolicyPath:          nondefaultPath,
+			name: "user wins over etc and usr",
+			setup: func(t *testing.T, rootPrefix string) *types.SystemContext {
+				tempHome := t.TempDir()
+				t.Setenv("XDG_CONFIG_HOME", tempHome)
+				mustWritePolicy(t, filepath.Join(tempHome, "containers", "policy.json"), insecureJSON)
+				mustWritePolicy(t, filepath.Join(rootPrefix, "etc", "containers", "policy.json"), rejectJSON)
+				mustWritePolicy(t, filepath.Join(rootPrefix, "usr", "share", "containers", "policy.json"), rejectJSON)
+				return &types.SystemContext{
+					RootForImplicitAbsolutePaths: rootPrefix,
+				}
 			},
-			false,
-			true,
-			nondefaultPath,
-			"",
+			expectPolicy: &prInsecureAcceptAnything{},
 		},
-		// No environment expansion happens in the overridden paths
-		{&types.SystemContext{SignaturePolicyPath: variableReference}, false, true, variableReference, ""},
-		// No policy.json file is present in userfilePath and systemfilePath
-		{nil, false, false, "", fmt.Sprintf("no policy.json file found at any of the following: %q, %q", userDefaultPolicyPath, tempsystemdefaultpath)},
+		{
+			name: "etc fallback when user missing",
+			setup: func(t *testing.T, rootPrefix string) *types.SystemContext {
+				tempHome := t.TempDir()
+				t.Setenv("XDG_CONFIG_HOME", tempHome)
+				mustWritePolicy(t, filepath.Join(rootPrefix, "etc", "containers", "policy.json"), rejectJSON)
+				mustWritePolicy(t, filepath.Join(rootPrefix, "usr", "share", "containers", "policy.json"), insecureJSON)
+				return &types.SystemContext{
+					RootForImplicitAbsolutePaths: rootPrefix,
+				}
+			},
+			expectPolicy: &prReject{},
+		},
+		{
+			name: "usr fallback when only usr present",
+			setup: func(t *testing.T, rootPrefix string) *types.SystemContext {
+				tempHome := t.TempDir()
+				t.Setenv("XDG_CONFIG_HOME", tempHome)
+				mustWritePolicy(t, filepath.Join(rootPrefix, "usr", "share", "containers", "policy.json"), insecureJSON)
+				return &types.SystemContext{
+					RootForImplicitAbsolutePaths: rootPrefix,
+				}
+			},
+			expectPolicy: &prInsecureAcceptAnything{},
+		},
+		{
+			name: "no policy file found",
+			setup: func(t *testing.T, rootPrefix string) *types.SystemContext {
+				t.Setenv("XDG_CONFIG_HOME", "/tmp")
+				return &types.SystemContext{
+					RootForImplicitAbsolutePaths: rootPrefix,
+				}
+			},
+			expectErr:      true,
+			expectErrMatch: "no policy.json file found; searched paths: [\"/tmp/containers/policy.json\" ",
+		},
+		{
+			name: "containers policy conf override base file",
+			setup: func(t *testing.T, rootPrefix string) *types.SystemContext {
+				tempHome := t.TempDir()
+				t.Setenv("XDG_CONFIG_HOME", tempHome)
+				mustWritePolicy(t, filepath.Join(rootPrefix, "etc", "containers", "policy.json"), rejectJSON)
+				base := filepath.Join(t.TempDir(), "env-base.json")
+				mustWritePolicy(t, base, insecureJSON)
+				t.Setenv("CONTAINERS_POLICY_JSON", base)
+				return &types.SystemContext{
+					RootForImplicitAbsolutePaths: rootPrefix,
+				}
+			},
+			expectPolicy: &prInsecureAcceptAnything{},
+		},
+		{
+			name: "containers policy conf read error",
+			setup: func(t *testing.T, _ string) *types.SystemContext {
+				tempHome := t.TempDir()
+				t.Setenv("XDG_CONFIG_HOME", tempHome)
+				t.Setenv("CONTAINERS_POLICY_JSON", "/this/does/not/exist")
+				return &types.SystemContext{}
+			},
+			expectErr: true,
+		},
+		{
+			name: "containers policy conf parse error",
+			setup: func(t *testing.T, _ string) *types.SystemContext {
+				tempHome := t.TempDir()
+				t.Setenv("XDG_CONFIG_HOME", tempHome)
+				t.Setenv("CONTAINERS_POLICY_JSON", "/dev/null")
+				return &types.SystemContext{}
+			},
+			expectErr: true,
+		},
+		{
+			name: "containers policy conf readall error",
+			setup: func(t *testing.T, _ string) *types.SystemContext {
+				tempHome := t.TempDir()
+				t.Setenv("XDG_CONFIG_HOME", tempHome)
+				// Point the env to a directory so io.ReadAll fails when reading it.
+				dir := t.TempDir()
+				t.Setenv("CONTAINERS_POLICY_JSON", dir)
+				return &types.SystemContext{}
+			},
+			expectErr: true,
+		},
+		{
+			name: "signature policy path wins over root for implicit absolute paths",
+			setup: func(t *testing.T, rootPrefix string) *types.SystemContext {
+				tempHome := t.TempDir()
+				t.Setenv("XDG_CONFIG_HOME", tempHome)
+
+				// If SignaturePolicyPath were ignored, this would be used due to RootForImplicitAbsolutePaths.
+				mustWritePolicy(t, filepath.Join(rootPrefix, "etc", "containers", "policy.json"), rejectJSON)
+
+				return &types.SystemContext{
+					SignaturePolicyPath:          "./fixtures/policy.json",
+					RootForImplicitAbsolutePaths: rootPrefix,
+				}
+			},
+			expectPolicy: policyFixtureContents,
+		},
+		{
+			name: "root for implicit absolute paths is honored",
+			setup: func(t *testing.T, rootPrefix string) *types.SystemContext {
+				tempHome := t.TempDir()
+				t.Setenv("XDG_CONFIG_HOME", tempHome)
+				mustWritePolicy(t, filepath.Join(rootPrefix, "etc", "containers", "policy.json"), rejectJSON)
+				return &types.SystemContext{
+					RootForImplicitAbsolutePaths: rootPrefix,
+				}
+			},
+			expectPolicy: &prReject{},
+		},
 	} {
-		paths := []struct {
-			condition bool
-			path      string
-		}{
-			{c.userfilePresent, userDefaultPolicyPath},
-			{c.systemfilePresent, tempsystemdefaultpath},
-		}
-		for _, p := range paths {
-			if p.condition {
-				err := os.MkdirAll(filepath.Dir(p.path), os.ModePerm)
-				require.NoError(t, err)
-				f, err := os.Create(p.path)
-				require.NoError(t, err)
-				f.Close()
-			} else {
-				os.Remove(p.path)
+		t.Run(test.name, func(t *testing.T) {
+			rootPrefix := t.TempDir()
+			var sys *types.SystemContext
+			if test.setup != nil {
+				sys = test.setup(t, rootPrefix)
 			}
-		}
-		path, err := defaultPolicyPathWithHomeDir(c.sys, tempHome, tempsystemdefaultpath)
-		if c.expectedError != "" {
-			assert.Empty(t, path)
-			assert.EqualError(t, err, c.expectedError)
-		} else {
+
+			policy, err := DefaultPolicy(sys)
+			if test.expectErr {
+				require.Error(t, err)
+				assert.Nil(t, policy)
+				if test.expectErrMatch != "" {
+					assert.Contains(t, err.Error(), test.expectErrMatch)
+				}
+				return
+			}
+
 			require.NoError(t, err)
-			assert.Equal(t, c.expected, path)
-		}
+
+			switch expected := test.expectPolicy.(type) {
+			case *Policy:
+				assert.Equal(t, expected, policy)
+			case *prInsecureAcceptAnything:
+				_, ok := policy.Default[0].(*prInsecureAcceptAnything)
+				assert.True(t, ok, "expected insecureAcceptAnything policy requirement")
+			case *prReject:
+				_, ok := policy.Default[0].(*prReject)
+				assert.True(t, ok, "expected reject policy requirement")
+			default:
+				t.Fatalf("unexpected expectedPolicy type %T", test.expectPolicy)
+			}
+		})
 	}
 }
 

@@ -113,8 +113,10 @@ func Test_Read(t *testing.T) {
 		setup func(t *testing.T, tc *testcase)
 		// Expected result, file content in right order.
 		want []string
-		// wantErr is the error type matched with errors.Is() is the function should error instead
+		// wantErr is matched with errors.Is() when the function should error instead.
 		wantErr error
+		// wantErrContains, if non-empty, asserts a substring of the error string instead of wantErr.
+		wantErrContains string
 	}
 
 	tests := []testcase{
@@ -125,6 +127,16 @@ func Test_Read(t *testing.T) {
 				Extension: "conf",
 			},
 			want: nil,
+		},
+		{
+			name: "no files error if not found",
+			arg: File{
+				Name:            "containers",
+				Extension:       "conf",
+				ErrorIfNotFound: true,
+			},
+			// Read records real paths (under RootForImplicitAbsolutePaths / XDG); the message is fmt.Errorf(..., %q, usedPaths).
+			wantErrContains: "no containers.conf file found; searched paths:",
 		},
 		{
 			name: "simple main file",
@@ -555,7 +567,7 @@ func Test_Read(t *testing.T) {
 				tt.setup(t, &tt)
 			}
 			seq := Read(&tt.arg)
-			if tt.wantErr == nil {
+			if tt.wantErr == nil && tt.wantErrContains == "" {
 				confs := collectConfigs(t, seq)
 				assert.Equal(t, tt.want, confs)
 
@@ -570,7 +582,12 @@ func Test_Read(t *testing.T) {
 
 				_, err, ok := next()
 				assert.True(t, ok)
-				assert.ErrorIs(t, err, tt.wantErr)
+				if tt.wantErrContains != "" {
+					assert.ErrorContains(t, err, tt.wantErrContains)
+					assert.Contains(t, err.Error(), tt.arg.RootForImplicitAbsolutePaths)
+				} else {
+					assert.ErrorIs(t, err, tt.wantErr)
+				}
 
 				// end of iterator
 				_, _, ok = next()
