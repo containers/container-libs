@@ -73,6 +73,9 @@ type File struct {
 	// For compatibility reasons this field is written to with the fully resolved paths
 	// of each module as this is what podman expects today.
 	Modules []string
+
+	// ErrorIfNotFound is true if an error should be returned if no file is found.
+	ErrorIfNotFound bool
 }
 
 // Item is a single config file that is being read once at a time and returned by the iterator from [Read].
@@ -97,13 +100,6 @@ func getConfName(name, extension string, noExtension bool) string {
 //
 // The _OVERRIDE environment is ignored if DoNotLoadDropInFiles is set.
 func Read(conf *File) iter.Seq2[*Item, error] {
-	return ReadWithPaths(conf, nil)
-}
-
-// ReadWithPaths behaves like [Read] but also records every file path it tried to open.
-//
-// usedPaths is populated during iteration (if not nil).
-func ReadWithPaths(conf *File, usedPaths *[]string) iter.Seq2[*Item, error] {
 	configFileName := getConfName(conf.Name, conf.Extension, conf.DoNotUseExtensionForConfigName)
 
 	// Note this can be empty which is a valid case and should be simply ignored then.
@@ -125,10 +121,14 @@ func ReadWithPaths(conf *File, usedPaths *[]string) iter.Seq2[*Item, error] {
 	}
 
 	return func(yield func(*Item, error) bool) {
+		usedPaths := make([]string, 0, 8)
+		foundAny := false
+
 		shouldLoadMainFile := !conf.DoNotLoadMainFiles
 		shouldLoadDropIns := !conf.DoNotLoadDropInFiles
 
 		yieldAndClose := func(f *os.File) bool {
+			foundAny = true
 			ok := yield(&Item{
 				Reader: f,
 				Name:   f.Name(),
@@ -146,9 +146,7 @@ func ReadWithPaths(conf *File, usedPaths *[]string) iter.Seq2[*Item, error] {
 
 		if conf.EnvironmentName != "" {
 			if path := os.Getenv(conf.EnvironmentName); path != "" {
-				if usedPaths != nil {
-					*usedPaths = append(*usedPaths, path)
-				}
+				usedPaths = append(usedPaths, path)
 				f, err := os.Open(path)
 				// Do not ignore ErrNotExist here, we want to hard error if users set a wrong path here.
 				if err != nil {
@@ -180,9 +178,7 @@ func ReadWithPaths(conf *File, usedPaths *[]string) iter.Seq2[*Item, error] {
 				if path == "" {
 					continue
 				}
-				if usedPaths != nil {
-					*usedPaths = append(*usedPaths, path)
-				}
+				usedPaths = append(usedPaths, path)
 				f, err := os.Open(path)
 				// only ignore ErrNotExist, all other errors get return to the caller via yield
 				if err != nil {
@@ -209,9 +205,7 @@ func ReadWithPaths(conf *File, usedPaths *[]string) iter.Seq2[*Item, error] {
 				return
 			}
 			for _, file := range files {
-				if usedPaths != nil {
-					*usedPaths = append(*usedPaths, file)
-				}
+				usedPaths = append(usedPaths, file)
 				f, err := os.Open(file)
 				// only ignore ErrNotExist, all other errors get return to the caller via yield
 				if err != nil {
@@ -232,7 +226,7 @@ func ReadWithPaths(conf *File, usedPaths *[]string) iter.Seq2[*Item, error] {
 			dirs := moduleDirectories(defaultConfig, overrideConfig, userConfig)
 			resolvedModules := make([]string, 0, len(conf.Modules))
 			for _, module := range conf.Modules {
-				f, err := resolveModule(module, dirs, usedPaths)
+				f, err := resolveModule(module, dirs, &usedPaths)
 				if err != nil {
 					yield(nil, fmt.Errorf("could not resolve module: %w", err))
 					return
@@ -248,9 +242,7 @@ func ReadWithPaths(conf *File, usedPaths *[]string) iter.Seq2[*Item, error] {
 		if conf.EnvironmentName != "" && !conf.DoNotLoadDropInFiles {
 			// The _OVERRIDE env must be appended after loading all files, even modules.
 			if path := os.Getenv(conf.EnvironmentName + "_OVERRIDE"); path != "" {
-				if usedPaths != nil {
-					*usedPaths = append(*usedPaths, path)
-				}
+				usedPaths = append(usedPaths, path)
 				f, err := os.Open(path)
 				// Do not ignore ErrNotExist here, we want to hard error if users set a wrong path here.
 				if err != nil {
@@ -261,6 +253,11 @@ func ReadWithPaths(conf *File, usedPaths *[]string) iter.Seq2[*Item, error] {
 					return
 				}
 			}
+		}
+
+		if conf.ErrorIfNotFound && !foundAny {
+			yield(nil, fmt.Errorf("no %s file found; searched paths: %q", configFileName, usedPaths))
+			return
 		}
 	}
 }

@@ -6,7 +6,6 @@ import (
 	"iter"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -114,10 +113,10 @@ func Test_Read(t *testing.T) {
 		setup func(t *testing.T, tc *testcase)
 		// Expected result, file content in right order.
 		want []string
-		// wantErr is the error type matched with errors.Is() is the function should error instead
+		// wantErr is matched with errors.Is() when the function should error instead.
 		wantErr error
-		// wantPaths contains the expected list of filesystem paths that ReadWithPaths should record.
-		wantPaths []string
+		// wantErrContains, if non-empty, asserts a substring of the error string instead of wantErr.
+		wantErrContains string
 	}
 
 	tests := []testcase{
@@ -128,11 +127,16 @@ func Test_Read(t *testing.T) {
 				Extension: "conf",
 			},
 			want: nil,
-			wantPaths: []string{
-				"/home/containers/containers.conf",
-				"/etc/containers/containers.conf",
-				"/usr/share/containers/containers.conf",
+		},
+		{
+			name: "no files error if not found",
+			arg: File{
+				Name:            "containers",
+				Extension:       "conf",
+				ErrorIfNotFound: true,
 			},
+			// Read records real paths (under RootForImplicitAbsolutePaths / XDG); the message is fmt.Errorf(..., %q, usedPaths).
+			wantErrContains: "no containers.conf file found; searched paths:",
 		},
 		{
 			name: "simple main file",
@@ -148,11 +152,6 @@ func Test_Read(t *testing.T) {
 				},
 			},
 			want: []string{"content1"},
-			wantPaths: []string{
-				"/home/containers/containers.conf",
-				"/etc/containers/containers.conf",
-				"/usr/share/containers/containers.conf",
-			},
 		},
 		{
 			name: "etc overrides usr file",
@@ -169,10 +168,6 @@ func Test_Read(t *testing.T) {
 				},
 			},
 			want: []string{"file2"},
-			wantPaths: []string{
-				"/home/containers/containers.conf",
-				"/etc/containers/containers.conf",
-			},
 		},
 		{
 			name: "home overrides etc and usr file",
@@ -192,9 +187,6 @@ func Test_Read(t *testing.T) {
 				},
 			},
 			want: []string{"home"},
-			wantPaths: []string{
-				"/home/containers/containers.conf",
-			},
 		},
 		{
 			name: "single drop in",
@@ -208,12 +200,6 @@ func Test_Read(t *testing.T) {
 				},
 			},
 			want: []string{"content1"},
-			wantPaths: []string{
-				"/home/containers/containers.conf",
-				"/etc/containers/containers.conf",
-				"/usr/share/containers/containers.conf",
-				"/usr/share/containers/containers.conf.d/10-myconf.conf",
-			},
 		},
 		{
 			name: "drop in and main file",
@@ -229,12 +215,6 @@ func Test_Read(t *testing.T) {
 				},
 			},
 			want: []string{"file1", "file2"},
-			wantPaths: []string{
-				"/home/containers/containers.conf",
-				"/etc/containers/containers.conf",
-				"/usr/share/containers/containers.conf",
-				"/usr/share/containers/containers.conf.d/10-myconf.conf",
-			},
 		},
 		{
 			name: "drop in and main file on different paths",
@@ -252,11 +232,6 @@ func Test_Read(t *testing.T) {
 				},
 			},
 			want: []string{"etc", "usr"},
-			wantPaths: []string{
-				"/home/containers/containers.conf",
-				"/etc/containers/containers.conf",
-				"/usr/share/containers/containers.conf.d/10-myconf.conf",
-			},
 		},
 		{
 			name: "drop in order",
@@ -278,15 +253,6 @@ func Test_Read(t *testing.T) {
 				},
 			},
 			want: []string{"1", "2", "3", "4"},
-			wantPaths: []string{
-				"/home/containers/containers.conf",
-				"/etc/containers/containers.conf",
-				"/usr/share/containers/containers.conf",
-				"/etc/containers/containers.conf.d/10-conf1.conf",
-				"/usr/share/containers/containers.conf.d/20-conf2.conf",
-				"/home/containers/containers.conf.d/30-conf3.conf",
-				"/usr/share/containers/containers.conf.d/40-conf4.conf",
-			},
 		},
 		{
 			name: "drop in override",
@@ -306,13 +272,6 @@ func Test_Read(t *testing.T) {
 				},
 			},
 			want: []string{"etc-override", "usr-content-2"},
-			wantPaths: []string{
-				"/home/containers/containers.conf",
-				"/etc/containers/containers.conf",
-				"/usr/share/containers/containers.conf",
-				"/etc/containers/containers.conf.d/10-settings.conf",
-				"/usr/share/containers/containers.conf.d/20-settings.conf",
-			},
 		},
 		{
 			name: "drop in ignores wrong extensions",
@@ -328,12 +287,6 @@ func Test_Read(t *testing.T) {
 				},
 			},
 			want: []string{"valid"},
-			wantPaths: []string{
-				"/home/containers/containers.conf",
-				"/etc/containers/containers.conf",
-				"/usr/share/containers/containers.conf",
-				"/usr/share/containers/containers.conf.d/10-valid.conf",
-			},
 		},
 		{
 			name: "policy.json main files only (ignore drop-ins)",
@@ -349,11 +302,6 @@ func Test_Read(t *testing.T) {
 				},
 			},
 			want: []string{"main"},
-			wantPaths: []string{
-				"/home/containers/policy.json",
-				"/etc/containers/policy.json",
-				"/usr/share/containers/policy.json",
-			},
 		},
 		{
 			name: "registries.d drop ins only (ignore main)",
@@ -370,9 +318,6 @@ func Test_Read(t *testing.T) {
 				},
 			},
 			want: []string{"drop-in"},
-			wantPaths: []string{
-				"/usr/share/containers/registries.d/10-extra.yaml",
-			},
 		},
 		{
 			name: "rootless specific drop-ins",
@@ -389,13 +334,6 @@ func Test_Read(t *testing.T) {
 				},
 			},
 			want: []string{"global", "rootless-specific"},
-			wantPaths: []string{
-				"/home/containers/containers.conf",
-				"/etc/containers/containers.conf",
-				"/usr/share/containers/containers.conf",
-				"/usr/share/containers/containers.conf.d/01-global.conf",
-				"/usr/share/containers/containers.rootless.conf.d/02-user.conf",
-			},
 		},
 		{
 			name: "rootless uid specific drop-ins",
@@ -411,12 +349,6 @@ func Test_Read(t *testing.T) {
 				},
 			},
 			want: []string{"uid-1000"},
-			wantPaths: []string{
-				"/home/containers/containers.conf",
-				"/etc/containers/containers.conf",
-				"/usr/share/containers/containers.conf",
-				"/usr/share/containers/containers.rootless.conf.d/1000/settings.conf",
-			},
 		},
 		{
 			name: "containers.conf env var not being set",
@@ -431,11 +363,6 @@ func Test_Read(t *testing.T) {
 				},
 			},
 			want: []string{"content1"},
-			wantPaths: []string{
-				"/home/containers/containers.conf",
-				"/etc/containers/containers.conf",
-				"/usr/share/containers/containers.conf",
-			},
 		},
 		{
 			name: "containers.conf env var must override all files",
@@ -458,9 +385,6 @@ func Test_Read(t *testing.T) {
 				t.Setenv("CONTAINERS_CONF", file)
 			},
 			want: []string{"env"},
-			wantPaths: []string{
-				"/somepath",
-			},
 		},
 		{
 			name: "containers.conf override env var should be appended",
@@ -482,13 +406,6 @@ func Test_Read(t *testing.T) {
 				t.Setenv("CONTAINERS_CONF_OVERRIDE", file)
 			},
 			want: []string{"content1", "01", "env"},
-			wantPaths: []string{
-				"/home/containers/containers.conf",
-				"/etc/containers/containers.conf",
-				"/usr/share/containers/containers.conf",
-				"/usr/share/containers/containers.conf.d/01.conf",
-				"/somepath",
-			},
 		},
 		{
 			name: "containers.conf both env var should be appended",
@@ -515,10 +432,6 @@ func Test_Read(t *testing.T) {
 				t.Setenv("CONTAINERS_CONF_OVERRIDE", file2)
 			},
 			want: []string{"env1", "env2"},
-			wantPaths: []string{
-				"/path1",
-				"/path1",
-			},
 		},
 		{
 			name: "env var should error on non existing file",
@@ -531,8 +444,7 @@ func Test_Read(t *testing.T) {
 				file := filepath.Join(t.TempDir(), "123")
 				t.Setenv("CONTAINERS_CONF", file)
 			},
-			wantErr:   fs.ErrNotExist,
-			wantPaths: nil,
+			wantErr: fs.ErrNotExist,
 		},
 		{
 			name: "override env var should error on non existing file",
@@ -546,10 +458,6 @@ func Test_Read(t *testing.T) {
 				t.Setenv("CONTAINERS_CONF_OVERRIDE", file)
 			},
 			wantErr: fs.ErrNotExist,
-			wantPaths: []string{
-				"/home/containers/containers.conf",
-				"/etc/containers/containers.conf",
-			},
 		},
 		{
 			name: "containers.conf with modules",
@@ -575,13 +483,6 @@ func Test_Read(t *testing.T) {
 				tc.arg.Modules = append(tc.arg.Modules, file)
 			},
 			want: []string{"content1", "relative module", "absolute module"},
-			wantPaths: []string{
-				"/home/containers/containers.conf",
-				"/etc/containers/containers.conf",
-				"/usr/share/containers/containers.conf",
-				"/home/containers/containers.conf.modules/module.abc",
-				"/somepath",
-			},
 		},
 		{
 			name: "containers.conf with module override",
@@ -603,13 +504,6 @@ func Test_Read(t *testing.T) {
 				},
 			},
 			want: []string{"home", "etc"},
-			wantPaths: []string{
-				"/home/containers/containers.conf",
-				"/etc/containers/containers.conf",
-				"/usr/share/containers/containers.conf",
-				"/home/containers/containers.conf.modules/module.conf",
-				"/etc/containers/containers.conf.modules/different.conf",
-			},
 		},
 		{
 			// same as above except we switch the module order to ensure we read the files in the proper order as given
@@ -632,13 +526,6 @@ func Test_Read(t *testing.T) {
 				},
 			},
 			want: []string{"etc", "home"},
-			wantPaths: []string{
-				"/home/containers/containers.conf",
-				"/etc/containers/containers.conf",
-				"/usr/share/containers/containers.conf",
-				"/etc/containers/containers.conf.modules/different.conf",
-				"/home/containers/containers.conf.modules/module.conf",
-			},
 		},
 		{
 			name: "containers.conf env and modules order",
@@ -669,11 +556,6 @@ func Test_Read(t *testing.T) {
 			},
 			// CONTAINERS_CONF, then modules, then CONTAINERS_CONF_OVERRIDE
 			want: []string{"env1", "mod", "env2"},
-			wantPaths: []string{
-				"/path1",
-				"/usr/share/containers/containers.conf.modules/module.conf",
-				"/path1",
-			},
 		},
 	}
 
@@ -684,43 +566,32 @@ func Test_Read(t *testing.T) {
 			if tt.setup != nil {
 				tt.setup(t, &tt)
 			}
+			seq := Read(&tt.arg)
+			if tt.wantErr == nil && tt.wantErrContains == "" {
+				confs := collectConfigs(t, seq)
+				assert.Equal(t, tt.want, confs)
 
-			for _, useReadWithPaths := range []bool{false, true} {
-				var usedPaths []string
-				var seq iter.Seq2[*Item, error]
-				if useReadWithPaths {
-					seq = ReadWithPaths(&tt.arg, &usedPaths)
-				} else {
-					seq = Read(&tt.arg)
+				// ensure the modules all get resolves to absolute paths and are valid
+				for _, module := range tt.arg.Modules {
+					assert.FileExists(t, module)
+					assert.True(t, filepath.IsAbs(module))
 				}
-				if tt.wantErr == nil {
-					confs := collectConfigs(t, seq)
-					assert.Equal(t, tt.want, confs)
+			} else {
+				next, stop := iter.Pull2(seq)
+				defer stop()
 
-					if useReadWithPaths && tt.wantErr == nil {
-						require.Equal(t, len(tt.wantPaths), len(usedPaths))
-						for i, want := range tt.wantPaths {
-							assert.Truef(t, strings.HasSuffix(usedPaths[i], want), "path %q does not end with %q", usedPaths[i], want)
-						}
-					}
-
-					// ensure the modules all get resolves to absolute paths and are valid
-					for _, module := range tt.arg.Modules {
-						assert.FileExists(t, module)
-						assert.True(t, filepath.IsAbs(module))
-					}
+				_, err, ok := next()
+				assert.True(t, ok)
+				if tt.wantErrContains != "" {
+					assert.ErrorContains(t, err, tt.wantErrContains)
+					assert.Contains(t, err.Error(), tt.arg.RootForImplicitAbsolutePaths)
 				} else {
-					next, stop := iter.Pull2(seq)
-					defer stop()
-
-					_, err, ok := next()
-					assert.True(t, ok)
 					assert.ErrorIs(t, err, tt.wantErr)
-
-					// end of iterator
-					_, _, ok = next()
-					assert.False(t, ok)
 				}
+
+				// end of iterator
+				_, _, ok = next()
+				assert.False(t, ok)
 			}
 		})
 	}

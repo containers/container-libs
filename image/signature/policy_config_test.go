@@ -215,7 +215,7 @@ func TestDefaultPolicy(t *testing.T) {
 				}
 			},
 			expectErr:      true,
-			expectErrMatch: "no policy.json file found; searched paths: /tmp/containers/policy.json, ",
+			expectErrMatch: "no policy.json file found; searched paths: [\"/tmp/containers/policy.json\" ",
 		},
 		{
 			name: "containers policy conf override base file",

@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	"go.podman.io/image/v5/docker/reference"
 	"go.podman.io/image/v5/signature/internal"
@@ -58,11 +57,11 @@ func DefaultPolicy(sys *types.SystemContext) (*Policy, error) {
 		DoNotLoadDropInFiles:         true,
 		EnvironmentName:              "CONTAINERS_POLICY_JSON",
 		RootForImplicitAbsolutePaths: rootForImplicitAbsPaths,
+		ErrorIfNotFound:              true,
 	}
 
 	var policy *Policy
-	var usedPaths []string
-	for item, err := range configfile.ReadWithPaths(&policyFiles, &usedPaths) {
+	for item, err := range configfile.Read(&policyFiles) {
 		if err != nil {
 			return nil, err
 		}
@@ -75,13 +74,6 @@ func DefaultPolicy(sys *types.SystemContext) (*Policy, error) {
 		if err != nil {
 			return nil, fmt.Errorf("invalid policy in %q: %w", item.Name, err)
 		}
-	}
-
-	if policy == nil {
-		if len(usedPaths) > 0 {
-			return nil, fmt.Errorf("no policy.json file found; searched paths: %s", strings.Join(usedPaths, ", "))
-		}
-		return nil, fmt.Errorf("no policy.json file found")
 	}
 
 	return policy, nil
