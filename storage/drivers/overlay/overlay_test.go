@@ -119,8 +119,8 @@ func TestOverlayCreateFromTemplate(t *testing.T) {
 	graphtest.DriverTestCreateFromTemplate(t, driverName)
 }
 
-func TestOverlay128LayerRead(t *testing.T) {
-	graphtest.DriverTestDeepLayerRead(t, 128, driverName)
+func TestOverlay500LayerRead(t *testing.T) {
+	graphtest.DriverTestDeepLayerRead(t, 500, driverName)
 }
 
 func TestOverlayDiffApply10Files(t *testing.T) {
