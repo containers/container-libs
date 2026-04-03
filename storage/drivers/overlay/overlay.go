@@ -2083,6 +2083,16 @@ func (d *Driver) Put(id string) error {
 		// rename(2) can be used on an empty directory, as it is the mountpoint after umount, and it retains
 		// its atomic semantic.  In this way the "merged" directory is never removed.
 		if err := unix.Rename(tmpMountpoint, mountpoint); err != nil {
+			// With shared mounts (e.g. Bidirectional propagation from a CSI driver),
+			// MNT_DETACH may not immediately release the mountpoint — another namespace
+			// still holds a reference. rename(2) returns EBUSY in this case.
+			// Clean up the temp dir and return success since MNT_DETACH already detached
+			// the mount from the calling namespace.
+			if errors.Is(err, unix.EBUSY) {
+				logrus.Debugf("Failed to replace mountpoint %s overlay: %s - %v (mount still held, skipping)", id, mountpoint, err)
+				os.Remove(tmpMountpoint)
+				return nil
+			}
 			logrus.Debugf("Failed to replace mountpoint %s overlay: %s: %v", id, mountpoint, err)
 			return fmt.Errorf("replacing mount point %q: %w", mountpoint, err)
 		}
