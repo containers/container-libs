@@ -185,12 +185,16 @@ any user.
 
   `OCTAL`: Users can experiment with other OCTAL Permissions.
 
-Note: The force_mask Flag is an experimental feature, it could change in the
+Notes:
+
+- The force_mask Flag is an experimental feature, it could change in the
 future.  When "force_mask" is set the original permission mask is stored in the
 "user.containers.override_stat" xattr and the "mount_program" option must be
 specified. Mount programs like "/usr/bin/fuse-overlayfs" present the extended
 attribute permissions to processes within containers rather than the
 "force_mask"  permissions.
+
+- When force_mask is used in rootless mode with explicit UID mappings (e.g., `--uidmap`), the container's UID 0 must map to the host user's UID.  fuse-overlayfs (see "mount_program" below) creates a FUSE mount that that is only accessible to the user who created it (the user running podman in this case).  If UID 0 within the container is mapped to a different host UID (such as a subordinate UID from /etc/subuid), the OCI runtime (which runs in the user namespace) will not be able to access the FUSE mount.
 
 **mount_program**=""
   Specifies the path to a custom program to use instead of using kernel defaults
