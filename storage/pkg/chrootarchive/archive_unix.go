@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -82,6 +83,10 @@ func untar() {
 	}
 
 	if err := archive.Unpack(os.Stdin, dst, &options); err != nil {
+		if errors.Is(err, unix.ENOSPC) {
+			fmt.Fprint(os.Stderr, err)
+			os.Exit(int(unix.ENOSPC))
+		}
 		fatal(err)
 	}
 	// fully consume stdin in case it is zero padded
@@ -155,6 +160,20 @@ func invokeUnpack(decompressedArchive io.Reader, dest *unpackDestination, option
 	w.Close()
 
 	if err := cmd.Wait(); err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			exitCode := exitErr.ExitCode()
+			if exitCode == int(unix.ENOSPC) {
+				procPath := fmt.Sprintf("/proc/self/fd/%d", dest.root.Fd())
+
+				path, err := os.Readlink(procPath)
+
+				if err == nil {
+					fmt.Fprintf(os.Stderr, "no space left on device: %s\n", path)
+					os.Exit(28)
+				}
+			}
+		}
+
 		errorOut := fmt.Errorf("unpacking failed (error: %w; output: %s)", err, output)
 		// when `xz -d -c -q | storage-untar ...` failed on storage-untar side,
 		// we need to exhaust `xz`'s output, otherwise the `xz` side will be
