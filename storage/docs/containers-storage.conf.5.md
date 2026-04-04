@@ -194,7 +194,7 @@ specified. Mount programs like "/usr/bin/fuse-overlayfs" present the extended
 attribute permissions to processes within containers rather than the
 "force_mask"  permissions.
 
-- When force_mask is used in rootless mode with explicit UID mappings (e.g., `--uidmap`), the container's UID 0 must map to the host user's UID.  fuse-overlayfs (see "mount_program" below) creates a FUSE mount that that is only accessible to the user who created it (the user running podman in this case).  If UID 0 within the container is mapped to a different host UID (such as a subordinate UID from /etc/subuid), the OCI runtime (which runs in the user namespace) will not be able to access the FUSE mount.
+- When force_mask is used in rootless mode with explicit UID mappings (e.g., `--uidmap`), the container's UID 0 must map to the host user's UID.  The fuse-overlayfs (see "mount_program" below) storage driver creates a FUSE mount accessible only to the user who created it (the user running podman in this case).  If UID 0 within the container is mapped to a different host UID (such as a subordinate UID from /etc/subuid), the OCI runtime (which runs in the user namespace) will not be able to access the FUSE mount.
 
 **mount_program**=""
   Specifies the path to a custom program to use instead of using kernel defaults
