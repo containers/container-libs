@@ -311,10 +311,10 @@ go.opentelemetry.io/otel/trace v1.40.0 h1:WA4etStDttCSYuhwvEa8OP8I5EWu24lkOzp+ZY
 go.opentelemetry.io/otel/trace v1.40.0/go.mod h1:zeAhriXecNGP/s2SEG3+Y8X9ujcJOTqQ5RgdEJcawiA=
 go.opentelemetry.io/proto/otlp v1.7.1 h1:gTOMpGDb0WTBOP8JaO72iL3auEZhVmAQg4ipjOVAtj4=
 go.opentelemetry.io/proto/otlp v1.7.1/go.mod h1:b2rVh6rfI/s2pHWNlB7ILJcRALpcNDzKhACevjI+ZnE=
-go.podman.io/image/v5 v5.39.1 h1:loIw4qHzZzBlUguYZau40u8HbR5MrTPQhwT4Hy6sCm0=
-go.podman.io/image/v5 v5.39.1/go.mod h1:SlaR6Pra1ATIx4BcuZ16oafb3QcCHISaKcJbtlN/G/0=
-go.podman.io/storage v1.62.1-0.20260325203629-8af78737e8bb h1:gTawPpGgB21JF6uNQESpO+s/nbG9LzL53cCMYCSnSXk=
-go.podman.io/storage v1.62.1-0.20260325203629-8af78737e8bb/go.mod h1:FpDiADa6tAspPQXdefPDFvP4fSE9OXUFiVip+q0GjyE=
+go.podman.io/image/v5 v5.39.2 h1:EJua/pRtvgLV/a5y8/RvA+ekKukZh0UuKMvLdTmEWFk=
+go.podman.io/image/v5 v5.39.2/go.mod h1:SlaR6Pra1ATIx4BcuZ16oafb3QcCHISaKcJbtlN/G/0=
+go.podman.io/storage v1.62.1-0.20260401174726-f0ddf1a745bb h1:j6R74wJ8nQ6fx34AI3ri1YZFugCaaD8gyRx5CFmqQXo=
+go.podman.io/storage v1.62.1-0.20260401174726-f0ddf1a745bb/go.mod h1:FpDiADa6tAspPQXdefPDFvP4fSE9OXUFiVip+q0GjyE=
 go.yaml.in/yaml/v2 v2.4.3 h1:6gvOSjQoTB3vt1l+CU+tSyi/HOjfOjRLJ4YwYZGwRO0=
 go.yaml.in/yaml/v2 v2.4.3/go.mod h1:zSxWcmIDjOzPXpjlTTbAsKokqkDNAVtZO0WOMiT90s8=
 go.yaml.in/yaml/v3 v3.0.4 h1:tfq32ie2Jv2UxXFdLJdh3jXuOzWiL1fo0bu/FbuKpbc=
