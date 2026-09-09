@@ -31,7 +31,7 @@ echo "::endgroup::"
 
 set +e
 
-limactl shell --workdir /var/tmp/container-libs $LIMA_VM_NAME ./hack/ci/runner.sh "${@}"
+limactl shell --preserve-env --workdir /var/tmp/container-libs $LIMA_VM_NAME ./hack/ci/runner.sh "${@}"
 rc=$?
 
 echo "::group::Collecting logs"
