@@ -49,6 +49,12 @@ jobs:
       matrix:
         distro: [fedora-current, debian-sid]
         driver: [vfs, overlay, overlay-transient, fuse-overlay, fuse-overlay-whiteout, btrfs]
+        include:
+          # We only need one unit test run with -race.
+          # Currently running on debian with go 1.27 fails by running out of memory.
+          - distro: fedora-current
+            driver: overlay
+            testflags: "-race"
         exclude:
           - distro: debian-sid
             driver: overlay-transient
@@ -58,6 +64,7 @@ jobs:
       module: storage
       distro: ${{ matrix.distro }}
       variant: ${{ matrix.driver }}
+      testflags: ${{ matrix.testflags }}
       timeout: 20
 
   storage-cross:

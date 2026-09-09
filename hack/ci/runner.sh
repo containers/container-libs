@@ -37,15 +37,10 @@ run_storage() {
 
     SUDO="sudo -E env PATH=$PATH GOPATH=$(go env GOPATH) HOME=$HOME"
 
-    TESTFLAGS=
-    if [[ "$DISTRO_NAME" == "fedora-current" ]]; then
-        # Only run go unit tests with -race on fedora, they seem to run OOM on debian.
-        TESTFLAGS=-race
-    fi
-
     case "$VARIANT" in
         overlay)
-            $SUDO make STORAGE_DRIVER=overlay "TESTFLAGS=$TESTFLAGS" local-test-integration local-test-unit
+            # We only run unit tests for one matrix run with overlay
+            $SUDO make STORAGE_DRIVER=overlay local-test-integration local-test-unit
             ;;
         overlay-transient)
             $SUDO make STORAGE_DRIVER=overlay STORAGE_TRANSIENT=1 local-test-integration

@@ -15,6 +15,9 @@ on:
       runner:
         required: true
         type: string
+      testflags:
+        required: false
+        type: string
       timeout:
         required: false
         type: number
@@ -51,6 +54,8 @@ jobs:
       # stored by github somewhere else.
 
       - name: Run test on lima
+        env:
+          TESTFLAGS: "${{ inputs.testflags || '' }}"
         run: | # zizmor: ignore[template-injection]
           ./hack/ci/ci.sh ${{ inputs.module }} ${{ inputs.distro }} ${{ inputs.variant }}
 
