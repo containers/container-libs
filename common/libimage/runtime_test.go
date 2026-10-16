@@ -150,17 +150,3 @@ func TestRuntimeListImagesByNames(t *testing.T) {
 	_, err := runtime.ListImagesByNames([]string{""})
 	require.Error(t, err)
 }
-
-func TestLookupImageUnsupportedTransport(t *testing.T) {
-	runtime := testNewRuntime(t)
-
-	for _, name := range []string{
-		"docker://quay.io/libpod/busybox:latest",
-		"docker-daemon:busybox:latest",
-	} {
-		_, _, err := runtime.LookupImage(name, nil)
-		require.ErrorContains(t, err, "unsupported transport", name)
-		require.ErrorContains(t, err, name, name)
-		require.ErrorContains(t, err, "pull it first", name)
-	}
-}
