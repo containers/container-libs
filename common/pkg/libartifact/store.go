@@ -80,6 +80,13 @@ func NewArtifactStore(storePath string, sc *types.SystemContext) (*ArtifactStore
 			return nil, createErr
 		}
 	}
+
+	artifactStore.lock.Lock()
+	defer artifactStore.lock.Unlock()
+	if err := artifactStore.removeUnnamedArtifacts(context.Background()); err != nil {
+		return nil, err
+	}
+
 	return artifactStore, nil
 }
 
@@ -387,6 +394,36 @@ func createNewArtifactManifest(options *libartTypes.AddOptions) specV1.Manifest 
 		Config:       specV1.DescriptorEmptyJSON,
 		Layers:       make([]specV1.Descriptor, 0),
 		Annotations:  annotations,
+	}
+}
+
+// removeUnnamedArtifacts deletes index entries missing org.opencontainers.image.ref.name.
+// Legacy unnamed orphans cannot be retagged (their repository name is unknown).
+// Note: must be called while holding the store lock.
+//
+// DeleteImage mutates index.json; layout.List must be called again after each removal
+// instead of walking the first snapshot and deleting every unnamed entry in one pass.
+func (as *ArtifactStore) removeUnnamedArtifacts(ctx context.Context) error {
+	for {
+		lrs, err := layout.List(as.storePath)
+		if err != nil {
+			return err
+		}
+		var deleted bool
+		for _, l := range lrs {
+			if _, ok := l.ManifestDescriptor.Annotations[specV1.AnnotationRefName]; ok {
+				continue
+			}
+			logrus.Debugf("Removing unnamed artifact manifest %s from %s", l.ManifestDescriptor.Digest, as.storePath)
+			if err := l.Reference.DeleteImage(ctx, as.SystemContext); err != nil {
+				return err
+			}
+			deleted = true
+			break
+		}
+		if !deleted {
+			return nil
+		}
 	}
 }
 
