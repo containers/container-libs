@@ -56,12 +56,6 @@ func (f *layerFiles) Lookup(name string, size int64, onlyWorldReadable bool) (in
 		}
 		openPath = flat
 	} else {
-		// Resolve name as if the diff directory were the root, as
-		// RESOLVE_IN_ROOT would: tar entry names can be absolute, or go
-		// above the root, in an image converted from another format.  The
-		// consumer resolves the name it is given beneath the directory,
-		// so it has to be relative and without "..", and symlinks are
-		// refused below, so resolving it lexically gives the same result.
 		openPath = strings.TrimPrefix(createpath.CleanAbsPath(name), "/")
 		if openPath == "" {
 			return 0, "", false, nil
