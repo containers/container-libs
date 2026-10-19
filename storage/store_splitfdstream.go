@@ -42,7 +42,9 @@ func SplitFDStreamStoreFor(s Store) (*SplitFDStreamStore, error) {
 // the image was pulled.
 //
 // The client is responsible for verifying that each layer it reassembles
-// hashes to the diff ID it expects, and for closing the lifetime
+// is what it expects, normally by hashing it and comparing the result to the
+// diff ID in the image's config (which only identifies the layer if it was
+// enforced when the image was pulled), and for closing the lifetime
 // descriptor of a layer as soon as it is done with it, without waiting for
 // another layer in the meantime: until then, the layer is locked against
 // writers.
