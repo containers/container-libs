@@ -101,12 +101,14 @@ func (s *Server) Connection(backend ImageBackend, tmpDir string) (*os.File, erro
 }
 
 // startLease takes over l and waits, in the background, for the consumer
-// to be done with the layer.  It reports false, having taken nothing over,
-// if the server is already stopping.
+// to be done with the layer.  If the server is already stopping it reports
+// false; it then only releases the lifetime pipe, and the layer is still the
+// caller's to close.
 func (s *Server) startLease(l *lease) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.stopped {
+		l.keepR.Close()
 		return false
 	}
 	s.leases[l] = struct{}{}
