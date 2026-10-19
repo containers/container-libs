@@ -138,11 +138,10 @@ func (i *ociInterface) getLayer(ctx context.Context, call varlink.Call) error {
 	if err != nil {
 		return replyOciError(ctx, call, "InternalError", err.Error())
 	}
+	// The lease ends once every copy of keepW is closed: ours on the way
+	// out of here, and the consumer's when it is done with the layer, or
+	// right away if the reply never reaches it.
 	defer keepW.Close()
-	// From here on the lease owns the layer.  It ends once every copy of
-	// keepW is closed: ours on the way out of here, and the consumer's when
-	// it is done with the layer, or right away if the reply never reaches
-	// it.
 	if !i.server.startLease(l) {
 		return replyOciError(ctx, call, "InternalError", "the store is no longer serving layers")
 	}
