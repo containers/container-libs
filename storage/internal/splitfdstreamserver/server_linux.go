@@ -77,24 +77,21 @@ func (s *Server) Connection(backend ImageBackend, tmpDir string) (*os.File, erro
 		return nil, fmt.Errorf("unexpected connection type %T", serverConn)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
 	s.mu.Lock()
 	if s.stopped {
 		s.mu.Unlock()
-		cancel()
 		clientFile.Close()
 		conn.Close()
 		return nil, errors.New("the store is no longer serving layers")
 	}
 	s.conns[conn] = struct{}{}
 	s.wg.Go(func() {
-		defer cancel()
 		defer func() {
 			s.mu.Lock()
 			delete(s.conns, conn)
 			s.mu.Unlock()
 		}()
-		svc.ServeConn(ctx, conn)
+		svc.ServeConn(context.Background(), conn)
 	})
 	s.mu.Unlock()
 	return clientFile, nil
