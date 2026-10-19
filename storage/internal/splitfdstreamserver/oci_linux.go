@@ -47,8 +47,10 @@ error NoSuchLayerIndex (layer_index: int)
 # else, such as another GetLayer, while it holds it: that can deadlock.
 #
 # The stream is what the store has recorded for the layer.  It is not
-# checked against the image's config: the client must verify that what it
-# reassembles hashes to the diff ID it expects.
+# checked against anything: the client must verify that what it reassembles
+# is what it expects, normally by hashing it and comparing the result to
+# the diff ID in the image's config.  That only identifies the layer if the
+# diff ID was enforced when the image was pulled.
 method GetLayer(handle: int, params: GetLayerParams) -> (dir_count: int)
 `
 )
