@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"go.podman.io/storage/internal/createpath"
 	"golang.org/x/sys/unix"
 )
 
@@ -61,7 +62,7 @@ func (f *layerFiles) Lookup(name string, size int64, onlyWorldReadable bool) (in
 		// consumer resolves the name it is given beneath the directory,
 		// so it has to be relative and without "..", and symlinks are
 		// refused below, so resolving it lexically gives the same result.
-		openPath = strings.TrimPrefix(filepath.Clean("/"+name), "/")
+		openPath = strings.TrimPrefix(createpath.CleanAbsPath(name), "/")
 		if openPath == "" {
 			return 0, "", false, nil
 		}
