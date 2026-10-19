@@ -24,8 +24,9 @@ method GetInfo() -> (features: []string)
 
 # layer_index selects a layer of the image the connection serves: 0 is the
 # base layer, in the order of the layers the store records for the image.
-# That is not necessarily the order of the rootfs.diff_ids of the image's
-# config; see the note on verification below.
+# That is the order of the rootfs.diff_ids in the image's config, if it has
+# any, but the diff IDs are not what selects a layer; see the note on
+# verification below.
 type GetLayerParams (
   layer_index: ?int,
   consumer_has_cap_dac_override: ?bool
