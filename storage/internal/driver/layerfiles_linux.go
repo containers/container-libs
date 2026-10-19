@@ -67,9 +67,7 @@ func (f *layerFiles) Lookup(name string, size int64, onlyWorldReadable bool) (in
 		Resolve: unix.RESOLVE_NO_SYMLINKS | unix.RESOLVE_BENEATH,
 	})
 	if err != nil {
-		// EXDEV: a flat name that does not stay beneath the diff
-		// directory.
-		if errors.Is(err, unix.ENOENT) || errors.Is(err, unix.ELOOP) || errors.Is(err, unix.EXDEV) {
+		if errors.Is(err, unix.ENOENT) || errors.Is(err, unix.ELOOP) {
 			return 0, "", false, nil
 		}
 		return 0, "", false, fmt.Errorf("opening %q: %w", name, err)
@@ -100,7 +98,7 @@ func (f *layerFiles) Lookup(name string, size int64, onlyWorldReadable bool) (in
 					Resolve: unix.RESOLVE_NO_SYMLINKS | unix.RESOLVE_BENEATH,
 				})
 				if err != nil {
-					if errors.Is(err, unix.ENOENT) || errors.Is(err, unix.ELOOP) || errors.Is(err, unix.EXDEV) || errors.Is(err, unix.ENOTDIR) {
+					if errors.Is(err, unix.ENOENT) || errors.Is(err, unix.ELOOP) || errors.Is(err, unix.ENOTDIR) {
 						return 0, "", false, nil
 					}
 					return 0, "", false, fmt.Errorf("opening parent %q of %q: %w", parent, name, err)

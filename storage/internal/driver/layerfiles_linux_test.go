@@ -71,7 +71,6 @@ func TestLayerFilesLookup(t *testing.T) {
 		{name: "flat, private parent", flatNames: map[string]string{"etc/conf": "ab/cdef"}, entry: "etc/conf", size: 4, onlyWorldReadable: true, parent: "ab", parentMode: 0o700},
 		{name: "flat, unclean name", flatNames: map[string]string{"etc/conf": "ab/cdef"}, entry: "./etc//conf", size: 4, wantFile: "ab/cdef"},
 		{name: "flat, not in the map", flatNames: map[string]string{"etc/conf": "ab/cdef"}, entry: "usr/bin/tool", size: 4},
-		{name: "flat, escaping name", flatNames: map[string]string{"etc/conf": "../ab/cdef"}, entry: "etc/conf", size: 4},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.parent != "" {
@@ -93,4 +92,16 @@ func TestLayerFilesLookup(t *testing.T) {
 			assert.Equal(t, tc.wantFile, file)
 		})
 	}
+}
+
+// A stored name that leaves the diff directory cannot come from a valid
+// table of contents, so it is an error rather than a reason to inline.
+func TestLayerFilesEscapingStoredName(t *testing.T) {
+	d, err := os.Open(t.TempDir())
+	require.NoError(t, err)
+	f := NewLayerFiles(d, map[string]string{"etc/conf": "../ab/cdef"})
+	defer f.Close()
+
+	_, _, _, err = f.Lookup("etc/conf", 4, false)
+	assert.Error(t, err)
 }
