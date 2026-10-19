@@ -116,32 +116,37 @@ func (i *ociInterface) getLayer(ctx context.Context, call varlink.Call) error {
 	if err != nil {
 		return replyOciError(ctx, call, "InternalError", err.Error())
 	}
+	// The lease takes over layer once it has started; until then closing it
+	// is up to us.
+	leaseStarted := false
+	defer func() {
+		if !leaseStarted {
+			layer.Close()
+		}
+	}()
 
 	// A consumer that cannot bypass file permissions could not open a file
 	// that is not world-readable, so such content is sent inline instead.
 	onlyWorldReadable := params.Params.ConsumerHasCapDACOverride == nil || !*params.Params.ConsumerHasCapDACOverride
 	streamFile, err := i.buildStream(layerID, layer, onlyWorldReadable)
 	if err != nil {
-		layer.Close()
 		return replyOciError(ctx, call, "InternalError", err.Error())
 	}
 	defer streamFile.Close()
 
 	l, keepW, err := newLease(layer)
 	if err != nil {
-		layer.Close()
 		return replyOciError(ctx, call, "InternalError", err.Error())
 	}
+	defer keepW.Close()
 	// From here on the lease owns the layer.  It ends once every copy of
 	// keepW is closed: ours on the way out of here, and the consumer's when
 	// it is done with the layer, or right away if the reply never reaches
 	// it.
 	if !i.server.startLease(l) {
-		layer.Close()
-		keepW.Close()
 		return replyOciError(ctx, call, "InternalError", "the store is no longer serving layers")
 	}
-	defer keepW.Close()
+	leaseStarted = true
 
 	// The stream references directories by their index in this array, less
 	// the leading stream FD.
