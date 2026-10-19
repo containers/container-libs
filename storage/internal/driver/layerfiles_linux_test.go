@@ -3,6 +3,7 @@
 package driver
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -94,6 +95,55 @@ func TestLayerFilesLookup(t *testing.T) {
 	}
 }
 
+func TestLayerFilesOpen(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(dir, "usr/bin"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "usr/bin/tool"), []byte("tool"), 0o600))
+	require.NoError(t, os.MkdirAll(filepath.Join(dir, "ab"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "ab/cdef"), []byte("flat"), 0o600))
+	require.NoError(t, os.Symlink("usr/bin/tool", filepath.Join(dir, "link")))
+
+	read := func(f LayerFiles, name string) (string, error) {
+		t.Helper()
+		r, err := f.Open(name)
+		if err != nil {
+			return "", err
+		}
+		defer r.Close()
+		data, err := io.ReadAll(r)
+		require.NoError(t, err)
+		return string(data), nil
+	}
+	newFiles := func(flatNames map[string]string) LayerFiles {
+		t.Helper()
+		d, err := os.Open(dir)
+		require.NoError(t, err)
+		f := NewLayerFiles(d, flatNames)
+		t.Cleanup(func() { require.NoError(t, f.Close()) })
+		return f
+	}
+
+	f := newFiles(nil)
+	for _, name := range []string{"usr/bin/tool", "./usr/bin/tool", "/usr/bin/tool", "../usr/bin/tool"} {
+		got, err := read(f, name)
+		require.NoError(t, err, name)
+		assert.Equal(t, "tool", got, name)
+	}
+	_, err := read(f, "missing")
+	assert.ErrorIs(t, err, os.ErrNotExist)
+	_, err = read(f, "link")
+	assert.Error(t, err, "symlinks are refused")
+	_, err = read(f, "/")
+	assert.ErrorIs(t, err, os.ErrNotExist)
+
+	flat := newFiles(map[string]string{"usr/bin/tool": "ab/cdef"})
+	got, err := read(flat, "./usr/bin/tool")
+	require.NoError(t, err)
+	assert.Equal(t, "flat", got)
+	_, err = read(flat, "usr/bin/other")
+	assert.ErrorIs(t, err, os.ErrNotExist)
+}
+
 // A stored name that leaves the diff directory cannot come from a valid
 // table of contents, so it is an error rather than a reason to inline.
 func TestLayerFilesEscapingStoredName(t *testing.T) {
@@ -103,5 +153,7 @@ func TestLayerFilesEscapingStoredName(t *testing.T) {
 	defer f.Close()
 
 	_, _, _, err = f.Lookup("etc/conf", 4, false)
+	assert.Error(t, err)
+	_, err = f.Open("etc/conf")
 	assert.Error(t, err)
 }

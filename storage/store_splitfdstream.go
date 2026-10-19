@@ -154,21 +154,20 @@ type splitFDStreamLayer struct {
 	store     roLayerStore
 	files     internalDriver.LayerFiles
 	tarSplit  io.ReadCloser
-	getter    drivers.FileGetCloser
 }
 
 // openSplitFDStreamLayer opens layerID in store, which the caller has
 // locked for reading.  On success, the result takes over that lock.
 func openSplitFDStreamLayer(store roLayerStore, layerID string) (*splitFDStreamLayer, error) {
-	tarSplit, getter, err := store.tarSplitWithoutMounting(layerID)
+	tarSplit, err := store.tarSplitWithoutMounting(layerID)
 	if err != nil {
 		return nil, err
 	}
 	files, err := store.layerFilesWithoutMounting(layerID)
 	if err != nil {
-		return nil, errors.Join(err, tarSplit.Close(), getter.Close())
+		return nil, errors.Join(err, tarSplit.Close())
 	}
-	return &splitFDStreamLayer{store: store, files: files, tarSplit: tarSplit, getter: getter}, nil
+	return &splitFDStreamLayer{store: store, files: files, tarSplit: tarSplit}, nil
 }
 
 // Files implements splitfdstreamserver.Layer.
@@ -181,16 +180,11 @@ func (l *splitFDStreamLayer) TarSplit() io.Reader {
 	return l.tarSplit
 }
 
-// Get implements splitfdstreamserver.Layer.
-func (l *splitFDStreamLayer) Get(name string) (io.ReadCloser, error) {
-	return l.getter.Get(name)
-}
-
 // Close implements splitfdstreamserver.Layer.
 func (l *splitFDStreamLayer) Close() error {
 	var err error
 	l.closeOnce.Do(func() {
-		err = errors.Join(l.files.Close(), l.tarSplit.Close(), l.getter.Close())
+		err = errors.Join(l.files.Close(), l.tarSplit.Close())
 		l.store.stopReading()
 	})
 	return err

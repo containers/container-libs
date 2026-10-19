@@ -45,10 +45,11 @@ type fakeLayer struct {
 	tarSplit io.Reader
 }
 
-func (l *fakeLayer) Files() driver.LayerFiles               { return &fakeLayerFiles{} }
-func (l *fakeLayer) TarSplit() io.Reader                    { return l.tarSplit }
-func (l *fakeLayer) Get(name string) (io.ReadCloser, error) { return l.backend.contents.Get(name) }
-func (l *fakeLayer) Close() error                           { close(l.backend.closed); return nil }
+func (l *fakeLayer) Files() driver.LayerFiles {
+	return &fakeLayerFiles{inline: l.backend.contents}
+}
+func (l *fakeLayer) TarSplit() io.Reader { return l.tarSplit }
+func (l *fakeLayer) Close() error        { close(l.backend.closed); return nil }
 
 // newFakeBackend records a one-file layer.
 func newFakeBackend(t *testing.T, content []byte) *fakeBackend {
