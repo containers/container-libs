@@ -122,8 +122,9 @@ func (s *Server) startLease(l *lease) bool {
 //
 // Outstanding leases are cut short rather than waited for: a consumer is
 // under no obligation to be quick, and the store cannot shut down while a
-// lease holds a layer store lock.  A consumer that had not finished sees
-// the names it was given disappear, which it has to handle anyway.
+// lease holds a layer store lock.  That releases the lock, so a consumer
+// that had not finished is no longer protected from another process
+// removing the layer, and may find the files it was given gone.
 func (s *Server) Stop() {
 	s.mu.Lock()
 	s.stopped = true
