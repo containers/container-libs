@@ -4,7 +4,24 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 )
+
+type cacheFrame struct {
+	path    string
+	dirRoot *os.Root
+	dirFile *os.File // lazily opened; nil until FileForRoot needs it
+}
+
+func (f *cacheFrame) Close() error {
+	if f.dirRoot != nil {
+		_ = f.dirRoot.Close()
+	}
+	if f.dirFile != nil {
+		_ = f.dirFile.Close()
+	}
+	return nil
+}
 
 // Cache attempts to speed up repeated path lookups in an os.Root.
 //
@@ -32,9 +49,7 @@ type Cache struct {
 	// the best we can do; but callers that implement tree walks manually could also explicitly manage the lifetime
 	// / equality of cache values (e.g. while recursing to subdirectories, the caller knows when it returns back to a
 	// parent, and could perhaps maintain some kind of a direct reference to a cache entry).
-	cachedDirRoot *os.Root // Or nil
-	cachedPath    string   // Valid if cachedDirRoot != nil
-	cachedDirFile *os.File // For cachedDirRoot, which must be non-nil; or nil
+	frames []cacheFrame
 }
 
 // NewCache creates a cache for operations within root.
@@ -45,17 +60,19 @@ func NewCache(root *os.Root) *Cache {
 	}
 }
 
+func (c *Cache) truncateFrames(n int) {
+	for i := n; i < len(c.frames); i++ {
+		_ = c.frames[i].Close()
+	}
+	c.frames = c.frames[:n]
+}
+
 // Close releases any possibly cached handles.
 func (c *Cache) Close() error {
 	if c.rootFile != nil {
 		_ = c.rootFile.Close()
 	}
-	if c.cachedDirRoot != nil {
-		_ = c.cachedDirRoot.Close()
-	}
-	if c.cachedDirFile != nil {
-		_ = c.cachedDirFile.Close()
-	}
+	c.truncateFrames(0)
 	return nil
 }
 
@@ -67,25 +84,33 @@ func (c *Cache) RootForDir(dir string) (*os.Root, error) {
 		return c.root, nil
 	}
 
-	if c.cachedDirRoot != nil && c.cachedPath == dir {
-		return c.cachedDirRoot, nil
+	components := strings.Split(dir, "/")
+	targetIndex := len(components) - 1
+
+	deepestValidIndex := min(targetIndex, len(c.frames)-1)
+	for deepestValidIndex >= 0 && c.frames[deepestValidIndex].path !=
+		strings.Join(components[:deepestValidIndex+1], "/") {
+		deepestValidIndex--
+	}
+	c.truncateFrames(deepestValidIndex + 1)
+
+	parent := c.root
+	if deepestValidIndex >= 0 {
+		parent = c.frames[deepestValidIndex].dirRoot
+	}
+	for componentIndex := deepestValidIndex + 1; componentIndex <= targetIndex; componentIndex++ {
+		dirRoot, err := parent.OpenRoot(components[componentIndex])
+		if err != nil {
+			return nil, err
+		}
+		c.frames = append(c.frames, cacheFrame{
+			path:    strings.Join(components[:componentIndex+1], "/"),
+			dirRoot: dirRoot,
+		})
+		parent = dirRoot
 	}
 
-	dirRoot, err := c.root.OpenRoot(dir)
-	if err != nil {
-		return nil, err
-	}
-	if c.cachedDirRoot != nil {
-		_ = c.cachedDirRoot.Close()
-	}
-	if c.cachedDirFile != nil {
-		_ = c.cachedDirFile.Close()
-		c.cachedDirFile = nil
-	}
-	c.cachedDirRoot = dirRoot
-	c.cachedPath = dir
-
-	return dirRoot, nil
+	return c.frames[targetIndex].dirRoot, nil
 }
 
 // PreparePath returns a parent-directory *os.Root and a basename for efficiently accessing fsPath (per fs.ValidPath),
@@ -129,15 +154,18 @@ func (c *Cache) FileForRoot(root *os.Root) (*os.File, error) {
 		return c.rootFile, nil
 	}
 
-	if c.cachedDirRoot != nil && root == c.cachedDirRoot {
-		if c.cachedDirFile == nil {
-			fd, err := c.cachedDirRoot.Open(".")
-			if err != nil {
-				return nil, err
+	if len(c.frames) > 0 {
+		deepestFrame := &c.frames[len(c.frames)-1]
+		if deepestFrame.dirRoot == root {
+			if deepestFrame.dirFile == nil {
+				fd, err := deepestFrame.dirRoot.Open(".")
+				if err != nil {
+					return nil, err
+				}
+				deepestFrame.dirFile = fd
 			}
-			c.cachedDirFile = fd
+			return deepestFrame.dirFile, nil
 		}
-		return c.cachedDirFile, nil
 	}
 
 	// Otherwise we would need to open a new file descriptor, and then we would need to close it at some point,
