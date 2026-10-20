@@ -20,8 +20,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/docker/distribution/registry/api/errcode"
-	v2 "github.com/docker/distribution/registry/api/v2"
+	"github.com/distribution/distribution/v3/registry/api/errcode"
 	digest "github.com/opencontainers/go-digest"
 	"github.com/sirupsen/logrus"
 	"go.podman.io/image/v5/docker/reference"
@@ -594,7 +593,7 @@ func isMirrorFallbackError(err error) bool {
 	var ec errcode.ErrorCoder
 	if errors.As(err, &ec) {
 		switch ec.ErrorCode() {
-		case v2.ErrorCodeBlobUnknown:
+		case errcode.ErrorCodeBlobUnknown:
 			// Blob endpoint returns HTTP 404 with errcode JSON body
 			// {"errors":[{"code":"BLOB_UNKNOWN",...}]}.
 			// registryHTTPResponseToError calls handleErrorResponse → parseHTTPErrorResponse,

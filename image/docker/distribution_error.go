@@ -23,7 +23,7 @@ import (
 	"net/http"
 	"slices"
 
-	"github.com/docker/distribution/registry/api/errcode"
+	"github.com/distribution/distribution/v3/registry/api/errcode"
 )
 
 // errNoErrorsInBody is returned when an HTTP response body parses to an empty

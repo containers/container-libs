@@ -11,8 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/docker/distribution/registry/api/errcode"
-	errcodev2 "github.com/docker/distribution/registry/api/v2"
+	"github.com/distribution/distribution/v3/registry/api/errcode"
 	"github.com/hashicorp/go-multierror"
 	"github.com/sirupsen/logrus"
 	"go.podman.io/image/v5/docker"
@@ -82,7 +81,7 @@ func IsErrorRetryable(err error) bool {
 	case errcode.Error:
 		switch e.Code {
 		case errcode.ErrorCodeUnauthorized, errcode.ErrorCodeDenied,
-			errcodev2.ErrorCodeNameUnknown, errcodev2.ErrorCodeManifestUnknown:
+			errcode.ErrorCodeNameUnknown, errcode.ErrorCodeManifestUnknown:
 			return false
 		}
 		return true

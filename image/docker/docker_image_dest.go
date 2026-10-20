@@ -16,8 +16,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/docker/distribution/registry/api/errcode"
-	v2 "github.com/docker/distribution/registry/api/v2"
+	"github.com/distribution/distribution/v3/registry/api/errcode"
 	"github.com/opencontainers/go-digest"
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/sirupsen/logrus"
@@ -559,11 +558,11 @@ func isManifestInvalidError(err error) bool {
 
 	switch ec.ErrorCode() {
 	// ErrorCodeManifestInvalid is returned by OpenShift with acceptschema2=false.
-	case v2.ErrorCodeManifestInvalid:
+	case errcode.ErrorCodeManifestInvalid:
 		return true
 	// ErrorCodeTagInvalid is returned by docker/distribution (at least as of commit ec87e9b6971d831f0eff752ddb54fb64693e51cd)
 	// when uploading to a tag (because it can’t find a matching tag inside the manifest)
-	case v2.ErrorCodeTagInvalid:
+	case errcode.ErrorCodeTagInvalid:
 		return true
 	// ErrorCodeUnsupported with 'Invalid JSON syntax' is returned by AWS ECR when
 	// uploading an OCI manifest that is (correctly, according to the spec) missing

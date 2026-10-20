@@ -3,8 +3,7 @@ package jsonproxy
 import (
 	"errors"
 
-	dockerdistributionerrcode "github.com/docker/distribution/registry/api/errcode"
-	dockerdistributionapi "github.com/docker/distribution/registry/api/v2"
+	dockerdistributionerrcode "github.com/distribution/distribution/v3/registry/api/errcode"
 	ociarchive "go.podman.io/image/v5/oci/archive"
 	ocilayout "go.podman.io/image/v5/oci/layout"
 	"go.podman.io/image/v5/storage"
@@ -31,5 +30,5 @@ func isDockerManifestUnknownError(err error) bool {
 	if !errors.As(err, &ec) {
 		return false
 	}
-	return ec.ErrorCode() == dockerdistributionapi.ErrorCodeManifestUnknown
+	return ec.ErrorCode() == dockerdistributionerrcode.ErrorCodeManifestUnknown
 }

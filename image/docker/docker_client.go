@@ -17,8 +17,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/docker/distribution/registry/api/errcode"
-	v2 "github.com/docker/distribution/registry/api/v2"
+	"github.com/distribution/distribution/v3/registry/api/errcode"
 	"github.com/docker/go-connections/tlsconfig"
 	digest "github.com/opencontainers/go-digest"
 	imgspecv1 "github.com/opencontainers/image-spec/specs-go/v1"
@@ -1189,7 +1188,7 @@ func (c *dockerClient) getOCIDescriptorContents(ctx context.Context, ref dockerR
 func isManifestUnknownError(err error) bool {
 	// docker/distribution, and as defined in the spec
 	var ec errcode.ErrorCoder
-	if errors.As(err, &ec) && ec.ErrorCode() == v2.ErrorCodeManifestUnknown {
+	if errors.As(err, &ec) && ec.ErrorCode() == errcode.ErrorCodeManifestUnknown {
 		return true
 	}
 	// registry.redhat.io as of October 2022
