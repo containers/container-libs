@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/docker/distribution/registry/api/errcode"
+	"github.com/distribution/distribution/v3/registry/api/errcode"
 	"github.com/sirupsen/logrus"
 )
 

@@ -17,8 +17,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/docker/distribution/registry/api/errcode"
-	v2 "github.com/docker/distribution/registry/api/v2"
+	"github.com/distribution/distribution/v3/registry/api/errcode"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.podman.io/image/v5/internal/private"
@@ -158,10 +157,10 @@ func TestIsMirrorFallbackError(t *testing.T) {
 		expected bool
 	}{
 		// BLOB_UNKNOWN: registryHTTPResponseToError → handleErrorResponse → parseHTTPErrorResponse
-		// returns errcode.Error{Code: v2.ErrorCodeBlobUnknown}. getBlob wraps with "fetching blob: ".
+		// returns errcode.Error{Code: errcode.ErrorCodeBlobUnknown}. getBlob wraps with "fetching blob: ".
 		{
 			name:     "BLOB_UNKNOWN from registry",
-			err:      fmt.Errorf("fetching blob: %w", errcode.Error{Code: v2.ErrorCodeBlobUnknown, Message: "blob unknown to registry"}),
+			err:      fmt.Errorf("fetching blob: %w", errcode.Error{Code: errcode.ErrorCodeBlobUnknown, Message: "blob unknown to registry"}),
 			expected: true,
 		},
 		// TOO_MANY_REQUESTS: parseHTTPErrorResponse returns this for HTTP 429,
@@ -175,7 +174,7 @@ func TestIsMirrorFallbackError(t *testing.T) {
 		// not just the blob.
 		{
 			name:     "MANIFEST_UNKNOWN is not fallback",
-			err:      errcode.Error{Code: v2.ErrorCodeManifestUnknown, Message: "manifest unknown"},
+			err:      errcode.Error{Code: errcode.ErrorCodeManifestUnknown, Message: "manifest unknown"},
 			expected: false,
 		},
 		// UnexpectedHTTPStatusError is not matched — for regular blobs, handleErrorResponse

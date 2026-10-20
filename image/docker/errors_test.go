@@ -6,8 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/docker/distribution/registry/api/errcode"
-	v2 "github.com/docker/distribution/registry/api/v2"
+	"github.com/distribution/distribution/v3/registry/api/errcode"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -94,7 +93,7 @@ func TestRegistryHTTPResponseToError(t *testing.T) {
 			errorString:       "manifest unknown",
 			errorType:         nil,
 			unwrappedErrorPtr: &unwrappedErrcodeError,
-			errorCode:         &v2.ErrorCodeManifestUnknown,
+			errorCode:         &errcode.ErrorCodeManifestUnknown,
 		},
 		{ // public.ecr.aws does not implement tag list
 			name: "GET https://public.ecr.aws/v2/nginx/nginx/tags/list",

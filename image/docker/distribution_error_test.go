@@ -22,7 +22,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/docker/distribution/registry/api/errcode"
+	"github.com/distribution/distribution/v3/registry/api/errcode"
 )
 
 func TestHandleErrorResponse401InvalidTokenChallenge(t *testing.T) {
