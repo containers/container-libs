@@ -18,9 +18,9 @@ import (
 // and a potential for improvement.
 
 const (
-	maxDepth      = 4
-	entriesPerDir = 100
-	dirDivider    = 25
+	maxDepth      = 5
+	entriesPerDir = 10
+	dirDivider    = 2
 )
 
 func benchmarkDir(b *testing.B) string {
