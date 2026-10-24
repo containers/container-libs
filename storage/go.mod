@@ -15,7 +15,7 @@ require (
 	github.com/klauspost/pgzip v1.3.0
 	github.com/mattn/go-shellwords v1.0.16
 	github.com/mistifyio/go-zfs/v4 v4.0.0
-	github.com/moby/sys/capability v0.4.0
+	github.com/moby/sys/capability v0.5.0
 	github.com/moby/sys/mountinfo v0.7.2
 	github.com/moby/sys/user v0.4.1
 	github.com/opencontainers/go-digest v1.0.0

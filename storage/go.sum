@@ -26,8 +26,8 @@ github.com/mattn/go-shellwords v1.0.16 h1:RRxAaRzU1YbzOSCj9NJqg2/VIbSWv0dnPoD3Ew
 github.com/mattn/go-shellwords v1.0.16/go.mod h1:EZzvwXDESEeg03EKmM+RmDnNOPKG4lLtQsUlTZDWQ8Y=
 github.com/mistifyio/go-zfs/v4 v4.0.0 h1:sU0+5dX45tdDK5xNZ3HBi95nxUc48FS92qbIZEvpAg4=
 github.com/mistifyio/go-zfs/v4 v4.0.0/go.mod h1:weotFtXTHvBwhr9Mv96KYnDkTPBOHFUbm9cBmQpesL0=
-github.com/moby/sys/capability v0.4.0 h1:4D4mI6KlNtWMCM1Z/K0i7RV1FkX+DBDHKVJpCndZoHk=
-github.com/moby/sys/capability v0.4.0/go.mod h1:4g9IK291rVkms3LKCDOoYlnV8xKwoDTpIrNEE35Wq0I=
+github.com/moby/sys/capability v0.5.0 h1:Bm4oD9xGCtZguPnaoQy1/jvKTSwZHMvM0FrnxNYtGYU=
+github.com/moby/sys/capability v0.5.0/go.mod h1:i+0cXvNSriGrL3C6sxnmlmGL5HVU0OdxocizXdC8A+g=
 github.com/moby/sys/mountinfo v0.7.2 h1:1shs6aH5s4o5H2zQLn796ADW1wMrIwHsyJ2v9KouLrg=
 github.com/moby/sys/mountinfo v0.7.2/go.mod h1:1YOa8w8Ih7uW0wALDUgT1dTTSBrZ+HiBLGws92L2RU4=
 github.com/moby/sys/user v0.4.1 h1:RgjRlaDKi/Xmyrz4t8lyzXT6v2ooFeO/7xtchmhVWE0=
